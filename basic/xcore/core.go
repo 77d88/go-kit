@@ -57,6 +57,9 @@ func IsZero[T any](val T) bool {
 
 	// 其他类型使用反射处理
 	default:
+		if v == nil {
+			return true
+		}
 		rv := reflect.ValueOf(val)
 		if rv.Kind() == reflect.Ptr {
 			if rv.IsNil() {

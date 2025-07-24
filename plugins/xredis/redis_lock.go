@@ -13,7 +13,7 @@ import (
 )
 
 type RedisLock struct {
-	client    *RedisClient
+	client    *Client
 	key       string
 	value     string // 唯一标识锁持有者
 	ttl       time.Duration
@@ -41,7 +41,7 @@ func NewLock(key string, ttl time.Duration, name ...string) *RedisLock {
 }
 
 // NewLockByClient 创建Redis锁实例 自定义客户端
-func NewLockByClient(client *RedisClient, key string, ttl time.Duration) *RedisLock {
+func NewLockByClient(client *Client, key string, ttl time.Duration) *RedisLock {
 	return &RedisLock{
 		client: client,
 		key:    key,

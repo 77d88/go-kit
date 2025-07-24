@@ -1114,6 +1114,10 @@ func IsEmpty[T any](array []T) bool {
 	return len(array) == 0
 }
 
+func FromSlice[T any](t ...T) []T {
+	return t
+}
+
 func GetIndexVal[T any](array []T, index int, nilTo T) (T, bool) {
 	if array == nil {
 		return nilTo, false

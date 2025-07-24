@@ -27,14 +27,14 @@ type Config struct {
 	DbLinkName                string `yaml:"dbLinkName"`                // 数据库链接名称
 }
 
-func InitWith(e *xe.Engine) *DataSource {
+func InitWith(e *xe.Engine) *DB {
 	var config Config
 	e.Cfg.ScanKey(dbStr, &config)
 	config.DbLinkName = dbStr
 	return Init(&config)
 }
 
-func Init(c *Config) *DataSource {
+func Init(c *Config) *DB {
 	if c == nil {
 		xlog.Fatalf(nil, "init db error config is nil ")
 		return nil
@@ -80,7 +80,7 @@ func Init(c *Config) *DataSource {
 		return nil
 	}
 
-	// 获取通用数据库对象 sql.DataSource ，然后使用其提供的功能
+	// 获取通用数据库对象 sql.DB ，然后使用其提供的功能
 	sqlDB, err := gormDb.DB()
 	if err != nil {
 		xlog.Fatalf(nil, "db init error -2 %s", err)
@@ -97,10 +97,9 @@ func Init(c *Config) *DataSource {
 	maskedStr := re.ReplaceAllString(c.Dns, "password=******* ")
 	xlog.Infof(nil, "init db conn success %s link -> %s", maskedStr, c.DbLinkName)
 	dbs[c.DbLinkName] = gormDb
-	return &DataSource{
-		DB:      gormDb,
-		Context: context.TODO(),
-		Config:  c,
+	return &DB{
+		DB:     gormDb,
+		Config: c,
 	}
 }
 

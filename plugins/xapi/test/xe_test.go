@@ -1,25 +1,40 @@
 package test
 
 import (
+	"context"
 	"github.com/77d88/go-kit/basic/xconfig"
 	"github.com/77d88/go-kit/basic/xconfig/json_scanner"
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth/aes_auth"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/cors"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/dbmw"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/limiter"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/plugins/xdb"
 	"github.com/77d88/go-kit/plugins/xe"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/plugins/xredis"
 	"testing"
 )
 
-func a(c *xhs.Ctx, db *xdb.DataSource, redis *xredis.RedisClient) (interface{}, error) {
+func c2(c context.Context, q string) {
+	xdb.BeginWithCtx(c).Exec("update s_user set sys_nickname = ? where id = 600075249287237", q)
+}
+func a(c *xhs.Ctx, db *xdb.DB, redis *xredis.Client) (interface{}, error) {
+	query := c.DefaultQuery("name", "test")
+
+	c2(c, query)
+	db.WithContext(c).Exec("update s_user set note = ? where id = 600075249287237", query)
+	if query == "test" {
+		return nil, xerror.New("error no query")
+	}
+	return nil, nil
+}
+
+func b(c *xhs.Ctx, db *xdb.DB) (interface{}, error) {
 	m := make(map[string]interface{})
-	xdb.Ctx(c).Raw("select * from s_user limit 1").Scan(&m)
-	db.WithContext(c).Raw("select * from s_user limit 1").Scan(&m)
-	xlog.Errorf(c, "%v", m)
-	return m, nil
+	scan := db.WithContext(c).Table("s_user").WithId(600075249287237).Scan(&m)
+	return m, scan.Error
 }
 
 func TestName(t *testing.T) {
@@ -49,9 +64,12 @@ func TestName(t *testing.T) {
 			engine.MustProvide(func() *xhs.HttpServer {
 				return server
 			})
+			server.Use(limiter.Limiter(server.Config.Rate))
 			server.Use(cors.New(server.Config))
 			server.Use(auth.NewMw(aes_auth.New()))
+			server.Use(dbmw.TranManager())
 			server.GET("/test", server.WrapWithDI(a))
+			server.GET("/test2", server.WrapWithDI(b))
 			return server
 		}).
 		Start()

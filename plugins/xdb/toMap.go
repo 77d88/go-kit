@@ -65,7 +65,7 @@ mapping []map[string]interface{}{
 	"a_field": func() int64
 }
 */
-func toSqlMap(c context.Context, obj interface{}, mapping ...interface{}) map[string]interface{} {
+func toSqlMap(obj interface{}, mapping ...interface{}) map[string]interface{} {
 	value := reflect.ValueOf(obj)
 	kind := value.Kind()
 	if kind == reflect.Ptr {
@@ -120,14 +120,14 @@ func toSqlMap(c context.Context, obj interface{}, mapping ...interface{}) map[st
 		case states:
 			if v == ToMapIgnore { // 忽略字段
 				delete(result, k)
-				xlog.Tracef(c, "toSqlMap ignore field:%s", k)
+				xlog.Tracef(context.TODO(), "toSqlMap ignore field:%s", k)
 			}
 		case ToMapFunc:
 			if newKey, newVal, err := v(result[k]); err == nil {
 				if s, ok := newVal.(states); ok {
 					if s == ToMapIgnore { // 方法返回的是_字符串则不处理
 						delete(result, k)
-						xlog.Tracef(c, "toSqlMap ignore field:%s", k)
+						xlog.Tracef(context.TODO(), "toSqlMap ignore field:%s", k)
 						continue
 					}
 

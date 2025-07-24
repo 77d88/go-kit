@@ -11,7 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const ctxKeyContext = "CTX_KEY_CONTEXT"
+const ctxThisKey = "_xe/CTX_KEY_CONTEXT"
+const ctxSetValueKey = "_xe/CTX_KEY_SET_VALUE"
 
 type Ctx struct {
 	*gin.Context
@@ -31,7 +32,7 @@ type CopyContext struct {
 }
 
 func newCtx(c *gin.Context) *Ctx {
-	value := c.Value(ctxKeyContext)
+	value := c.Value(ctxThisKey)
 	if value != nil {
 		c2, ok := value.(*Ctx)
 		if ok {
@@ -44,7 +45,7 @@ func newCtx(c *gin.Context) *Ctx {
 		Result:     nil,
 		TraceId:    xid.NextId(),
 	}
-	d.Set(ctxKeyContext, d)
+	d.Set(ctxThisKey, d)
 	return d
 }
 
@@ -56,21 +57,22 @@ func NewTestContext() *Ctx {
 }
 
 func (c *Ctx) Value(key any) any {
-	switch key {
-	case xlog.CtxLogParam:
-		return logFields(c)
-	case ctxKeyContext:
+	if key == ctxThisKey {
 		return c
+	}
+	if key == xlog.CtxLogParam {
+		return logFields(c)
 	}
 	return c.Context.Value(key)
 }
 
+func (c *Ctx) Set(key string, val any) {
+	c.Context.Set(key, val)
+}
+
 func (c *Ctx) Send(v interface{}) {
-	c.Result = &Response{
-		Code: CodeSuccess,
-		Msg:  "ok",
-		Data: v,
-	}
+	c.Result = NewResp(v)
+
 	if c.test {
 		indent, err := json.MarshalIndent(c.Result, "", "  ")
 		if err != nil {

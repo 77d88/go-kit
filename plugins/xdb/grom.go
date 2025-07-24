@@ -19,78 +19,74 @@ import (
 // password为数据库用户对应的密码
 // dbname为需要连接的具体实例库名
 
-type DataSource struct {
-	context.Context
+type DB struct {
+	*gorm.DB
 	Config *Config
-	DB     *gorm.DB
 }
 
-// New 创建链接 DataSource
-func New(name ...string) *DataSource {
+// New 创建链接 DB
+func New(name ...string) *DB {
 	db, err := GetDB(name...)
 	if err != nil {
 		return nil
 	}
-	return &DataSource{
-		Context: context.Background(),
-		DB:      db,
+	return &DB{
+		DB: db,
 	}
 }
 
-func wrap(c context.Context, db *gorm.DB) *DataSource {
-	return &DataSource{
-		Context: c,
-		DB:      db,
+func wrap(db *gorm.DB) *DB {
+	return &DB{
+		DB: db,
 	}
 }
 
-func Ctx(c context.Context, names ...string) *DataSource {
+func Ctx(c context.Context, names ...string) *DB {
 	db := New(names...)
 	return db.WithContext(c)
 }
-func (d *DataSource) WithContext(c context.Context) *DataSource {
-	get := c.Value(CtxTransactionKey) // 有事务优先获取事务
+func (d *DB) WithContext(c context.Context) *DB {
+	get := GetCtxTran(c) // 有事务优先获取事务
 	if get != nil {
-		return get.(*DataSource)
+		return get
 	}
-	d.Context = c
-	d.DB = d.DB.WithContext(c)
-	return d
+	return wrap(d.DB.WithContext(c))
 }
-func (d *DataSource) Session(session ...*gorm.Session) *DataSource {
+func (d *DB) Session(session ...*gorm.Session) *DB {
 	if session == nil || len(session) == 0 {
 		session = append(session, &gorm.Session{})
 	}
 	if d == nil {
-		return wrap(context.TODO(), d.DB.Session(session[0]))
+		return wrap(d.DB.Session(session[0]))
 	}
-	return wrap(d.Context, d.DB.Session(session[0]))
+	return wrap(d.DB.Session(session[0]))
 }
 
-func (d *DataSource) Table(name string, args ...interface{}) *DataSource {
-	return wrap(d.Context, d.DB.Table(name, args...))
+func (d *DB) Table(name string, args ...interface{}) *DB {
+	d.DB = d.DB.Table(name, args...)
+	return d
 }
 
-func (d *DataSource) unWrap() *gorm.DB {
+func (d *DB) unWrap() *gorm.DB {
 	return d.DB
 }
 
-func (d *DataSource) Model(val interface{}) *DataSource {
+func (d *DB) Model(val interface{}) *DB {
 	d.DB = d.DB.Model(val)
 	return d
 }
 
-func (d *DataSource) Select(query interface{}, args ...interface{}) (tx *DataSource) {
+func (d *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
 	d.DB = d.DB.Select(query, args...)
 	return d
 }
 
-func (d *DataSource) Where(query interface{}, args ...interface{}) *DataSource {
+func (d *DB) Where(query interface{}, args ...interface{}) *DB {
 	d.DB = d.DB.Where(query, args...)
 	return d
 }
 
-func (d *DataSource) WithId(ids ...int64) *DataSource {
+func (d *DB) WithId(ids ...int64) *DB {
 	is := xarray.Filter(ids, func(i int, item int64) bool {
 		return item > 0
 	})
@@ -100,30 +96,30 @@ func (d *DataSource) WithId(ids ...int64) *DataSource {
 	d.DB = d.DB.Where("id in ?", ids).Limit(len(ids))
 	return d
 }
-func (d *DataSource) Order(value interface{}) *DataSource {
+func (d *DB) Order(value interface{}) *DB {
 	d.DB = d.DB.Order(value)
 	return d
 }
 
-func (d *DataSource) Having(query interface{}, args ...interface{}) *DataSource {
+func (d *DB) Having(query interface{}, args ...interface{}) *DB {
 	d.DB = d.DB.Having(query, args)
 	return d
 }
 
-func (d *DataSource) Group(name string) *DataSource {
+func (d *DB) Group(name string) *DB {
 	d.DB = d.DB.Group(name)
 	return d
 }
 
 // XWhere 条件查询 条件判定为true才增加
-func (d *DataSource) XWhere(condition bool, query interface{}, args ...interface{}) *DataSource {
+func (d *DB) XWhere(condition bool, query interface{}, args ...interface{}) *DB {
 	if !condition {
 		return d
 	}
 	return d.Where(query, args...)
 }
 
-func (d *DataSource) Append(condition bool, f func(d *DataSource) *DataSource) *DataSource {
+func (d *DB) Append(condition bool, f func(d *DB) *DB) *DB {
 	if condition {
 		d.DB = f(d).DB
 		return d
@@ -131,86 +127,84 @@ func (d *DataSource) Append(condition bool, f func(d *DataSource) *DataSource) *
 	return d
 }
 
-func (d *DataSource) Raw(sql string, values ...interface{}) *DataSource {
+func (d *DB) Raw(sql string, values ...interface{}) *DB {
 	d.DB = d.DB.Raw(sql, values...)
 	return d
 }
 
-func (d *DataSource) Limit(limit int) *DataSource {
+func (d *DB) Limit(limit int) *DB {
 	d.DB = d.DB.Limit(limit)
 	return d
 }
-func (d *DataSource) Offset(offset int) *DataSource {
+func (d *DB) Offset(offset int) *DB {
 	d.DB = d.DB.Offset(offset)
 	return d
 }
-func (d *DataSource) IdDesc() *DataSource {
+func (d *DB) IdDesc() *DB {
 	d.DB = d.DB.Order("id desc")
 	return d
 }
-func (d *DataSource) IdAsc() *DataSource {
+func (d *DB) IdAsc() *DB {
 	d.DB = d.DB.Order("id asc")
 	return d
 }
 
-func (d *DataSource) PageSearch(page PageRequest) *DataSource {
+func (d *DB) PageSearch(page PageRequest) *DB {
 	offset, limit := page.Limit()
-	d.DB = d.DB.Offset(offset).Limit(limit)
-	return d
+	return d.Offset(offset).Limit(limit)
 }
 
-func (d *DataSource) Page(page, size int) *DataSource {
-	d.DB = d.DB.Offset((page - 1) * size).Limit(size)
-	return d
+func (d *DB) Page(page, size int) *DB {
+	return d.Offset((page - 1) * size).Limit(size)
 }
 
-func (d *DataSource) Scopes(funcs ...func(*gorm.DB) *gorm.DB) *DataSource {
+func (d *DB) Scopes(funcs ...func(*gorm.DB) *gorm.DB) *DB {
 	d.DB = d.DB.Scopes(funcs...)
 	return d
 }
-func (d *DataSource) Unscoped() *DataSource {
+func (d *DB) Unscoped() *DB {
 	d.DB = d.DB.Unscoped()
 	return d
 }
-func (d *DataSource) Delete(value interface{}, conds ...interface{}) *Result {
+func (d *DB) Delete(value interface{}, conds ...interface{}) *Result {
 	return warpResult(d.DB.Delete(value, conds...))
 }
 
-func (d *DataSource) DeleteById(dest interface{}, id int64) *Result {
+func (d *DB) DeleteById(dest interface{}, id int64) *Result {
 	if id <= 0 {
 		return emptyResult
 	}
 	return warpResult(d.DB.Model(dest).Limit(1).Delete("id = ?", id))
 }
 
-func (d *DataSource) DeleteByIds(dest interface{}, ids ...int64) *Result {
+func (d *DB) DeleteByIds(dest interface{}, ids ...int64) *Result {
 	if len(ids) == 0 {
 		return emptyResult
 	}
-	return warpResult(d.DB.Model(dest).Delete("id in (?)", ids))
+	return warpResult(d.DB.Model(dest).Limit(len(ids)).Delete("id in (?)", ids))
 }
 
 // DeleteUnscoped 删除数据 物理删除
-func (d *DataSource) DeleteUnscoped(value interface{}, conds ...interface{}) *Result {
+func (d *DB) DeleteUnscoped(value interface{}, conds ...interface{}) *Result {
 	return warpResult(d.DB.Unscoped().Delete(value, conds...))
 }
-func (d *DataSource) DeleteUnscopedById(dest interface{}, id int64) *Result {
+func (d *DB) DeleteUnscopedById(dest interface{}, id int64) *Result {
 	if id <= 0 {
 		return emptyResult
 	}
 	return warpResult(d.DB.Unscoped().Model(dest).Limit(1).Delete("id = ?", id))
 }
-func (d *DataSource) DeleteUnscopedByIds(dest interface{}, ids ...int64) *Result {
+func (d *DB) DeleteUnscopedByIds(dest interface{}, ids ...int64) *Result {
 	if len(ids) == 0 {
 		return emptyResult
 	}
 	return warpResult(d.DB.Unscoped().Model(dest).Delete("id in (?)", ids))
 }
 
-func (d *DataSource) Find(dest interface{}, conds ...interface{}) *Result {
+func (d *DB) Find(dest interface{}, conds ...interface{}) *Result {
 	return warpResult(d.DB.Find(dest, conds...))
 }
-func (d *DataSource) FindByIds(dest interface{}, ids ...int64) *Result {
+func (d *DB) FindByIds(dest interface{}, ids ...int64) *Result {
 	if len(ids) == 0 {
 		return emptyResult
 	}
@@ -222,7 +216,7 @@ func (d *DataSource) FindByIds(dest interface{}, ids ...int64) *Result {
 // to 为关联对象 实际数据库查询对象
 // fields 为关联字段
 // 示例：xdb.GetDB().FindLinks(&orders, &User{}, "UserID","SendId")
-func (d *DataSource) FindLinks(source interface{}, to interface{}, fields ...string) *Result {
+func (d *DB) FindLinks(source interface{}, to interface{}, fields ...string) *Result {
 	// source 是否为集合
 	ids := make([]int64, 0)
 	for _, field := range fields {
@@ -237,16 +231,16 @@ func (d *DataSource) FindLinks(source interface{}, to interface{}, fields ...str
 	return warpResult(d.DB.Find(to, "id in (?)", ids))
 }
 
-func (d *DataSource) FindById(dest interface{}, id int64) *Result {
+func (d *DB) FindById(dest interface{}, id int64) *Result {
 	if id <= 0 {
 		return emptyResult
 	}
 	return warpResult(d.DB.Find(dest, "id = ?", id))
 }
-func (d *DataSource) First(dest interface{}, conds ...interface{}) *Result {
+func (d *DB) First(dest interface{}, conds ...interface{}) *Result {
 	return warpResult(d.DB.First(dest, conds...))
 }
-func (d *DataSource) FirstById(dest interface{}, id int64) *Result {
+func (d *DB) FirstById(dest interface{}, id int64) *Result {
 	if id <= 0 {
 		return &Result{
 			Error: gorm.ErrRecordNotFound,
@@ -254,24 +248,24 @@ func (d *DataSource) FirstById(dest interface{}, id int64) *Result {
 	}
 	return warpResult(d.DB.First(dest, "id = ?", id))
 }
-func (d *DataSource) Scan(dest interface{}) *Result {
+func (d *DB) Scan(dest interface{}) *Result {
 	return warpResult(d.DB.Scan(dest))
 }
-func (d *DataSource) Count(count *int64) *Result {
+func (d *DB) Count(count *int64) *Result {
 	return warpResult(d.DB.Count(count))
 }
-func (d *DataSource) Create(value interface{}) *Result {
+func (d *DB) Create(value interface{}) *Result {
 	return warpResult(d.DB.Create(value))
 }
-func (d *DataSource) Update(column string, value interface{}) *Result {
+func (d *DB) Update(column string, value interface{}) *Result {
 	return warpResult(d.DB.Update(column, value))
 }
-func (d *DataSource) Updates(values interface{}) *Result {
+func (d *DB) Updates(values interface{}) *Result {
 	return warpResult(d.DB.Updates(values))
 }
 
 // FindPage 分页查询
-func (d *DataSource) FindPage(page PageRequest, result any, count *int64) *Result {
+func (d *DB) FindPage(page PageRequest, result any, count *int64) *Result {
 	if d.DB.Statement.Model == nil {
 		d.Model(result)
 	}
@@ -288,8 +282,8 @@ func (d *DataSource) FindPage(page PageRequest, result any, count *int64) *Resul
 	return d.IdDesc().Offset(offset).Limit(limit).Find(result)
 }
 
-func (d *DataSource) SaveMap(s GromModel, obj interface{}, mapping ...interface{}) *Result {
-	m := toSqlMap(d, obj, mapping...)
+func (d *DB) SaveMap(s GromModel, obj interface{}, mapping ...interface{}) *Result {
+	m := toSqlMap(obj, mapping...)
 	var id int64
 	// 获取出ID 单独处理
 	for k, v := range m {
@@ -316,12 +310,12 @@ func (d *DataSource) SaveMap(s GromModel, obj interface{}, mapping ...interface{
 	}
 }
 
-func (d *DataSource) Exec(sql string, values ...interface{}) *Result {
+func (d *DB) Exec(sql string, values ...interface{}) *Result {
 	return warpResult(d.DB.Exec(sql, values...))
 }
 
-func (d *DataSource) Dispose() error {
-	sqlDB, err := d.DB.DB() // 获取底层的 sql.DataSource 对象
+func (d *DB) Dispose() error {
+	sqlDB, err := d.DB.DB() // 获取底层的 sql.DB 对象
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"net/http"
@@ -127,13 +128,16 @@ func (c *ApiAuth) TokenInfo() xhs.Handler {
 		x.SetUserId(data.Id)
 		x.SetRoles(data.Roles...)
 		x.SetToken(token)
+		x.Next()
 		return nil, nil
 	}
 }
 
 func ForceAuth(c *xhs.Ctx) (interface{}, error) {
 	if c.GetUserId() == 0 {
-		return nil, c.NewError("auth error!").SetCode(xhs.CodeTokenError)
+		c.Abort()
+		return nil, xerror.New("auth error!").SetCode(xhs.CodeTokenError)
 	}
+	c.Next()
 	return nil, nil
 }

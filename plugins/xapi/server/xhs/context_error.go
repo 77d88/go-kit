@@ -10,18 +10,9 @@ import (
 const DefaultErrorMsg = "系统错误"
 
 func (c *Ctx) SendError(err interface{}) {
-	c.Result = xerror.New(err)
-}
-
-func NewErrorf(msg string, args ...interface{}) *xerror.Error {
-	return &xerror.Error{
-		Msg:  fmt.Sprintf(msg, args...),
-		Code: 500,
-	}
-}
-
-func (c *Ctx) NewError(msg interface{}) *xerror.Error {
-	return xerror.New(msg)
+	e := xerror.New(err)
+	c.Result = e
+	_ = c.Error(e)
 }
 
 // Fatalf fatalConfig 统一快速处理错误

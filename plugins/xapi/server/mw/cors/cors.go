@@ -57,6 +57,7 @@ func corsMw(config *CorsConfig) xhs.Handler {
 		origin := c.Request.Header.Get("Origin") // 请求头部
 		if method == http.MethodOptions {
 			if !config.CorsCheck(origin) { // 没有支持的域 拒绝访问
+				c.Abort()
 				return nil, xerror.New("no support cors origin")
 			}
 		}
@@ -75,6 +76,7 @@ func corsMw(config *CorsConfig) xhs.Handler {
 			c.Abort()
 			return nil, nil
 		}
+		c.Next()
 		return nil, nil
 	}
 }

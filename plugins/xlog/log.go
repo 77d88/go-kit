@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const CtxLogParam = "CTX_LOG_PARAM"
+const CtxLogParam = "_xe/CTX_LOG_PARAM"
 
 type Func = func(f LoggerFields, format string, v ...interface{})
 type Logger struct {

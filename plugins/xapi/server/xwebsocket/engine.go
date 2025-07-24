@@ -115,13 +115,13 @@ func (r *WsEngine) removeConn(c *Context) {
 }
 
 func (r *WsEngine) createGinHandler() gin.HandlerFunc {
-	return xhs.WarpHandle(func(c *xhs.Ctx) {
+	return xhs.WarpHandle(func(c *xhs.Ctx) (interface{}, error) {
 		conn, err := r.upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			xlog.Errorf(c, "升级失败: %v", err)
 			c.Send("error")
 			c.Abort()
-			return
+			return nil, err
 		}
 
 		ctx := &Context{
@@ -155,12 +155,13 @@ func (r *WsEngine) createGinHandler() gin.HandlerFunc {
 		if r.config.Auth {
 			if err := r.config.AuthHandler(ctx); err != nil {
 				handleConnAddError(err, ctx)
-				return
+				return nil, err
 			}
 		}
 		if err := r.addConn(ctx); err != nil {
 			handleConnAddError(err, ctx)
 		}
+		return nil, nil
 	})
 }
 

@@ -74,7 +74,7 @@ func TemplateFuncs() template.FuncMap {
 			return xstr.UpperFirst(s)
 		},
 		"camelCase": func(s string) string {
-			return strutil.CamelCase(s)
+			return xstr.CamelCase(s)
 		},
 	}
 }

@@ -2,7 +2,10 @@ module github.com/77d88/go-kit/cmd
 
 go 1.24.2
 
-require github.com/spf13/viper v1.20.1
+require (
+	github.com/77d88/go-kit v0.0.2
+	github.com/spf13/viper v1.20.1
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
@@ -16,7 +19,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

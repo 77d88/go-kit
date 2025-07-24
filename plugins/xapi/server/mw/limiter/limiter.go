@@ -7,13 +7,14 @@ import (
 )
 
 // Limiter 全局的限流器 令牌桶限流
-func Limiter(limit int) xhs.NewHandlers {
+func Limiter(limit int) xhs.Handler {
 	limiter := rate.NewLimiter(rate.Limit(limit), limit*2)
-	return func(c *xhs.Ctx) error {
+	return func(c *xhs.Ctx) (interface{}, error) {
 		if !limiter.Allow() {
-			return xerror.New("frequent!!").SetCode(xhs.CodeCurrentLimiting)
+			c.Abort()
+			return nil, xerror.New("frequent!!").SetCode(xhs.CodeCurrentLimiting)
 		}
-
-		return nil
+		c.Next()
+		return nil, nil
 	}
 }

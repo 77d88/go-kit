@@ -8,7 +8,7 @@ import (
 
 type UserBlackCache struct {
 	Prefix string
-	client *RedisClient
+	client *Client
 }
 
 func NewUserBlackCache(prefix string, name ...string) *UserBlackCache {

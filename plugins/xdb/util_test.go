@@ -32,12 +32,12 @@ func (m *MuDbProduct) TableName() string {
 
 func TestSession(t *testing.T) {
 
-	xlog.WithDebugger(-1)
+	xlog.WithDebugger()
 	Init(&Config{
 		Dns:    FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 		Logger: true,
 	})
-	err := CtxTran(context.Background(), func(d *DataSource) error {
+	err := Ctx(context.Background()).Tran(func(d *DB) error {
 		update := d.Session().Model(&MuDbUser{}).Where("id = ?", 1).Limit(1).Update("wx_open_id", "123")
 		if update.Error != nil {
 			return update.Error

@@ -15,10 +15,7 @@ func WarpHandle(f Handler) gin.HandlerFunc {
 		_, err := f(newCtx(c))
 		if err != nil {
 			handleError(newCtx(c), err)
-			c.Abort()
-			return
 		}
-		c.Next()
 	}
 }
 
@@ -26,22 +23,32 @@ func handleError(c *Ctx, e interface{}) {
 	switch r := e.(type) {
 	case string, int:
 		xlog.Errorf(c, "%v", r)
-		c.JSON(CodeSuccess, c.NewError(r))
+		c.SendError(xerror.New(r))
 	case Response, *Response: // 理论上不会走到这里 这里只有错误
-		c.JSON(CodeSuccess, r)
+		c.Send(r)
 	case xerror.Error, *xerror.Error:
-		c.JSON(CodeSuccess, r)
+		c.SendError(r)
 	case error:
 		// 正常业务的错误不会走到这里 打印错误
 		xlog.Errorf(c, "%v %s", r, xsys.StackTrace(false))
-		c.JSON(CodeSuccess, c.NewError(r))
+		c.SendError(xerror.New(r))
 	default:
-		c.JSON(CodeSuccess, c.NewError(r))
+		c.SendError(xerror.New(r))
 	}
 }
 
 // NewHandlers api执行处理器 包括异常 事务
 func NewHandlers(c *Ctx, fs ...Handler) {
+	defer func() {
+		if !c.Writer.Written() {
+			// 如果没有写入内容，则默认返回成功
+			if c.Result == nil {
+				c.JSON(CodeSuccess, NewResp(nil))
+				return
+			}
+			c.JSON(CodeSuccess, c.Result)
+		}
+	}()
 	defer func() {
 		if e := recover(); e != nil {
 			handleError(c, e)
@@ -52,8 +59,7 @@ func NewHandlers(c *Ctx, fs ...Handler) {
 		r, err := f(c)
 		if err != nil {
 			handleError(c, err)
-			c.Abort()
-			return
+			break
 		}
 		if r != nil {
 			c.Result = NewResp(r)
@@ -62,12 +68,5 @@ func NewHandlers(c *Ctx, fs ...Handler) {
 
 	// 继续处理
 	c.Next()
-	if !c.Writer.Written() {
-		// 如果没有写入内容，则默认返回成功
-		if c.Result == nil {
-			c.JSON(CodeSuccess, NewResp(nil))
-			return
-		}
-		c.JSON(CodeSuccess, c.Result)
-	}
+
 }

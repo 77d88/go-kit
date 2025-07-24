@@ -14,7 +14,7 @@ const Nil = redis.Nil
 const redisStr string = "redis"
 
 var (
-	dbs = make(map[string]*RedisClient)
+	dbs = make(map[string]*Client)
 )
 
 // Config redis 配置
@@ -25,14 +25,14 @@ type Config struct {
 	DbLinkName string `yaml:"dbLinkName" json:"dbLinkName"`
 }
 
-// RedisClient redis命令
-type RedisClient struct {
+// Client redis命令
+type Client struct {
 	*redis.Client
 	DbLinkName string
 	Config     *Config
 }
 
-func (c *RedisClient) Dispose() error {
+func (c *Client) Dispose() error {
 	err := c.Close()
 	if err != nil {
 		xlog.Errorf(nil, "redis dispose errror link->%s ", c.DbLinkName)
@@ -41,14 +41,14 @@ func (c *RedisClient) Dispose() error {
 	return err
 }
 
-func InitWith(e *xe.Engine) *RedisClient {
+func InitWith(e *xe.Engine) *Client {
 	var config Config
 	e.Cfg.ScanKey(redisStr, &config)
 	config.DbLinkName = redisStr
 	return Init(&config)
 }
 
-func Init(config *Config) *RedisClient {
+func Init(config *Config) *Client {
 
 	if config == nil {
 		xlog.Errorf(nil, "redis init Fatal %+v", config)
@@ -64,7 +64,7 @@ func Init(config *Config) *RedisClient {
 		Password: config.Pass, // no password set
 		DB:       config.Db,   // use default Database
 	})
-	cli := RedisClient{
+	cli := Client{
 		Client:     client,
 		DbLinkName: config.DbLinkName,
 		Config:     config,
@@ -83,7 +83,7 @@ func Init(config *Config) *RedisClient {
 }
 
 // Get 获取数据库链接
-func Get(name ...string) (*RedisClient, error) {
+func Get(name ...string) (*Client, error) {
 	database, ok := dbs[xarray.FirstOrDefault(name, redisStr)]
 	if !ok {
 		xlog.Errorf(nil, "数据库[%s]链接不存在", name)

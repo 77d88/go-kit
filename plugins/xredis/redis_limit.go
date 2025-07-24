@@ -12,7 +12,7 @@ var (
 )
 
 // LimitRun  锁的变种 只能自动释放
-func (c *RedisClient) LimitRun(ctx context.Context, key string, ttl time.Duration, f func() error) error {
+func (c *Client) LimitRun(ctx context.Context, key string, ttl time.Duration, f func() error) error {
 	acquired, err := c.SetNX(ctx, key, "1", ttl).Result()
 	// 尝试获取限流器
 	if err != nil {
