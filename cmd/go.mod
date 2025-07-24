@@ -1,4 +1,4 @@
-module github.com/77d88/go-kit/v2/cmd
+module github.com/77d88/go-kit/cmd
 
 go 1.24.2
 

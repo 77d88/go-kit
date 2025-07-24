@@ -3,7 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
-	"github.com/77d88/go-kit/v2/basic/xstr"
+	"github.com/77d88/go-kit/basic/xstr"
 	"github.com/spf13/viper"
 	"os"
 	"strings"
