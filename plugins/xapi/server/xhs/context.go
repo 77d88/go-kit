@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/77d88/go-kit/basic/xcore"
-	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
@@ -22,6 +21,7 @@ type Ctx struct {
 	PrintStack bool
 	TraceId    int64
 	test       bool
+	Server     *HttpServer
 }
 
 type CopyContext struct {
@@ -31,7 +31,7 @@ type CopyContext struct {
 	TraceId int64
 }
 
-func newCtx(c *gin.Context) *Ctx {
+func newCtx(c *gin.Context, x *HttpServer) *Ctx {
 	value := c.Value(ctxThisKey)
 	if value != nil {
 		c2, ok := value.(*Ctx)
@@ -44,6 +44,7 @@ func newCtx(c *gin.Context) *Ctx {
 		PrintStack: true,
 		Result:     nil,
 		TraceId:    xid.NextId(),
+		Server:     x,
 	}
 	d.Set(ctxThisKey, d)
 	return d
@@ -114,16 +115,16 @@ func (c *Ctx) FastSendPage(result interface{}, total int64) {
 }
 
 // ShouldBind 重写一下
-func (c *Ctx) ShouldBind(obj any) {
-	if obj == nil {
-		return
-	}
-	err := c.Context.ShouldBind(obj)
-	if err != nil {
-		xlog.Errorf(c, "参数错误 ShouldBind: %+v", err)
-		c.Fatalf(xerror.Newf("参数错误").SetCode(CodeParamError))
-	}
-}
+//func (c *Ctx) ShouldBind(obj any) {
+//	if obj == nil {
+//		return
+//	}
+//	err := c.Context.ShouldBind(obj)
+//	if err != nil {
+//		xlog.Errorf(c, "参数错误 ShouldBind: %+v", err)
+//		c.Fatalf(xerror.Newf("参数错误").SetCode(CodeParamError))
+//	}
+//}
 
 // CopyFinal 拷贝最终上下文 用于传输获其他现场调用
 func (c *Ctx) CopyFinal() context.Context {

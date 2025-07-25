@@ -1,6 +1,0 @@
-routes:
-  - path: /api/v1/users
-    methods: [ GET,POST ]
-    handlers:
-      - { name: "list", module: "user_service", fn: "list",remark: "获取用户列表","auth": true }
-      - { name: "create", module: "user_service", fn: "create", remark: "创建用户","auth": false }

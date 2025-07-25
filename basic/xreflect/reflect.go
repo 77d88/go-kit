@@ -2,7 +2,6 @@ package xreflect
 
 import (
 	"reflect"
-	//"github.com/patrickmn/go-cache"
 )
 
 type Field struct {

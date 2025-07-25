@@ -12,9 +12,9 @@ type Handler func(ctx *Ctx) (interface{}, error)
 // WarpHandle 通用处理函数 包装了一个本地的Context
 func WarpHandle(f Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, err := f(newCtx(c))
+		_, err := f(newCtx(c, nil))
 		if err != nil {
-			handleError(newCtx(c), err)
+			handleError(newCtx(c, nil), err)
 		}
 	}
 }

@@ -9,8 +9,6 @@ import (
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"os"
-	"os/signal"
 	"reflect"
 	"time"
 )
@@ -25,11 +23,10 @@ type ServerConfig struct {
 }
 
 type HttpServer struct {
-	Engine     *gin.Engine
-	srv        *http.Server
-	QuitSignal chan os.Signal
-	Config     *ServerConfig
-	e          *xe.Engine
+	Engine *gin.Engine
+	srv    *http.Server
+	Config *ServerConfig
+	XE     *xe.Engine
 }
 
 func New(e *xe.Engine) *HttpServer {
@@ -40,7 +37,7 @@ func New(e *xe.Engine) *HttpServer {
 	}
 	engine := gin.New()
 	loggerInit(&cfg)
-	server := &HttpServer{Engine: engine, Config: &cfg, QuitSignal: make(chan os.Signal), e: e}
+	server := &HttpServer{Engine: engine, Config: &cfg, XE: e}
 	generatedDefaultRegister(server)
 	// 限流器
 	engine.NoMethod(WarpHandle(func(c *Ctx) (interface{}, error) {
@@ -58,32 +55,20 @@ func (x *HttpServer) Start() {
 		Addr:    fmt.Sprintf(":%d", x.Config.Port),
 		Handler: x.Engine,
 	}
-	go func() {
-		// 服务连接
-		if err := x.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			xlog.Fatalf(nil, "listen: %s\n", err)
-		}
-	}()
-
+	// 服务连接
 	xlog.Infof(nil, "start success  prot: %d  production %v name: %v ", x.Config.Port, !x.Config.Debug, x.Config.Name)
-	x.Listening()
+	if err := x.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		xlog.Fatalf(nil, "listen: %s\n", err)
+	}
 }
 
-func (x *HttpServer) Listening() {
-	// 等待中断信号以优雅地关闭服务器（设置 5 秒的超时时间）
-	signal.Notify(x.QuitSignal, os.Interrupt)
-	<-x.QuitSignal
-
+func (x *HttpServer) Shutdown() {
 	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := x.srv.Shutdown(timeout); err != nil {
-		xlog.Errorf(nil, "server stop error: %v", err)
+		xlog.Errorf(nil, "http server stop error: %v", err)
 	}
-
-	xlog.Infof(nil, "xapi stop success!!")
-}
-func (x *HttpServer) Shutdown() {
-	close(x.QuitSignal)
+	xlog.Infof(nil, "http server stop success!!")
 }
 
 func (x *HttpServer) Use(fs Handler) *HttpServer {
@@ -93,31 +78,31 @@ func (x *HttpServer) Use(fs Handler) *HttpServer {
 
 func (x *HttpServer) POST(path string, fs ...Handler) *HttpServer {
 	x.Engine.POST(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c), fs...)
+		NewHandlers(newCtx(c, x), fs...)
 	})
 	return x
 }
 func (x *HttpServer) GET(path string, fs ...Handler) *HttpServer {
 	x.Engine.GET(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c), fs...)
+		NewHandlers(newCtx(c, x), fs...)
 	})
 	return x
 }
 func (x *HttpServer) PUT(path string, fs ...Handler) *HttpServer {
 	x.Engine.PUT(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c), fs...)
+		NewHandlers(newCtx(c, x), fs...)
 	})
 	return x
 }
 func (x *HttpServer) DELETE(path string, fs ...Handler) *HttpServer {
 	x.Engine.DELETE(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c), fs...)
+		NewHandlers(newCtx(c, x), fs...)
 	})
 	return x
 }
 func (x *HttpServer) ANY(path string, fs ...Handler) *HttpServer {
 	x.Engine.Any(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c), fs...)
+		NewHandlers(newCtx(c, x), fs...)
 	})
 	return x
 }
@@ -146,6 +131,18 @@ func loggerInit(cfg *ServerConfig) {
 //		  如果容器中没有注册，则返回错误吗 8000 如果有 则正常生成路由函数
 //		}
 func (x *HttpServer) WrapWithDI(method any) func(*Ctx) (interface{}, error) {
+
+	if method == nil {
+		return func(ctx *Ctx) (interface{}, error) {
+			return nil, xerror.New(CodeInvoke)
+		}
+	}
+	if reflect.TypeOf(method).Kind() != reflect.Func {
+		return func(ctx *Ctx) (interface{}, error) {
+			return nil, xerror.New(CodeInvoke)
+		}
+	}
+
 	methodValue := reflect.ValueOf(method)
 	methodType := methodValue.Type()
 
@@ -163,29 +160,17 @@ func (x *HttpServer) WrapWithDI(method any) func(*Ctx) (interface{}, error) {
 	for i := 1; i < methodType.NumIn(); i++ {
 		paramTypes[i-1] = methodType.In(i)
 	}
-	injectFuncType := reflect.FuncOf(paramTypes, make([]reflect.Type, 0), false)
 
-	paramsValues := make([]reflect.Value, len(paramTypes))
-
-	// 构造一个函数值，用于调用 Invoke 调用
-	invokeFunc := reflect.MakeFunc(injectFuncType, func(args []reflect.Value) []reflect.Value {
-		// 在参数最前面加上 *Ctx（实际调用时由包装函数传入）
-		copy(paramsValues, args)
-		return make([]reflect.Value, 0)
-	})
-
-	// 使用 dig.Invoke 注入依赖
-	var injectedFunc = invokeFunc.Interface()
-	if err := x.e.Invoke(injectedFunc); err != nil {
-		xlog.Errorf(nil, "dig inject error: %v", err)
+	inst, err := x.XE.GetInstValue(paramTypes...)
+	if err != nil {
+		xlog.Errorf(nil, "dig get inst error: %v", err)
 		return func(ctx *Ctx) (interface{}, error) {
 			return nil, xerror.New(CodeInvoke)
 		}
 	}
-
 	// 返回包装后的处理函数
 	return func(ctx *Ctx) (interface{}, error) {
-		args := append([]reflect.Value{reflect.ValueOf(ctx)}, paramsValues...)
+		args := append([]reflect.Value{reflect.ValueOf(ctx)}, inst...)
 		results := methodValue.Call(args)
 		if len(results) != 2 {
 			return nil, xerror.New(CodeInvoke)

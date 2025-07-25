@@ -55,6 +55,11 @@ func BeginWithCtx(c context.Context, opts ...*sql.TxOptions) *DB {
 	return begin
 }
 
-func BeginWithCtxAndDbName(c context.Context, name string, opts ...*sql.TxOptions) {
-	Ctx(c, name).Begin(opts...)
+func BeginWithCtxAndDbName(c context.Context, name string, opts ...*sql.TxOptions) *DB {
+	if tx := GetCtxTran(c); tx != nil {
+		return tx // 如果已有事务，返回现有事务
+	}
+	begin := Ctx(c, name).Begin(opts...)
+	xctx.SetVal(c, CtxTransactionKey, begin)
+	return begin
 }

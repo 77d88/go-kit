@@ -682,21 +682,29 @@ func Unique[T comparable](slice []T) []T {
 	return result
 }
 
-// UniqueBy 根据迭代函数调用结果移除切片中的重复元素。
-func UniqueBy[T comparable](slice []T, iteratee func(item T) T) []T {
-	result := []T{}
-
-	for _, v := range slice {
-		val := iteratee(v)
-		result = append(result, val)
+// UniqueBy 根据键提取函数移除切片中的重复元素
+func UniqueBy[T any, K comparable](slice []T, keyFunc func(T) K) []T {
+	if len(slice) == 0 {
+		return slice
 	}
 
-	return Unique(result)
+	seen := make(map[K]struct{})
+	result := make([]T, 0, len(slice))
+
+	for _, item := range slice {
+		key := keyFunc(item)
+		if _, exists := seen[key]; !exists {
+			seen[key] = struct{}{}
+			result = append(result, item)
+		}
+	}
+
+	return result
 }
 
 // Union 合并所有给定切片中的唯一元素，保持顺序。
 func Union[T comparable](slices ...[]T) []T {
-	result := []T{}
+	var result []T
 	contain := map[T]struct{}{}
 
 	for _, slice := range slices {

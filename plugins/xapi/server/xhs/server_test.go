@@ -2,7 +2,6 @@ package xhs
 
 import (
 	"github.com/gin-gonic/gin"
-	"os"
 	"testing"
 )
 
@@ -17,7 +16,7 @@ func TestName(t *testing.T) {
 	}
 	engine := gin.New()
 	//loggerInit(&cfg)
-	server := &HttpServer{Engine: engine, Config: &cfg, QuitSignal: make(chan os.Signal)}
+	server := &HttpServer{Engine: engine, Config: &cfg}
 	server.GET("/ping", func(ctx *Ctx) (interface{}, error) {
 		return nil, nil
 	})
