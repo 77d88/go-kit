@@ -14,6 +14,7 @@ func main() {
 	updateFilePath := flag.String("uf", "", "跟新文件的路径")
 	flag.Parse()
 	util.V.Set("mode", *mode)
+	fmt.Println("mode:", util.V.GetInt("mode"))
 	if util.V.GetInt("mode") == 1 {
 		util.V.Set("path", *path)
 		util.InitConfig(*path)
