@@ -17,7 +17,8 @@ func main() {
 	if util.V.GetInt("mode") == 1 {
 		util.V.Set("path", *path)
 		util.InitConfig(*path)
-		//route.Build()
+		route.GenRouteAll()
+		fmt.Println("路由生成完毕")
 	}
 
 	directory, _ := util.GetCurrentWorkingDirectory()

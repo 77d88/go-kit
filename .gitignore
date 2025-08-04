@@ -83,3 +83,4 @@ fabric.properties
 go.sum
 cmd/xf/go.work.sum
 nacos/
+examples
