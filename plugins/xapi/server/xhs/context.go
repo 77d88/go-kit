@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xcore"
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
@@ -32,10 +32,8 @@ type CopyContext struct {
 }
 
 func newCtx(c *gin.Context, x *HttpServer) *Ctx {
-	value := c.Value(ctxThisKey)
-	if value != nil {
-		c2, ok := value.(*Ctx)
-		if ok {
+	if value, exists := c.Get(ctxThisKey); exists {
+		if c2, ok := value.(*Ctx); ok {
 			return c2
 		}
 	}
@@ -46,7 +44,7 @@ func newCtx(c *gin.Context, x *HttpServer) *Ctx {
 		TraceId:    xid.NextId(),
 		Server:     x,
 	}
-	d.Set(ctxThisKey, d)
+	c.Set(ctxThisKey, d)
 	return d
 }
 
@@ -84,47 +82,14 @@ func (c *Ctx) Send(v interface{}) {
 	}
 }
 
-func (c *Ctx) FastSend(v interface{}) {
-	c.Fatalf(&Response{
-		Code: CodeSuccess,
-		Msg:  "ok",
-		Data: v,
-	})
-}
-
-func (c *Ctx) SendJSON(obj any) {
-	c.Result = obj
-}
-
 func (c *Ctx) SendPage(result interface{}, total int64) {
-	c.Result = &Response{
-		Code:  CodeSuccess,
-		Msg:   "ok",
-		Data:  result,
-		Total: xcore.V2p(int(total)),
-	}
+	c.Result = NewResp(result).SetTotal(int(total))
 }
-
-func (c *Ctx) FastSendPage(result interface{}, total int64) {
-	c.Fatalf(&Response{
-		Code:  CodeSuccess,
-		Msg:   "ok",
-		Data:  result,
-		Total: xcore.V2p(int(total)),
-	})
+func (c *Ctx) SendError(err interface{}) {
+	e := xerror.New(err)
+	c.Result = e
+	_ = c.Error(e)
 }
-
-// ShouldBind 重写一下
-//func (c *Ctx) ShouldBind(obj any) {
-//	if obj == nil {
-//		return
-//	}
-//	err := c.Context.ShouldBind(obj)
-//	if err != nil {
-//		xlog.Errorf(c, "参数错误 ShouldBind: %+v", err)
-//		c.Fatalf(xerror.Newf("参数错误").SetCode(CodeParamError))
-//	}
-//}
 
 // CopyFinal 拷贝最终上下文 用于传输获其他现场调用
 func (c *Ctx) CopyFinal() context.Context {

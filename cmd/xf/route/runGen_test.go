@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/77d88/go-kit/cmd/xf/util"
+	"path/filepath"
 	"testing"
 )
 
@@ -13,4 +14,18 @@ func TestName(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestUpdate(t *testing.T) {
+	directory, _ := util.GetCurrentWorkingDirectory()
+	err := UpdateRunFunc(filepath.Join(directory, "route.go"))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestGenAll(t *testing.T)  {
+	util.InitConfig("G:\\development\\project\\AAAAtools\\go\\commonv2\\cmd\\xf\\route.yml")
+	GenRouteAll()
+	
 }

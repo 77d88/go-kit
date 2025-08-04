@@ -43,9 +43,9 @@ func wrap(db *gorm.DB) *DB {
 
 func Ctx(c context.Context, names ...string) *DB {
 	db := New(names...)
-	return db.WithContext(c)
+	return db.WithCtx(c)
 }
-func (d *DB) WithContext(c context.Context) *DB {
+func (d *DB) WithCtx(c context.Context) *DB {
 	get := GetCtxTran(c) // 有事务优先获取事务
 	if get != nil {
 		return get

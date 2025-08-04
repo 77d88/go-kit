@@ -23,7 +23,7 @@ func a(c *xhs.Ctx, db *xdb.DB, redis *xredis.Client) (interface{}, error) {
 	query := c.DefaultQuery("name", "test")
 
 	c2(c, query)
-	db.WithContext(c).Exec("update s_user set note = ? where id = 600075249287237", query)
+	db.WithCtx(c).Exec("update s_user set note = ? where id = 600075249287237", query)
 	if query == "test" {
 		return nil, xerror.New("error no query")
 	}
@@ -32,7 +32,7 @@ func a(c *xhs.Ctx, db *xdb.DB, redis *xredis.Client) (interface{}, error) {
 
 func b(c *xhs.Ctx, db *xdb.DB) (interface{}, error) {
 	m := make(map[string]interface{})
-	scan := db.WithContext(c).Table("s_user").WithId(600075249287237).Scan(&m)
+	scan := db.WithCtx(c).Table("s_user").WithId(600075249287237).Scan(&m)
 	return m, scan.Error
 }
 

@@ -11,6 +11,7 @@ import (
 func main() {
 	path := flag.String("f", "./route.yml", "配置文件地址 默认为 ./route.yml")
 	mode := flag.String("m", "1", "1. 路由生成 2.handler包装器生成")
+	updateFilePath := flag.String("uf", "", "跟新文件的路径")
 	flag.Parse()
 	util.V.Set("mode", *mode)
 	if util.V.GetInt("mode") == 1 {
@@ -22,10 +23,19 @@ func main() {
 	directory, _ := util.GetCurrentWorkingDirectory()
 
 	if util.V.GetInt("mode") == 2 {
-		err := route.ScanAndGenerateRunFunctions(directory)
-		if err != nil {
-			panic(err)
+
+		if *updateFilePath != "" {
+			err := route.UpdateRunFunc(*updateFilePath)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := route.ScanAndGenerateRunFunctions(directory)
+			if err != nil {
+				panic(err)
+			}
 		}
+
 	}
 
 	fmt.Println("Current working directory:", directory)

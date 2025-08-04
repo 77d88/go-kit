@@ -37,10 +37,14 @@ func handleError(c *Ctx, e interface{}) {
 	}
 }
 
-// NewHandlers api执行处理器 包括异常 事务
-func NewHandlers(c *Ctx, fs ...Handler) {
+// serverHandler api执行处理器 包括异常 事务
+func serverHandler(c *Ctx) (interface{}, error) {
 	defer func() {
 		if !c.Writer.Written() {
+			// 如果有错误，则返回错误
+			if c.Errors.Last() != nil {
+				handleError(c, c.Errors.Last())
+			}
 			// 如果没有写入内容，则默认返回成功
 			if c.Result == nil {
 				c.JSON(CodeSuccess, NewResp(nil))
@@ -54,19 +58,8 @@ func NewHandlers(c *Ctx, fs ...Handler) {
 			handleError(c, e)
 		}
 	}()
-	// 处理业务逻辑
-	for _, f := range fs {
-		r, err := f(c)
-		if err != nil {
-			handleError(c, err)
-			break
-		}
-		if r != nil {
-			c.Result = NewResp(r)
-		}
-	}
-
 	// 继续处理
 	c.Next()
 
+	return nil, nil
 }

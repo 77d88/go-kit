@@ -397,6 +397,12 @@ func IndexOffset(str string, substr string, idxFrom int) int {
 	return strings.Index(str[idxFrom:], substr) + idxFrom
 }
 
+// Replace 替换字符串中的子串。
+func Replace(str, old, new string) string {
+	str = strings.ReplaceAll(str, old, new)
+	return str
+}
+
 // ReplaceWithMap 使用映射替换字符串中的特定子串。
 func ReplaceWithMap(str string, replaces map[string]string) string {
 	for k, v := range replaces {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/xe"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -39,6 +40,7 @@ func New(e *xe.Engine) *HttpServer {
 	loggerInit(&cfg)
 	server := &HttpServer{Engine: engine, Config: &cfg, XE: e}
 	generatedDefaultRegister(server)
+	engine.Use(WarpHandle(serverHandler))
 	// 限流器
 	engine.NoMethod(WarpHandle(func(c *Ctx) (interface{}, error) {
 		return nil, xerror.New("405", CodeMethodNotAllowed)
@@ -77,34 +79,30 @@ func (x *HttpServer) Use(fs Handler) *HttpServer {
 }
 
 func (x *HttpServer) POST(path string, fs ...Handler) *HttpServer {
-	x.Engine.POST(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c, x), fs...)
-	})
+	register(x.Engine.POST, path, fs...)
 	return x
 }
 func (x *HttpServer) GET(path string, fs ...Handler) *HttpServer {
-	x.Engine.GET(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c, x), fs...)
-	})
+	register(x.Engine.GET, path, fs...)
 	return x
 }
 func (x *HttpServer) PUT(path string, fs ...Handler) *HttpServer {
-	x.Engine.PUT(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c, x), fs...)
-	})
+	register(x.Engine.PUT, path, fs...)
 	return x
 }
 func (x *HttpServer) DELETE(path string, fs ...Handler) *HttpServer {
-	x.Engine.DELETE(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c, x), fs...)
-	})
+	register(x.Engine.DELETE, path, fs...)
 	return x
 }
 func (x *HttpServer) ANY(path string, fs ...Handler) *HttpServer {
-	x.Engine.Any(path, func(c *gin.Context) {
-		NewHandlers(newCtx(c, x), fs...)
-	})
+	register(x.Engine.Any, path, fs...)
 	return x
+}
+
+func register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes, path string, fs ...Handler) {
+	fc(path, xarray.Map(fs, func(index int, item Handler) gin.HandlerFunc {
+		return WarpHandle(item)
+	})...)
 }
 
 func (x *HttpServer) Name() string {
