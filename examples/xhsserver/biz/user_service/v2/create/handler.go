@@ -2,6 +2,7 @@ package create
 
 import (
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/xdb"
 )
 
 // 创建用户2

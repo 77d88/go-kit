@@ -2,7 +2,6 @@ package route
 
 import (
 	"github.com/77d88/go-kit/cmd/xf/util"
-	"path/filepath"
 	"testing"
 )
 
@@ -17,8 +16,7 @@ func TestName(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	directory, _ := util.GetCurrentWorkingDirectory()
-	err := UpdateRunFunc(filepath.Join(directory, "route.go"))
+	err := UpdateRunFunc("G:\\development\\project\\AAAAtools\\go\\commonv2\\examples\\xhsserver\\biz\\user_service\\v2\\create\\handler.go")
 	if err != nil {
 		panic(err)
 	}

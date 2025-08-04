@@ -206,7 +206,7 @@ func UpdateRunFunc(fileName string) error {
 
 	str, err := genRunFileContent(fileName)
 
-	formatted, err := compareFuncFormatted(content, []byte(str), "Run")
+	formatted, err := compareFuncFormatted(content, []byte(str), "run")
 	if err != nil {
 		return err
 	}
