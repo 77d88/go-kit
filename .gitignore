@@ -81,6 +81,5 @@ fabric.properties
 /.idea
 
 go.sum
-cmd/xf/go.work.sum
+*.work.sum
 nacos/
-examples

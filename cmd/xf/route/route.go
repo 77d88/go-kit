@@ -229,11 +229,9 @@ import (
 )
 
 func Register(xsh *xhs.HttpServer) {
-	xe.MustInvoke(func(xsh *xhs.HttpServer) {
 {{- range .Modules}}
-		{{.Alias}}.Register("{{.FullPath}}",xsh)
+	{{.Alias}}.Register("{{.FullPath}}",xsh)
 {{- end}}		
-	})
 }
 `
 
