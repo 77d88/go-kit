@@ -225,7 +225,6 @@ import (
 	{{.Alias}} "{{.ImportPath}}"
 {{- end}}
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
-	"github.com/77d88/go-kit/plugins/xe"
 )
 
 func Register(xsh *xhs.HttpServer) {

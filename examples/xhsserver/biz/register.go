@@ -8,14 +8,11 @@ import (
 	userServiceV3Create "example.com/xserver/biz/user_service/v3/create"
 	userServiceV3List "example.com/xserver/biz/user_service/v3/list"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
-	"github.com/77d88/go-kit/plugins/xe"
 )
 
 func Register(xsh *xhs.HttpServer) {
-	xe.MustInvoke(func(xsh *xhs.HttpServer) {
-		userServiceV2List.Register("/api/v1/users/list", xsh)
-		userServiceV2Create.Register("/api/v1/users/create", xsh)
-		userServiceV3List.Register("/api/v1/users/v2/list", xsh)
-		userServiceV3Create.Register("/api/v1/users/v2/create", xsh)
-	})
+	userServiceV2List.Register("/api/v1/users/list", xsh)
+	userServiceV2Create.Register("/api/v1/users/create", xsh)
+	userServiceV3List.Register("/api/v1/users/v2/list", xsh)
+	userServiceV3Create.Register("/api/v1/users/v2/create", xsh)
 }
