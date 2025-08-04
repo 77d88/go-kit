@@ -7,9 +7,7 @@ require (
 	github.com/spf13/viper v1.20.1
 )
 
-replace (
-	github.com/77d88/go-kit => ../../
-)
+
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
