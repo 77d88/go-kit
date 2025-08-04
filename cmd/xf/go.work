@@ -1,7 +1,3 @@
 go 1.24.2
 
 use .
-
-replace (
-	github.com/77d88/go-kit => ../../
-)
