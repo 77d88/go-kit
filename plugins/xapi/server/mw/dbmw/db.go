@@ -6,8 +6,8 @@ import (
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
-func TranManager() xhs.Handler {
-	return func(c *xhs.Ctx) (interface{}, error) {
+func TranManager() xhs.HandlerMw {
+	return func(c *xhs.Ctx) {
 		defer func() {
 
 			if err := recover(); err != nil {
@@ -25,23 +25,24 @@ func TranManager() xhs.Handler {
 
 		tran := xdb.GetCtxTran(c)
 		if tran == nil {
-			return nil, nil
+			return
 		}
 
 		if c.Errors.Last() != nil {
 			if r := tran.DB.Rollback(); r.Error != nil {
 				xlog.Errorf(c, "rollback error: %v", r.Error)
-				return nil, r.Error
+				return
 			}
 			xlog.Debugf(c, "request error db rollback %v", c.Errors.String())
-			return nil, nil
+			return
 		}
 
 		if r := tran.DB.Commit(); r.Error != nil {
 			xlog.Errorf(c, "commit error: %v", r.Error)
-			panic(r.Error) // 交给回滚 处理
+			// 交给回滚 处理
+			if r := tran.DB.Rollback(); r.Error != nil {
+				xlog.Errorf(c, "rollback error: %v", r.Error)
+			}
 		}
-
-		return nil, nil
 	}
 }

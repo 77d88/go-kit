@@ -168,14 +168,13 @@ type response struct {
 type request struct {
 }
 
-//go:generate xf -m=2
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return
 }
 
 func Register(path string,xsh *xhs.HttpServer) {
 {{- range .Methods}}
-	xsh.{{.}}(path, {{if $.Handler.Auth}}auth.ForceAuth, {{end}}run())
+	xsh.{{.}}(path, run(){{if $.Handler.Auth}},auth.ForceAuth {{end}})
 {{- end}}
 }
 `

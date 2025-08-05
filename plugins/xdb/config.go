@@ -136,9 +136,9 @@ func (g gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql s
 		xlog.DefaultLogger.WithOptions(zap.AddCallerSkip(4)).Debug(fmt.Sprintf("sql err: %s \n %v", sql, err), xlog.GetFields(ctx)...)
 	} else {
 		if elapsed > time.Duration(g.SlowThreshold)*time.Millisecond {
-			xlog.DefaultLogger.WithOptions(zap.AddCallerSkip(2)).Debug(fmt.Sprintf("[%.2fms:%d] query slow %s", float64(elapsed.Nanoseconds())/1e6, rows, sql), xlog.GetFields(ctx)...)
+			xlog.DefaultLogger.WithOptions(zap.AddCallerSkip(3)).Debug(fmt.Sprintf("[%.2fms:%d] query slow %s", float64(elapsed.Nanoseconds())/1e6, rows, sql), xlog.GetFields(ctx)...)
 		} else {
-			xlog.DefaultLogger.WithOptions(zap.AddCallerSkip(2)).Debug(fmt.Sprintf("[%.2fms:%d]: %s", float64(elapsed.Nanoseconds())/1e6, rows, sql), xlog.GetFields(ctx)...)
+			xlog.DefaultLogger.WithOptions(zap.AddCallerSkip(3)).Debug(fmt.Sprintf("[%.2fms:%d]: %s", float64(elapsed.Nanoseconds())/1e6, rows, sql), xlog.GetFields(ctx)...)
 		}
 	}
 }

@@ -11,7 +11,6 @@ import (
 )
 
 const ctxThisKey = "_xe/CTX_KEY_CONTEXT"
-const ctxSetValueKey = "_xe/CTX_KEY_SET_VALUE"
 
 type Ctx struct {
 	*gin.Context
@@ -91,10 +90,10 @@ func (c *Ctx) SendError(err interface{}) {
 	_ = c.Error(e)
 }
 
-// CopyFinal 拷贝最终上下文 用于传输获其他现场调用
-func (c *Ctx) CopyFinal() context.Context {
+// Copy 拷贝最终上下文 用于传输获其他现场调用
+func (c *Ctx) Copy() context.Context {
 	return CopyContext{
-		Context:     context.WithValue(context.Background(), xlog.CtxLogParam, logFields(c)),
+		Context:     context.WithValue(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
 		ContextAuth: c.ContextAuth,
 		ApiCache: ApiCache{
 			cache: c.CopyCacheMap(),

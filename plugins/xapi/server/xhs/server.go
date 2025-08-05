@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"reflect"
+	"runtime"
 	"time"
 )
 
@@ -36,18 +37,19 @@ func New(e *xe.Engine) *HttpServer {
 	if cfg.Rate <= 0 {
 		cfg.Rate = 100
 	}
+	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	loggerInit(&cfg)
 	server := &HttpServer{Engine: engine, Config: &cfg, XE: e}
+	engine.NoMethod(func(c *gin.Context) {
+		c.JSON(http.StatusOK, xerror.New("405", CodeMethodNotAllowed))
+	})
+	engine.NoRoute(func(c *gin.Context) {
+		xlog.Debugf(newCtx(c, server).Copy(), "Not Found ")
+		c.JSON(http.StatusOK, xerror.New("404", CodeNotFound))
+	})
+	engine.Use(WarpHandleMw(serverHandler))
 	generatedDefaultRegister(server)
-	engine.Use(WarpHandle(serverHandler))
-	// 限流器
-	engine.NoMethod(WarpHandle(func(c *Ctx) (interface{}, error) {
-		return nil, xerror.New("405", CodeMethodNotAllowed)
-	}))
-	engine.NoRoute(WarpHandle(func(c *Ctx) (interface{}, error) {
-		return nil, xerror.New("404", CodeNotFound)
-	}))
 	return server
 }
 
@@ -58,7 +60,7 @@ func (x *HttpServer) Start() {
 		Handler: x.Engine,
 	}
 	// 服务连接
-	xlog.Infof(nil, "start success  prot: %d  production %v name: %v ", x.Config.Port, !x.Config.Debug, x.Config.Name)
+	xlog.Infof(nil, "start success  prot: %d  production %v name: %v [%dms]", x.Config.Port, !x.Config.Debug, x.Config.Name, x.XE.RunTime().Milliseconds())
 	if err := x.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		xlog.Fatalf(nil, "listen: %s\n", err)
 	}
@@ -73,36 +75,50 @@ func (x *HttpServer) Shutdown() {
 	xlog.Infof(nil, "http server stop success!!")
 }
 
-func (x *HttpServer) Use(fs Handler) *HttpServer {
-	x.Engine.Use(WarpHandle(fs))
+func (x *HttpServer) Use(fs HandlerMw) *HttpServer {
+	x.Engine.Use(WarpHandleMw(fs))
 	return x
 }
 
-func (x *HttpServer) POST(path string, fs ...Handler) *HttpServer {
-	register(x.Engine.POST, path, fs...)
-	return x
-}
-func (x *HttpServer) GET(path string, fs ...Handler) *HttpServer {
-	register(x.Engine.GET, path, fs...)
-	return x
-}
-func (x *HttpServer) PUT(path string, fs ...Handler) *HttpServer {
-	register(x.Engine.PUT, path, fs...)
-	return x
-}
-func (x *HttpServer) DELETE(path string, fs ...Handler) *HttpServer {
-	register(x.Engine.DELETE, path, fs...)
-	return x
-}
-func (x *HttpServer) ANY(path string, fs ...Handler) *HttpServer {
-	register(x.Engine.Any, path, fs...)
+func (x *HttpServer) POST(path string, handler Handler, fs ...HandlerMw) *HttpServer {
+	register(x.Engine.POST, "POST", path, handler, fs...)
 	return x
 }
 
-func register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes, path string, fs ...Handler) {
-	fc(path, xarray.Map(fs, func(index int, item Handler) gin.HandlerFunc {
-		return WarpHandle(item)
-	})...)
+func (x *HttpServer) GET(path string, handler Handler, fs ...HandlerMw) *HttpServer {
+	register(x.Engine.GET, "GET", path, handler, fs...)
+	return x
+}
+
+func (x *HttpServer) PUT(path string, handler Handler, fs ...HandlerMw) *HttpServer {
+	register(x.Engine.PUT, "PUT", path, handler, fs...)
+	return x
+}
+
+func (x *HttpServer) DELETE(path string, handler Handler, fs ...HandlerMw) *HttpServer {
+	register(x.Engine.DELETE, "DELETE", path, handler, fs...)
+	return x
+}
+
+func (x *HttpServer) ANY(path string, handler Handler, fs ...HandlerMw) *HttpServer {
+	register(x.Engine.Any, "ANY", path, handler, fs...)
+	return x
+}
+
+func register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes, method string, path string, handler Handler, fs ...HandlerMw) {
+	// 获取 handler 的文件名和行号
+	handlerPtr := runtime.FuncForPC(reflect.ValueOf(handler).Pointer())
+	var location string
+	if handlerPtr != nil {
+		file, line := handlerPtr.FileLine(handlerPtr.Entry())
+		location = fmt.Sprintf("%s:%d", file, line)
+	} else {
+		location = "unknown"
+	}
+	xlog.Debugf(nil, "register %s %s %s mw[%d] ", method, path, location, len(fs))
+	fc(path, append(xarray.Map(fs, func(index int, item HandlerMw) gin.HandlerFunc {
+		return WarpHandleMw(item)
+	}), WarpHandle(handler))...)
 }
 
 func (x *HttpServer) Name() string {
@@ -111,13 +127,11 @@ func (x *HttpServer) Name() string {
 
 func loggerInit(cfg *ServerConfig) {
 	if cfg.Debug {
-		gin.SetMode(gin.DebugMode)
 		xlog.WithDebugger()
 		gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
 			xlog.Tracef(nil, "endpoint %v %v %v %v", httpMethod, absolutePath, handlerName, nuHandlers)
 		}
 	} else {
-		gin.SetMode(gin.ReleaseMode)
 		xlog.WithRelease()
 	}
 }

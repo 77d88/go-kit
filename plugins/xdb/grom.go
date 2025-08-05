@@ -20,7 +20,7 @@ import (
 // dbname为需要连接的具体实例库名
 
 type DB struct {
-	*gorm.DB
+	DB *gorm.DB
 	Config *Config
 }
 
@@ -92,6 +92,9 @@ func (d *DB) WithId(ids ...int64) *DB {
 	})
 	if len(is) == 0 {
 		return d
+	}
+	if len(is) == 1 {
+		return d.Where("id = ?", is[0])
 	}
 	d.DB = d.DB.Where("id in ?", ids).Limit(len(ids))
 	return d
@@ -170,16 +173,12 @@ func (d *DB) Delete(value interface{}, conds ...interface{}) *Result {
 	return warpResult(d.DB.Delete(value, conds...))
 }
 
-func (d *DB) DeleteById(dest interface{}, id int64) *Result {
-	if id <= 0 {
-		return emptyResult
-	}
-	return warpResult(d.DB.Model(dest).Limit(1).Delete("id = ?", id))
-}
-
-func (d *DB) DeleteByIds(dest interface{}, ids ...int64) *Result {
+func (d *DB) DeleteById(dest interface{}, ids ...int64) *Result {
 	if len(ids) == 0 {
 		return emptyResult
+	}
+	if len(ids) == 1 {
+		return warpResult(d.DB.Model(dest).Limit(1).Delete("id = ?", ids[0]))
 	}
 	return warpResult(d.DB.Model(dest).Limit(len(ids)).Delete("id in (?)", ids))
 }
@@ -188,17 +187,14 @@ func (d *DB) DeleteByIds(dest interface{}, ids ...int64) *Result {
 func (d *DB) DeleteUnscoped(value interface{}, conds ...interface{}) *Result {
 	return warpResult(d.DB.Unscoped().Delete(value, conds...))
 }
-func (d *DB) DeleteUnscopedById(dest interface{}, id int64) *Result {
-	if id <= 0 {
-		return emptyResult
-	}
-	return warpResult(d.DB.Unscoped().Model(dest).Limit(1).Delete("id = ?", id))
-}
 func (d *DB) DeleteUnscopedByIds(dest interface{}, ids ...int64) *Result {
 	if len(ids) == 0 {
 		return emptyResult
 	}
-	return warpResult(d.DB.Unscoped().Model(dest).Delete("id in (?)", ids))
+	if len(ids) == 1 {
+		return warpResult(d.DB.Unscoped().Model(dest).Delete("id = ?", ids[0]))
+	}
+	return warpResult(d.DB.Unscoped().Model(dest).Delete("id in (?)", ids).Limit(len(ids)))
 }
 
 func (d *DB) Find(dest interface{}, conds ...interface{}) *Result {
@@ -230,23 +226,11 @@ func (d *DB) FindLinks(source interface{}, to interface{}, fields ...string) *Re
 	}
 	return warpResult(d.DB.Find(to, "id in (?)", ids))
 }
-
-func (d *DB) FindById(dest interface{}, id int64) *Result {
-	if id <= 0 {
-		return emptyResult
-	}
-	return warpResult(d.DB.Find(dest, "id = ?", id))
+func (d *DB) Take(dest interface{}) *Result  {
+	return warpResult(d.DB.Take(dest))
 }
 func (d *DB) First(dest interface{}, conds ...interface{}) *Result {
-	return warpResult(d.DB.First(dest, conds...))
-}
-func (d *DB) FirstById(dest interface{}, id int64) *Result {
-	if id <= 0 {
-		return &Result{
-			Error: gorm.ErrRecordNotFound,
-		}
-	}
-	return warpResult(d.DB.First(dest, "id = ?", id))
+	return warpResult(d.DB.Take(dest, conds...))
 }
 func (d *DB) Scan(dest interface{}) *Result {
 	return warpResult(d.DB.Scan(dest))

@@ -1,5 +1,7 @@
 package xhs
 
+import "github.com/77d88/go-kit/basic/xerror"
+
 type IdRequest struct {
 	Id int64 `json:"id,string"`
 }
@@ -20,6 +22,20 @@ func NewResp(data interface{}) *Response {
 	}
 	if r, ok := data.(Response); ok {
 		return &r
+	}
+	if r, ok := data.(xerror.Error); ok {
+		return &Response{
+			Code: r.Code,
+			Msg:  r.Msg,
+			Info: &r.Info,
+		}
+	}
+	if r, ok := data.(*xerror.Error); ok {
+		return &Response{
+			Code: r.Code,
+			Msg:  r.Msg,
+			Info: &r.Info,
+		}
 	}
 
 	return &Response{

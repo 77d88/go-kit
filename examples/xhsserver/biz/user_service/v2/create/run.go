@@ -9,8 +9,8 @@ import (
 	"github.com/77d88/go-kit/plugins/xdb"
 )
 func run() xhs.Handler {
-	var db xdb.DB
-    xe.MustInvoke(func(p1 xdb.DB) {
+	var db *xdb.DB
+    xe.MustInvoke(func(p1 *xdb.DB) {
         db = p1
     })
     return func(c *xhs.Ctx) (interface{}, error) {

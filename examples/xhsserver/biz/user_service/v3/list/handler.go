@@ -18,5 +18,5 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 }
 
 func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, auth.ForceAuth, run())
+	xsh.POST(path, run(), auth.ForceAuth)
 }

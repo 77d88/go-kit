@@ -8,14 +8,25 @@ import (
 )
 
 type Handler func(ctx *Ctx) (interface{}, error)
+type HandlerMw func(ctx *Ctx)
 
 // WarpHandle 通用处理函数 包装了一个本地的Context
 func WarpHandle(f Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, err := f(newCtx(c, nil))
+		ctx := newCtx(c, nil)
+		result, err := f(ctx)
 		if err != nil {
-			handleError(newCtx(c, nil), err)
+			handleError(ctx, err)
+		} else {
+			ctx.Send(result)
 		}
+	}
+}
+
+func WarpHandleMw(f HandlerMw) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := newCtx(c, nil)
+		f(ctx)
 	}
 }
 
@@ -38,15 +49,17 @@ func handleError(c *Ctx, e interface{}) {
 }
 
 // serverHandler api执行处理器 包括异常 事务
-func serverHandler(c *Ctx) (interface{}, error) {
+func serverHandler(c *Ctx) {
 	defer func() {
 		if !c.Writer.Written() {
-			// 如果有错误，则返回错误
-			if c.Errors.Last() != nil {
-				handleError(c, c.Errors.Last())
-			}
+
 			// 如果没有写入内容，则默认返回成功
 			if c.Result == nil {
+				// 如果有错误，则返回错误
+				if c.Errors.Last() != nil {
+					c.JSON(CodeSuccess, xerror.New(c.Errors.Last()))
+					return
+				}
 				c.JSON(CodeSuccess, NewResp(nil))
 				return
 			}
@@ -61,5 +74,4 @@ func serverHandler(c *Ctx) (interface{}, error) {
 	// 继续处理
 	c.Next()
 
-	return nil, nil
 }

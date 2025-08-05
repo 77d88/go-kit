@@ -1,7 +1,6 @@
 package xwebsocket
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
@@ -44,11 +43,6 @@ func (c *Context) ReadMessage() (int, []byte, error) {
 	return c.Conn.ReadMessage()
 }
 
-func (c *Context) ShouldBind(obj any) {
-	message := c.Msg.Message
-	err := json.Unmarshal([]byte(message), obj)
-	c.Fatalf(err, "参数错误", "ShouldBind: %+v", err)
-}
 
 func (c *Context) handlerMsg() {
 	defer func() {

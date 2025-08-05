@@ -33,7 +33,7 @@ func Check(origin string) bool {
 	return Cors.CorsCheck(origin)
 }
 
-func New(cfg *xhs.ServerConfig) xhs.Handler {
+func New(cfg *xhs.ServerConfig) xhs.HandlerMw {
 	oriCors := []string{
 		"://localhost",
 		"null",
@@ -49,16 +49,17 @@ func New(cfg *xhs.ServerConfig) xhs.Handler {
 }
 
 // corsMw 处理跨域请求,支持options访问
-func corsMw(config *CorsConfig) xhs.Handler {
-	return func(c *xhs.Ctx) (interface{}, error) {
+func corsMw(config *CorsConfig) xhs.HandlerMw {
+	return func(c *xhs.Ctx) {
 		// Access-Control-Allow-Credentials=true和Access-Control-Allow-Origin="*"有冲突
 		// 故Access-Control-Allow-Origin需要指定具体得跨域origin
 		method := c.Request.Method               // 请求方法
 		origin := c.Request.Header.Get("Origin") // 请求头部
 		if method == http.MethodOptions {
 			if !config.CorsCheck(origin) { // 没有支持的域 拒绝访问
+				c.Send(xerror.New("no support cors origin"))
 				c.Abort()
-				return nil, xerror.New("no support cors origin")
+				return
 			}
 		}
 		if origin != "" {
@@ -74,9 +75,8 @@ func corsMw(config *CorsConfig) xhs.Handler {
 		if method == http.MethodOptions {
 			c.JSON(http.StatusOK, "")
 			c.Abort()
-			return nil, nil
+			return
 		}
 		c.Next()
-		return nil, nil
 	}
 }

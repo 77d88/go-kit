@@ -32,7 +32,7 @@ func New(manager Manager) *ApiAuth {
 	}
 }
 
-func NewMw(manager Manager) xhs.Handler {
+func NewMw(manager Manager) xhs.HandlerMw {
 	auth := ApiAuth{
 		Manager: manager,
 	}
@@ -97,10 +97,11 @@ func (c *ApiAuth) Authorization(id int64, roles ...string) (*LoginResponse, erro
 }
 
 // TokenInfo 默认的token解析中间件 只负责鉴权获取用户信息 不负责强制验证登录授权
-func (c *ApiAuth) TokenInfo() xhs.Handler {
-	return func(x *xhs.Ctx) (interface{}, error) {
+func (c *ApiAuth) TokenInfo() xhs.HandlerMw {
+	return func(x *xhs.Ctx) {
 		if c.Manager == nil {
-			return nil, nil
+			x.Next()
+			return
 		}
 		manager := c.Manager
 		// 常规校验
@@ -119,25 +120,27 @@ func (c *ApiAuth) TokenInfo() xhs.Handler {
 			}
 		}
 		if token == "" {
-			return nil, nil
+			x.Next()
+			return
 		}
 		data := manager.VerificationToken(token)
 		if !data.Validate() {
-			return nil, nil
+			x.Next()
+			return
 		}
 		x.SetUserId(data.Id)
 		x.SetRoles(data.Roles...)
 		x.SetToken(token)
+
 		x.Next()
-		return nil, nil
 	}
 }
 
-func ForceAuth(c *xhs.Ctx) (interface{}, error) {
+func ForceAuth(c *xhs.Ctx) {
 	if c.GetUserId() == 0 {
+		c.Send(xerror.New("auth error!").SetCode(xhs.CodeTokenError))
 		c.Abort()
-		return nil, xerror.New("auth error!").SetCode(xhs.CodeTokenError)
+		return
 	}
 	c.Next()
-	return nil, nil
 }
