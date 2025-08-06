@@ -8,8 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DefaultRegister(path string, x *xe.Engine, handler ...xhs.NewHandlers) {
-	x.RegisterByGroup(path, func(r *gin.RouterGroup) {
-		r.POST("/getToken", xapi.ApiHandlerToGin(append(handler, gettoken.Run)...)...)
-	})
+func DefaultRegister(path string, x *xhs.HttpServer, handler ...xhs.HandlerMw) {
+		x.POST("/getToken",gettoken.Run, handler...)
 }

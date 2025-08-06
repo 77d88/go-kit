@@ -87,7 +87,10 @@ func handler(c *xhs.Ctx, r request) (interface{}, error) {
 // Run 地址标准化
 func Run(c *xhs.Ctx) (interface{}, error) {
 	var r request
-	c.ShouldBind(&r)
+	err := c.ShouldBind(&r)
+	if err != nil {
+		return nil, err
+	}
 	return handler(c, r)
 }
 

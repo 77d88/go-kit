@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/77d88/go-kit/basic/xcore"
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -45,7 +46,7 @@ func newStsClient() (*sts20150401.Client, error) {
 }
 
 // handler 获取token /oss/getToken
-func handler(c *xhs.Ctx, r request) {
+func handler(c *xhs.Ctx, r request) (interface{}, error) {
 	var res response
 	err := xcache.Once("oss:sts", &res, time.Minute*30, func() (interface{}, error) {
 		assumeRoleRequest := &sts20150401.AssumeRoleRequest{
@@ -123,18 +124,24 @@ func handler(c *xhs.Ctx, r request) {
 		}
 		return s, nil
 	})
-	c.Fatalf(err, "获取token失败", "获取STS Token 失败 %v", err)
-	c.Send(res)
+	if err != nil {
+		xlog.Errorf(c, "获取token失败 %v", err)
+		return nil, xerror.New("获取token失败")
+	}
+	return res, nil
 }
 
 // Run 获取token
-func Run(c *xhs.Ctx) {
+func Run(c *xhs.Ctx) (interface{}, error) {
 	do.Do(func() {
 		Init()
 	})
 	var r request
-	c.ShouldBind(&r)
-	handler(c, r)
+	err := c.ShouldBind(&r)
+	if err != nil {
+		return nil, err
+	}
+	return handler(c, r)
 }
 
 type request struct {

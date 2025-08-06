@@ -1,9 +1,7 @@
 package aliyunossgin
 
 import (
-	"github.com/77d88/go-kit/plugins/xapi"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
-	"github.com/77d88/go-kit/plugins/xe"
 	ossfilesaveHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/filesave"
 	ossgetdomainHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/getdomain"
 	ossoptimizeallHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/optimizeall"
@@ -12,18 +10,18 @@ import (
 	osssaveHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/save"
 	osssavenetlinkHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/savenetlink"
 	osssmallimgsaveHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/smallimgsave"
-	"github.com/gin-gonic/gin"
 )
 
-func DefaultRegister(path string, x *xe.Engine, handler ...xhs.NewHandlers) {
-	x.RegisterByGroup(path, func(r *gin.RouterGroup) {
-		r.POST("/getDomain", xapi.ApiHandlerToGin(append(handler, ossgetdomainHandler.Run)...)...)       // 获取域名
-		r.POST("/save", xapi.ApiHandlerToGin(append(handler, osssaveHandler.Run)...)...)                 // oss保存
-		r.POST("/fileSave", xapi.ApiHandlerToGin(append(handler, ossfilesaveHandler.Run)...)...)         // 文件直传
-		r.POST("/smallImgSave", xapi.ApiHandlerToGin(append(handler, osssmallimgsaveHandler.Run)...)...) // 小图片文件直传
-		r.POST("/saveNetLink", xapi.ApiHandlerToGin(append(handler, osssavenetlinkHandler.Run)...)...)   // 保存网络图片
-		r.POST("/optimizeAll", xapi.ApiHandlerToGin(append(handler, ossoptimizeallHandler.Run)...)...)   // 处理所有没有优化的图片 慎用！！！
-		r.POST("/postSign", xapi.ApiHandlerToGin(append(handler, ossPostsign.Run)...)...)                // post上传的v4签名
-		r.POST("/preSign", xapi.ApiHandlerToGin(append(handler, ossPresign.Run)...)...)                  // put预签名签名上传的地址
-	})
+func DefaultRegister(path string, r *xhs.HttpServer, handler ...xhs.HandlerMw) {
+
+	//x.RegisterByGroup(path, func(r *gin.RouterGroup) {
+	r.POST("/getDomain", ossgetdomainHandler.Run, handler...)       // 获取域名
+	r.POST("/save", osssaveHandler.Run, handler...)                 // oss保存
+	r.POST("/fileSave", ossfilesaveHandler.Run, handler...)         // 文件直传
+	r.POST("/smallImgSave", osssmallimgsaveHandler.Run, handler...) // 小图片文件直传
+	r.POST("/saveNetLink", osssavenetlinkHandler.Run, handler...)   // 保存网络图片
+	r.POST("/optimizeAll", ossoptimizeallHandler.Run, handler...)   // 处理所有没有优化的图片 慎用！！！
+	r.POST("/postSign", ossPostsign.Run, handler...)                // post上传的v4签名
+	r.POST("/preSign", ossPresign.Run, handler...)                  // put预签名签名上传的地址
+	//})
 }

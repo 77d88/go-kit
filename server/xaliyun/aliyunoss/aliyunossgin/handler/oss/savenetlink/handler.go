@@ -5,7 +5,8 @@ import (
 )
 
 // handler 保存网络图片 /oss/saveNetLink
-func handler(c *xhs.Ctx, r request) {
+func handler(c *xhs.Ctx, r request) (interface{}, error) {
+
 	//client := ossutilt.Client
 	//o := ossutilt.Config
 	//bucket, err := client.Bucket(o.OssBucket)
@@ -27,13 +28,16 @@ func handler(c *xhs.Ctx, r request) {
 	//object, err := bucket.DoPutObject(request, opts)
 	//c.Fatalf(err)
 	//etag := object.Headers.Get("ETag")
+	return nil, nil
 }
 
 // Run 保存网络图片
-func Run(c *xhs.Ctx) {
+func Run(c *xhs.Ctx) (interface{}, error) {
 	var r request
-	c.ShouldBind(&r)
-	handler(c, r)
+	if err := c.ShouldBind(&r); err != nil {
+		return nil, err
+	}
+	return handler(c, r)
 }
 
 type request struct {

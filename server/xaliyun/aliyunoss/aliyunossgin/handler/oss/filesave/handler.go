@@ -4,16 +4,25 @@ import (
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
+	"mime/multipart"
 )
 
 // handler 文件直传 /oss/fileSave
-func handler(c *xhs.Ctx, r request) {
+func handler(c *xhs.Ctx, r request) (interface{}, error) {
 	file, header, err := c.Request.FormFile("file")
-	defer file.Close()
-	c.Fatalf(err)
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+	if err != nil {
+		return nil, err
+	}
+
 	client := aliyunoss.Client
 	o := aliyunoss.Config
-	c.Fatalf(err)
+
 	key := o.TempPrefix + "\\" + header.Filename
 
 	request := &oss.PutObjectRequest{
@@ -22,17 +31,21 @@ func handler(c *xhs.Ctx, r request) {
 		Body:   file,
 	}
 	object, err := client.PutObject(c, request)
-	c.Fatalf(err)
+
+	if err != nil {
+		return nil, err
+	}
+
 	etag := object.Headers.Get("ETag")
-	c.Send(aliyunoss.OFile{ETag: etag, Key: key})
+	return aliyunoss.OFile{ETag: etag, Key: key}, nil
 
 }
 
 // Run 文件直传
-func Run(c *xhs.Ctx) {
+func Run(c *xhs.Ctx) (interface{}, error) {
 	var r request
 	//c.ShouldBind(&r)
-	handler(c, r)
+	return handler(c, r)
 }
 
 type request struct {

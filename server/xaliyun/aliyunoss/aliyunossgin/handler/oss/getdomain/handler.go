@@ -7,21 +7,24 @@ import (
 )
 
 // handler 获取域名 /oss/getDomain
-func handler(c *xhs.Ctx, r request) {
+func handler(c *xhs.Ctx, r request) (interface{}, error) {
 	s := aliyunoss.Config
-	c.Send(&response{
+	return &response{
 		Domain:       fmt.Sprintf("%s/%s", s.Domain, s.SavePrefix),
 		TempPrefix:   s.TempPrefix,
 		UploadDomain: s.Domain,
 		Region:       s.Region,
-	})
+	}, nil
 }
 
 // Run 获取域名
-func Run(c *xhs.Ctx) {
+func Run(c *xhs.Ctx) (interface{}, error) {
 	var r request
-	c.ShouldBind(&r)
-	handler(c, r)
+	err := c.ShouldBind(&r)
+	if err != nil {
+		return nil, err
+	}
+	return handler(c, r)
 }
 
 type request struct {

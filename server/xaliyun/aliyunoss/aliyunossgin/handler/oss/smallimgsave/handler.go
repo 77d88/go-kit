@@ -11,7 +11,7 @@ import (
 )
 
 // handler 小图片文件直传 /oss/smallImgSave
-func handler(c *context2.Ctx, r request) {
+func handler(c *context2.Ctx, r request) (interface{}, error) {
 	file, header, err := c.Request.FormFile("file")
 	defer func(file multipart.File) {
 		err := file.Close()
@@ -19,10 +19,11 @@ func handler(c *context2.Ctx, r request) {
 			c.SendError(err)
 		}
 	}(file)
-	c.Fatalf(err)
+	if err != nil {
+		return nil, err
+	}
 	client := aliyunoss.Client
 	o := aliyunoss.Config
-	c.Fatalf(err)
 	key := o.TempPrefix + "/" + header.Filename
 
 	request := &oss.PutObjectRequest{
@@ -31,10 +32,12 @@ func handler(c *context2.Ctx, r request) {
 		Body:   file,
 	}
 	object, err := client.PutObject(c, request)
-	c.Fatalf(err)
+	if err != nil {
+		return nil, err
+	}
 	etag := object.Headers.Get("ETag")
 
-	save, err := aliyunoss.DbSave(c, aliyunoss.OFile{
+	return aliyunoss.DbSave(c, aliyunoss.OFile{
 		ETag: etag + "small", // 小图片的etag加上small标识 不要影响原始图片
 		Key:  key,
 	}, func(c context.Context, key, toPath string) error {
@@ -52,15 +55,13 @@ func handler(c *context2.Ctx, r request) {
 		_, err2 := client.ProcessObject(c, request)
 		return err2
 	})
-	c.Fatalf(err)
-	c.Send(save)
 }
 
 // Run 小图片文件直传
-func Run(c *context2.Ctx) {
+func Run(c *context2.Ctx) (interface{}, error) {
 	var r request
 	//c.ShouldBind(&r)
-	handler(c, r)
+	return handler(c, r)
 }
 
 type request struct {

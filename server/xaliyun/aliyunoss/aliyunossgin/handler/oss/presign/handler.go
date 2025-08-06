@@ -9,7 +9,7 @@ import (
 )
 
 // handler 预签名url /oss/presign 可以正常使用put上传的都行
-func handler(c *xhs.Ctx, r request) {
+func handler(c *xhs.Ctx, r request) (interface{}, error) {
 	key := oss.Ptr(aliyunoss.Config.TempPrefix + "/" + xid.NextIdStr())
 	client := aliyunoss.Client
 	// 生成PutObject的预签名URL
@@ -20,19 +20,24 @@ func handler(c *xhs.Ctx, r request) {
 	},
 		oss.PresignExpires(10*time.Minute),
 	)
-	c.Fatalf(err)
-	c.Send(map[string]interface{}{
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
 		"url":           result.URL,
 		"key":           key,
 		"signedHeaders": result.SignedHeaders,
-	})
+	}, err
 }
 
 // Run 小图片文件直传
-func Run(c *xhs.Ctx) {
+func Run(c *xhs.Ctx) (interface{}, error) {
 	var r request
-	c.ShouldBind(&r)
-	handler(c, r)
+	err := c.ShouldBind(&r)
+	if err != nil {
+		return nil, err
+	}
+	return handler(c, r)
 }
 
 type request struct {

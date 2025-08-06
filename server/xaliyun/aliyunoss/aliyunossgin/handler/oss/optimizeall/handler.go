@@ -8,7 +8,7 @@ import (
 )
 
 // handler 优化所有文件 /oss/optimizeall
-func handler(c *xhs.Ctx, r request) {
+func handler(c *xhs.Ctx, r request) (interface{}, error) {
 
 	var res []aliyunoss2.Res
 	c.Fatalf(xdb.Ctx(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res))
@@ -17,20 +17,24 @@ func handler(c *xhs.Ctx, r request) {
 		if r.IsOptimize {
 			continue
 		}
-		c.Fatalf(aliyunoss2.OptimizeRes(c, r, aliyunoss2.OFile{
+		err := aliyunoss2.OptimizeRes(c, r, aliyunoss2.OFile{
 			ETag: r.AliEtag,
 			Id:   r.ID,
 			Key:  r.Path,
 			Type: xcore.Ternary(r.MimeType == 0, aliyunoss2.ResTypeImage, r.MimeType),
-		}))
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
+	return nil, nil
 }
 
 // Run 小图片文件直传
-func Run(c *xhs.Ctx) {
+func Run(c *xhs.Ctx) (interface{}, error) {
 	var r request
 	//c.ShouldBind(&r)
-	handler(c, r)
+	return handler(c, r)
 }
 
 type request struct {
