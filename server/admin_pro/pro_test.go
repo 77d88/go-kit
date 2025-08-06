@@ -12,11 +12,15 @@ import (
 	"github.com/77d88/go-kit/plugins/xjob"
 	"github.com/77d88/go-kit/plugins/xredis"
 	"github.com/77d88/go-kit/server/admin_pro/proapi"
+	"github.com/77d88/go-kit/server/xaliyun/aliyunaddress"
+	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
+	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin"
+	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossginsts"
 	"testing"
 )
 
 func TestRun(t *testing.T) {
-		sc := str_scanner.Default(`{
+	sc := str_scanner.Default(`{
 	 "server": {
 	   "port": 9981,
 	   "debug": true,
@@ -33,15 +37,19 @@ func TestRun(t *testing.T) {
 	 }
 	}`)
 	xe.New(sc).
-		MustProvide(xdb.InitWith).
-		MustProvide(xredis.InitWith).
-		MustProvide(xjob.Init).
-		MustProvide(func(e *xe.Engine) xe.EngineServer {
+		Use(xdb.InitWith).
+		Use(xredis.InitWith).
+		Use(xjob.Init).
+		MustProvide(aliyunoss.InitWith).
+		Use(func(e *xe.Engine) xe.EngineServer {
 			server := xhs.New(e)
 			server.Use(limiter.Limiter(server.Config.Rate))
 			server.Use(cors.New(server.Config))
 			server.Use(auth.NewMw(aes_auth.New()))
 			proapi.Register(server)
+			aliyunossginsts.DefaultRegister("/aliyun/sts", server)
+			aliyunaddress.DefaultRegister("/aliyun/address", server)
+			aliyunossgin.DefaultRegister("/aliyun/oss", server)
 			return server
 		}).Start()
 

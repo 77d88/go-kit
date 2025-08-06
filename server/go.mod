@@ -3,7 +3,7 @@ module github.com/77d88/go-kit/server
 go 1.24.2
 
 require (
-	github.com/77d88/go-kit v0.0.15
+	github.com/77d88/go-kit v0.0.16
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.9
 	github.com/alibabacloud-go/sts-20150401/v2 v2.0.4
 	github.com/alibabacloud-go/tea v1.3.10
@@ -13,6 +13,9 @@ require (
 	github.com/go-pay/gopay v1.5.114
 	github.com/google/uuid v1.6.0
 	github.com/silenceper/wechat/v2 v2.1.9
+)
+replace (
+	 github.com/77d88/go-kit => ..
 )
 
 require (

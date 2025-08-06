@@ -5,6 +5,8 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
+	"reflect"
+	"runtime"
 	"sync"
 	"time"
 
@@ -52,9 +54,39 @@ func AddModels(dist ...GromModel) {
 		if re == nil {
 			re = make(map[string]GromModel)
 		}
-		re[v.TableName()] = v
+
+		// 获取v的文件完整路径
+		modelType := reflect.TypeOf(v)
+		if modelType.Kind() == reflect.Ptr {
+			modelType = modelType.Elem()
+		}
+
+		//var fileName string
+		//if modelType != nil {
+		//	// 尝试获取TableName方法的定义文件
+		//	if tableNameMethod, found := modelType.MethodByName("TableName"); found {
+		//		if tableNameMethod.Func.IsValid() {
+		//			file, _ := runtime.FuncForPC(tableNameMethod.Func.Pointer()).FileLine(0)
+		//			fileName = file
+		//		} else {
+		//			fileName = modelType.PkgPath()
+		//		}
+		//	} else {
+		//		fileName = modelType.PkgPath()
+		//	}
+		//} else {
+		//	// 如果无法获取模型信息，使用调用方文件
+		//	_, file, _, _ := runtime.Caller(1)
+		//	fileName = file
+		//}
+		_, file, line, _ := runtime.Caller(1)
+		if re[v.TableName()] == nil {
+			re[v.TableName()] = v
+			xlog.Debugf(nil, "register %s => table %s(%s:%d)", dbname, v.TableName(), file, line)
+		} else {
+			xlog.Warnf(nil, "table %s(%s) => [%s:%d] already exists", dbname, v.TableName(), file, line)
+		}
 		RegisterModels[dbname] = re
-		xlog.Tracef(nil, "register %s => table %s", dbname, v.TableName())
 	}
 }
 

@@ -1,7 +1,8 @@
 package aliyunaddress
 
 import (
-	"encoding/json"
+	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xparse"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -61,13 +62,22 @@ func handler(c *xhs.Ctx, r request) (interface{}, error) {
 		res, err := client.ProcessCommonRequest(request)
 		if err != nil {
 			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
-			c.Fatalf(err, "解析失败")
+			return nil, xerror.New("处理失败")
 		}
-		var obj httpRes
-		c.Fatalf(json.Unmarshal([]byte(res.GetHttpContentString()), &obj), "解析失败")
-		var data httpInfo
-		c.Fatalf(json.Unmarshal([]byte(obj.Data), &data), "解析失败")
-		c.Fatalf(data.Status != "OK", "解析失败")
+		obj, err := xparse.FromJSON[httpRes](res.GetHttpContentString())
+		if err != nil {
+			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
+			return nil, xerror.New("解析响应失败")
+		}
+		data, err := xparse.FromJSON[httpInfo](obj.Data)
+		if err != nil {
+			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
+			return nil, xerror.New("解析数据失败")
+		}
+		if data.Status != "OK" {
+			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
+			return nil, xerror.New("解析状态错误")
+		}
 
 		return &response{
 			UserName:     data.ExpressExtract.Per,

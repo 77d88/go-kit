@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/basic/xstr"
-	"github.com/77d88/go-kit/basic/xtype"
+	"github.com/77d88/go-kit/plugins/xe"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
@@ -51,9 +51,9 @@ var (
 	Config *Oss
 )
 
-func InitWietScanner(scanner xtype.Scanner) *oss.Client {
+func InitWith(x *xe.Engine) *oss.Client {
 	var config Oss
-	scanner.ScanKey("oss", &config)
+	x.Cfg.ScanKey("oss", &config)
 	return Init(&config)
 }
 

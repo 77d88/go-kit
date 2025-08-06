@@ -11,7 +11,10 @@ import (
 func handler(c *xhs.Ctx, r request) (interface{}, error) {
 
 	var res []aliyunoss2.Res
-	c.Fatalf(xdb.Ctx(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res))
+	if result := xdb.Ctx(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res); result.Error != nil {
+
+		return nil, result.Error
+	}
 
 	for _, r := range res {
 		if r.IsOptimize {

@@ -6,15 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/77d88/go-kit/basic/xstr"
-	xdb2 "github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"time"
 )
-
-func init() {
-	xdb2.AddModels(&Res{}) // 注册模型
-}
 
 type OFile struct {
 	Id       int64  `form:"id" json:"id,string"`
@@ -62,7 +58,7 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 		o := Config
 
 		var res Res
-		result := xdb2.Ctx(c).Where("ali_etag = ?", r.ETag).Limit(1).Find(&res)
+		result := xdb.Ctx(c).Where("ali_etag = ?", r.ETag).Limit(1).Find(&res)
 		if result.Error != nil {
 			return nil, result.Error
 		}
@@ -77,8 +73,8 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 			return &OFile{Id: res.ID}, nil
 		}
 
-		err := xdb2.CtxTran(c, func(tx *xdb2.DataSource) error {
-			base := xdb2.NewBaseModel()
+		err := xdb.Ctx(c).Tran(func(tx *xdb.DB) error {
+			base := xdb.NewBaseModel()
 			res = Res{
 				BaseModel:  base,
 				RefTime:    time.Now(),
@@ -109,7 +105,7 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 }
 
 func OptimizeRes(c context.Context, res Res, r OFile) error {
-	return xdb2.CtxTran(c, func(d *xdb2.DataSource) error {
+	return xdb.Ctx(c).Tran(func(d *xdb.DB) error {
 		result := d.Session().Model(&Res{}).Where("id = ?", res.ID).Update("is_optimize", true)
 		if result.Error != nil {
 			return result.Error

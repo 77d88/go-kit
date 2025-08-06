@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"sync"
 	"time"
 )
 
@@ -30,6 +31,7 @@ type Engine struct {
 	Cfg        *xconfig.Config
 	registry   []interface{}
 	QuitSignal chan os.Signal
+	wait       sync.WaitGroup
 }
 
 var E *Engine // 持有一个服务实例
@@ -48,6 +50,33 @@ func New(cfg *xconfig.Config) *Engine {
 
 	E = x
 	return x
+}
+
+// Use 添加依赖 这里是强制依赖立即初始化
+func (e *Engine) Use(a interface{}) *Engine {
+	MustProvide(a)
+	e.wait.Add(1)
+	go func(a interface{}) {
+		defer func() {
+			if err := recover(); err != nil {
+				xlog.Errorf(nil, "use init panic: %v", err)
+			}
+			e.wait.Done()
+		}()
+		methodValue := reflect.ValueOf(a)
+		methodType := methodValue.Type()
+		allTypes := make([]reflect.Type, 0, methodType.NumOut())
+		if methodType.Kind() == reflect.Func {
+			for i := 0; i < methodType.NumOut(); i++ {
+				allTypes = append(allTypes, methodType.Out(i))
+			}
+		}
+		_, err := e.GetInst(allTypes...)
+		if err != nil {
+			xlog.Fatalf(nil, "engine use error: %v", err)
+		}
+	}(a)
+	return e
 }
 
 func (e *Engine) Provide(a interface{}, options ...dig.ProvideOption) error {
@@ -88,7 +117,6 @@ func (e *Engine) MustProvide(a interface{}, options ...dig.ProvideOption) *Engin
 	return e
 }
 
-
 func (e *Engine) MustInvoke(a interface{}, options ...dig.InvokeOption) *Engine {
 	var err error
 	err = e.Invoke(a, options...)
@@ -99,7 +127,7 @@ func (e *Engine) MustInvoke(a interface{}, options ...dig.InvokeOption) *Engine 
 }
 
 func (e *Engine) Start() {
-
+	e.wait.Wait()
 	go func() {
 		err := e.Invoke(func(s EngineServer) {
 			s.Start()
@@ -124,8 +152,7 @@ func (e *Engine) RunTime() time.Duration {
 	return time.Since(e.Info.StartTime)
 }
 
-func (e *Engine) Close() {
-	xlog.Warnf(nil, "Engine close")
+func (e *Engine) getAllUseType() []reflect.Type {
 	allTypes := make([]reflect.Type, 0, len(e.registry))
 	for _, v := range e.registry {
 		methodValue := reflect.ValueOf(v)
@@ -138,10 +165,14 @@ func (e *Engine) Close() {
 
 	}
 	// 去重
-	allTypes = xarray.UniqueBy(allTypes, func(item reflect.Type) string {
+	return xarray.UniqueBy(allTypes, func(item reflect.Type) string {
 		return item.String()
 	})
-	getInst, _ := e.GetInst(allTypes...)
+}
+
+func (e *Engine) Close() {
+	xlog.Warnf(nil, "Engine close")
+	getInst, _ := e.GetInst(e.getAllUseType()...)
 	for _, inst := range getInst {
 		if disposable, ok := inst.(Disposer); ok {
 			if disposable != nil {

@@ -29,6 +29,7 @@ type HttpServer struct {
 	srv    *http.Server
 	Config *ServerConfig
 	XE     *xe.Engine
+	routes []string
 }
 
 func New(e *xe.Engine) *HttpServer {
@@ -63,7 +64,7 @@ func (x *HttpServer) Start() {
 		Handler: x.Engine,
 	}
 	// 服务连接
-	xlog.Infof(nil, "start success  prot: %d  production %v name: %v [%dms]", x.Config.Port, !x.Config.Debug, x.Config.Name, x.XE.RunTime().Milliseconds())
+	xlog.Infof(nil, "start success  prot: %d  production %v name: %v [%dms] [%droute]", x.Config.Port, !x.Config.Debug, x.Config.Name, x.XE.RunTime().Milliseconds(), len(x.routes))
 	if err := x.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		xlog.Fatalf(nil, "listen: %s\n", err)
 	}
@@ -84,31 +85,26 @@ func (x *HttpServer) Use(fs HandlerMw) *HttpServer {
 }
 
 func (x *HttpServer) POST(path string, handler Handler, fs ...HandlerMw) *HttpServer {
-	register(x.Engine.POST, "POST", path, handler, fs...)
-	return x
+	return x.register(x.Engine.POST, "POST", path, handler, fs...)
 }
 
 func (x *HttpServer) GET(path string, handler Handler, fs ...HandlerMw) *HttpServer {
-	register(x.Engine.GET, "GET", path, handler, fs...)
-	return x
+	return x.register(x.Engine.GET, "GET", path, handler, fs...)
 }
 
 func (x *HttpServer) PUT(path string, handler Handler, fs ...HandlerMw) *HttpServer {
-	register(x.Engine.PUT, "PUT", path, handler, fs...)
-	return x
+	return x.register(x.Engine.PUT, "PUT", path, handler, fs...)
 }
 
 func (x *HttpServer) DELETE(path string, handler Handler, fs ...HandlerMw) *HttpServer {
-	register(x.Engine.DELETE, "DELETE", path, handler, fs...)
-	return x
+	return x.register(x.Engine.DELETE, "DELETE", path, handler, fs...)
 }
 
 func (x *HttpServer) ANY(path string, handler Handler, fs ...HandlerMw) *HttpServer {
-	register(x.Engine.Any, "ANY", path, handler, fs...)
-	return x
+	return x.register(x.Engine.Any, "ANY", path, handler, fs...)
 }
 
-func register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes, method string, path string, handler Handler, fs ...HandlerMw) {
+func (x *HttpServer) register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes, method string, path string, handler Handler, fs ...HandlerMw) *HttpServer {
 	// 获取 handler 的文件名和行号
 	handlerPtr := runtime.FuncForPC(reflect.ValueOf(handler).Pointer())
 	var location string
@@ -119,9 +115,11 @@ func register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRou
 		location = "unknown"
 	}
 	xlog.Debugf(nil, "register %s %s %s mw[%d] ", method, path, location, len(fs))
+	x.routes = append(x.routes, fmt.Sprintf("%s %s %s", method, path, location))
 	fc(path, append(xarray.Map(fs, func(index int, item HandlerMw) gin.HandlerFunc {
 		return WarpHandleMw(item)
 	}), WarpHandle(handler))...)
+	return x
 }
 
 func (x *HttpServer) Name() string {
