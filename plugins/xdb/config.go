@@ -97,7 +97,6 @@ func Init(c *Config) *DB {
 	maskedStr := re.ReplaceAllString(c.Dns, "password=******* ")
 	xlog.Infof(nil, "init db conn success %s link -> %s", maskedStr, c.DbLinkName)
 	dbs[c.DbLinkName] = gormDb
-	RegisterModels[c.DbLinkName] = make(map[string]GromModel)
 	if DefaultDB == nil {
 		DefaultDB = gormDb
 	}

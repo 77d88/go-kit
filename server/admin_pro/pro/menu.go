@@ -45,7 +45,7 @@ func (m *Menu) InitData() []xdb.GromModel {
 			Redirect:      "/superadmin/index",
 			ComponentPath: "common/layout/index",
 			Path:          "/superadmin/manager",
-			Permission:    xdb.NewTextArray(RoleSuperAdmin),
+			Permission:    "superadmin_manager",
 			IsSystem:      true,
 			Children:      xdb.NewInt8Array(2, 3, 4, 5, 6),
 		},
@@ -55,7 +55,7 @@ func (m *Menu) InitData() []xdb.GromModel {
 			NameZh:        "系统管理",
 			Path:          "/superadmin/index",
 			ComponentPath: "system/super/index",
-			Permission:    xdb.NewTextArray(RoleSuperAdmin),
+			Permission:    "superadmin_index",
 			IsSystem:      true,
 		},
 		&Menu{
@@ -64,7 +64,7 @@ func (m *Menu) InitData() []xdb.GromModel {
 			NameZh:        "菜单管理",
 			Path:          "/superadmin/menu",
 			ComponentPath: "system/menu/index",
-			Permission:    xdb.NewTextArray(RoleSuperAdmin),
+			Permission:    "superadmin_menu",
 			IsSystem:      true,
 		},
 		&Menu{
@@ -73,7 +73,7 @@ func (m *Menu) InitData() []xdb.GromModel {
 			NameZh:        "字典管理",
 			Path:          "/superadmin/dict",
 			ComponentPath: "system/dict/index",
-			Permission:    xdb.NewTextArray(RoleSuperAdmin),
+			Permission:    "superadmin_dict",
 			IsSystem:      true,
 		},
 		&Menu{
@@ -82,7 +82,7 @@ func (m *Menu) InitData() []xdb.GromModel {
 			NameZh:        "测试表格",
 			Path:          "/superadmin/test_index",
 			ComponentPath: "test/list/index",
-			Permission:    xdb.NewTextArray(RoleSuperAdmin),
+			Permission:    "superadmin_test",
 			IsSystem:      true,
 		},
 		&Menu{
@@ -91,7 +91,7 @@ func (m *Menu) InitData() []xdb.GromModel {
 			NameZh:        "测试表单",
 			Path:          "/superadmin/test_form",
 			ComponentPath: "test/form/index",
-			Permission:    xdb.NewTextArray(RoleSuperAdmin),
+			Permission:    "superadmin_form",
 			IsSystem:      true,
 		},
 	}

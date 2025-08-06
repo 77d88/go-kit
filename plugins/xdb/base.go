@@ -48,7 +48,12 @@ func AddModels(dist ...GromModel) {
 		if v, ok := v.(DBNamer); ok {
 			dbname = v.DbName()
 		}
-		RegisterModels[dbname][v.TableName()] = v
+		re := RegisterModels[dbname]
+		if re == nil {
+			re = make(map[string]GromModel)
+		}
+		re[v.TableName()] = v
+		RegisterModels[dbname] = re
 		xlog.Tracef(nil, "register %s => table %s", dbname, v.TableName())
 	}
 }

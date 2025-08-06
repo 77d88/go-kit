@@ -5,20 +5,14 @@ package login
 import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
-	"github.com/77d88/go-kit/plugins/xe"
-	"github.com/77d88/go-kit/plugins/xe"
 )
 func run() xhs.Handler {
-	var engine *xe.Engine
-    xe.MustInvoke(func(p1 *xe.Engine) {
-        engine = p1
-    })
     return func(c *xhs.Ctx) (interface{}, error) {
         r := request{}
         err := c.ShouldBind(&r)
         if err != nil {
             return nil, xerror.New("参数错误").SetCode(xhs.CodeParamError).SetInfo("参数错误: %+v", err)
         }
-        return handler(c, &r, engine)
+        return handler(c, &r)
     }
 }
