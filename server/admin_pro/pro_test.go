@@ -17,22 +17,22 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	sc := xconfig.Init(str_scanner.New(`{
-  "server": {
-    "port": 9981,
-    "debug": true,
-	"logLevel": -1
-  },
-  "db": {
-    "dns": "host=127.0.0.1 port=5432 user=postgres password=jerry123! dbname=zyv2 sslmode=disable TimeZone=Asia/Shanghai",
-    "logger": true
-  },
-  "redis": {
-    "addr": "127.0.0.1:6379",
-    "pass": "jerry123!",
-    "db": 0
-  }
-}`), "")
+		sc := str_scanner.Default(`{
+	 "server": {
+	   "port": 9981,
+	   "debug": true,
+		"logLevel": -1
+	 },
+	 "db": {
+	   "dns": "host=127.0.0.1 port=5432 user=postgres password=jerry123! dbname=zyv2 sslmode=disable TimeZone=Asia/Shanghai",
+	   "logger": true
+	 },
+	 "redis": {
+	   "addr": "127.0.0.1:6379",
+	   "pass": "jerry123!",
+	   "db": 0
+	 }
+	}`)
 	xe.New(sc).
 		MustProvide(xdb.InitWith).
 		MustProvide(xredis.InitWith).
