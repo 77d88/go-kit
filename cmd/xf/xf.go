@@ -11,6 +11,7 @@ import (
 func main() {
 	path := flag.String("f", "./route.yml", "配置文件地址 默认为 ./route.yml")
 	mode := flag.String("m", "1", "1. 路由生成 2.handler包装器生成")
+	biz := flag.String("biz", "biz", "路由生成时候的业务包名")
 	updateFilePath := flag.String("uf", "", "跟新文件的路径")
 	flag.Parse()
 	util.V.Set("mode", *mode)
@@ -18,7 +19,7 @@ func main() {
 	if util.V.GetInt("mode") == 1 {
 		util.V.Set("path", *path)
 		util.InitConfig(*path)
-		route.GenRouteAll()
+		route.GenRouteAll(*biz)
 		fmt.Println("路由生成完毕")
 	}
 

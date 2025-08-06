@@ -1,22 +1,13 @@
 package xconfig
 
 import (
-	"fmt"
 	"github.com/77d88/go-kit/basic/xsys"
 	"github.com/spf13/viper"
 	"strings"
 	"time"
 )
 
-type Config struct {
-	viper         *viper.Viper
-	loader        ConfigLoader      // 配置加载器
-	cacheConfig   map[string]string // 缓存配置
-	dataIds       []string          // 配置文件
-	ListenDataIds []string          // 监听的配置文件
-	listenStop    chan struct{}
-	group         string
-}
+
 
 // startListen 开启配置监听 每分钟 监听配置文件变化
 func (c *Config) startListen() {
@@ -60,14 +51,6 @@ func (c *Config) startListen() {
 	}()
 }
 
-func (c *Config) Init() error {
-	return nil
-}
-
-func (c *Config) Dispose() error {
-	c.listenStop <- struct{}{}
-	return nil
-}
 
 func (c *Config) readToViper() {
 	c.viper = viper.New()         // 重置viper
@@ -91,37 +74,4 @@ func (c *Config) readToViper() {
 		successKeys = append(successKeys, id)
 	}
 	c.ListenDataIds = successKeys
-}
-
-// ShutDownListen 关闭配置监听
-func (c *Config) ShutDownListen() {
-	c.listenStop <- struct{}{}
-}
-
-func (c *Config) Scan(config any) {
-	if err := c.viper.Unmarshal(config); err != nil {
-		fmt.Printf("unmarshal conf failed, err:%s \n", err)
-	}
-}
-
-func (c *Config) ScanKey(key string, config any) {
-	if err := c.viper.UnmarshalKey(key, config); err != nil {
-		fmt.Printf("unmarshal conf key %s failed, err:%s \n", key, err)
-	}
-}
-
-func (c *Config) GetString(key string) string {
-	return c.viper.GetString(key)
-}
-
-func (c *Config) GetStringSlice(key string) []string {
-	return c.viper.GetStringSlice(key)
-}
-
-func (c *Config) ScanKeyExecute(key string, config any, f func()) {
-	if err := c.viper.UnmarshalKey(key, config); err != nil {
-		fmt.Printf("unmarshal conf key %s failed, err:%s \n", key, err)
-	} else {
-		f()
-	}
 }

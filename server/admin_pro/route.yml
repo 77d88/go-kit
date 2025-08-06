@@ -1,0 +1,66 @@
+workPath: "github.com/77d88/go-kit/server/admin_pro"
+routes:
+  - path: /pro/db
+    module: "pro/db"
+    methods: [ POST ]
+    handlers:
+      - { name: "autoMigrate",remark: "自动同步数据库结构","auth": true }
+      - { name: "initDataRows",remark: "重置初始化数据","auth": true }
+  - path: /pro/user
+    module: "pro/user"
+    methods: [ POST ]
+    handlers:
+      - { name: "login",remark: "登录" ,"auth": true }
+      - { name: "logout",remark: "登出/踢出" ,"auth": true }
+      - { name: "list",remark: "用户列表","auth": true }
+      - { name: "disable",remark: "用户禁用" ,"auth": true }
+      - { name: "enable",remark: "用户启用" ,"auth": true }
+      - { name: "del",remark: "用户删除" ,"auth": true }
+      - { name: "save",remark: "用户保存" ,"auth": true }
+      - { name: "permission",remark: "用户授权管理" ,"auth": true }
+      - { name: "role",remark: "用户角色管理" ,"auth": true }
+      - { name: "info",remark: "用户信息" ,"auth": true }
+      - { name: "loginUserList",remark: "登录用户列表" ,"auth": true }
+  # 角色管理
+  - path: /pro/role
+    module: "pro/role"
+    methods: [ POST ]
+    handlers:
+      - { name: "save",remark: "角色保存" ,"auth": true }
+      - { name: "list",remark: "角色列表" ,"auth": true }
+      - { name: "del",remark: "角色删除" ,"auth": true }
+      - { name: "info",remark: "角色信息" ,"auth": true }
+      - { name: "disable",remark: "角色禁用" ,"auth": true }
+      - { name: "enable",remark: "角色启用" ,"auth": true }
+      - { name: "permission",remark: "角色授权管理" ,"auth": true }
+  # 授权管理
+  - path: /pro/permission
+    module: "pro/permission"
+    methods: [ POST ]
+    handlers:
+      - { name: "list",remark: "权限列表" ,"auth": true }
+      - { name: "del",remark: "权限删除" ,"auth": true }
+      - { name: "info",remark: "权限信息" ,"auth": true }
+      - { name: "save",remark: "权限保存" ,"auth": true }
+      - { name: "disable",remark: "权限禁用" ,"auth": true }
+      - { name: "enable",remark: "权限启用" ,"auth": true }
+  # 字典管理 一些动态的选项数据
+  - path: /pro/dict
+    module: "pro/dict"
+    methods: [ POST ]
+    handlers:
+      - { name: "list",remark: "字典列表","auth": true }
+      - { name: "del",remark: "字典删除","auth": true }
+      - { name: "info",remark: "字典信息" ,"auth": true }
+      - { name: "save",remark: "字典保存" ,"auth": true }
+      - { name: "types",remark: "字典类型查询","auth": true }
+  # 菜单管理 菜单有权限码 会自动生成和移除权限
+  - path: /pro/menu
+    module: "pro/menu"
+    methods: [ POST ]
+    handlers:
+      - { name: "list",remark: "菜单列表","auth": true }
+      - { name: "del",remark: "菜单删除","auth": true }
+      - { name: "info",remark: "菜单信息" ,"auth": true }
+      - { name: "save",remark: "菜单保存" ,"auth": true }
+      - { name: "menu",remark: "用户菜单列表","auth": true }

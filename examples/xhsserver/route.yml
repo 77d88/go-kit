@@ -2,13 +2,13 @@ workPath: "example.com/xserver"
 routes:
   - path: /api/v1/users
     module: "user_service/v2"
-    methods: [ GET,POST ]
+    methods: [ GET,POST ] # 默认POST
     handlers:
-      - { name: "list", module: "list", route: "/list",remark: "获取用户列表","auth": true }
+      - { name: "list", module: "list", route: "/list",remark: "获取用户列表","auth": true } 
       - { name: "create", module: "create", route: "/create", remark: "创建用户2","auth": false,methods: [ "GET" ] }
   - path: /api/v1/users/v2
     module: "user_service/v3"
     methods: [ POST ]
     handlers:
       - { name: "list", module: "list", route: "/list",remark: "获取用户列表","auth": true }
-      - { name: "create" } # 这里  module、route 默认name name 必填 不然不生产代码
+      - { name: "create" } # 这里  module、route 默认/name name 必填 不然不生产代码

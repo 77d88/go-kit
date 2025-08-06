@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xcore"
-	"github.com/77d88/go-kit/basic/xtype"
+	"github.com/77d88/go-kit/plugins/xe"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/plugins/xredis"
 	"github.com/go-pay/gopay"
-	"github.com/go-pay/gopay/wechat/v3"
 	"time"
 )
 
@@ -25,20 +23,18 @@ type Config struct {
 	PrivateKey string `yaml:"privateKey"` // 私钥 apiclient_key.pem 读取后的内容
 	NotifyUrl  string `yaml:"notifyUrl"`  // 回调地址
 	SerialNo   string `yaml:"serialNo"`   //  商户证书的证书序列号
-	PayDesc    string `yaml:"PayDesc"`    // 支付的时候默认的描述
+	MchName    string `yaml:"mchName"`    // 商户名称 支付备注使用默认
 }
 
 func NotifyUrl() string {
 	return Cfg.NotifyUrl
 }
 
-func InitWith(scanner xtype.Scanner, names ...string) *wechat.ClientV3 {
+func InitWith(xe *xe.Engine) *wechat.ClientV3 {
 	var config Config
-	scanner.ScanKey(xarray.FirstOrDefault(names, "wx.pay"), &config)
-	if config.PayDesc == "" {
-		appName := scanner.GetString("appName")
-		config.PayDesc = appName
-		xcore.Ternary(appName != "", appName, "商品")
+	xe.Cfg.ScanKey(xarray.FirstOrDefault(names, "wx.pay"), &config)
+	if config.MchName == "" {
+		config.MchName = "商品"
 	}
 	return Init(&config)
 }
@@ -112,7 +108,7 @@ func TransactionJsapiPrepayId(ctx context.Context, place *PlaceOrder) (string, e
 		return "", errors.New("pay sn error")
 	}
 	if place.Desc == "" {
-		place.Desc = Cfg.PayDesc
+		place.Desc = Cfg.MchName
 	}
 	// 初始化 BodyMap
 	bm := make(gopay.BodyMap)

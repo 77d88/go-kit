@@ -24,6 +24,6 @@ func TestUpdate(t *testing.T) {
 
 func TestGenAll(t *testing.T)  {
 	util.InitConfig("G:\\development\\project\\AAAAtools\\go\\commonv2\\cmd\\xf\\route.yml")
-	GenRouteAll()
+	GenRouteAll("test")
 	
 }

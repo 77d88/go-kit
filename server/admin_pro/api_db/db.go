@@ -4,7 +4,6 @@ import (
 	"github.com/77d88/go-kit/basic/xcore"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/plugins/xdb"
-	"github.com/77d88/go-kit/plugins/xe"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -67,7 +66,7 @@ func initDataRows(ctx *xhs.Ctx) {
 	}
 }
 
-func Register(api *xe.Engine, path string) {
+func Register(path string, api *xhs.Engine) {
 	api.RegisterPost(path+"/auto_migrate", pro.SuperAdmin, autoMigrate)
 	api.RegisterPost(path+"/init_data_rows", pro.SuperAdmin, initDataRows)
 }

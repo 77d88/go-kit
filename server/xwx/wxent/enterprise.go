@@ -3,7 +3,7 @@ package wxent
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xstr"
+	"github.com/77d88/go-kit/basic/xparse"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"io"
 	"net/http"
@@ -43,7 +43,7 @@ func (m *EntRobotMsg) BuildArticles(url, picUrl, description string) *EntRobotMs
 			},
 		},
 	}
-	m.Content = xstr.ToString(msg)
+	m.Content, _ = xparse.ToJSON(msg)
 	return m
 }
 func (m *EntRobotMsg) BuildText(content string) *EntRobotMsg {
@@ -53,7 +53,7 @@ func (m *EntRobotMsg) BuildText(content string) *EntRobotMsg {
 			"Content": content,
 		},
 	}
-	m.Content = xstr.ToString(msg)
+	m.Content, _ = xparse.ToJSON(msg)
 	return m
 }
 func (m *EntRobotMsg) BuildMarkdown(content string) *EntRobotMsg {
@@ -63,7 +63,7 @@ func (m *EntRobotMsg) BuildMarkdown(content string) *EntRobotMsg {
 			"Content": content,
 		},
 	}
-	m.Content = xstr.ToString(msg)
+	m.Content, _ = xparse.ToJSON(msg)
 	return m
 }
 func (m *EntRobotMsg) Send() error {
