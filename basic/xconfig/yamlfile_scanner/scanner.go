@@ -3,6 +3,7 @@ package file_scanner
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/77d88/go-kit/basic/xconfig"
 	"gopkg.in/yaml.v3"
 	"io"
 	"os"
@@ -31,7 +32,10 @@ func (c *YamlConfigLoader) Type() string {
 func New(path string) *YamlConfigLoader {
 	return &YamlConfigLoader{path: path}
 }
-
+func Default(data string) *xconfig.Config {
+	config := xconfig.Init(New(data), "")
+	return config
+}
 func convertMap(m map[interface{}]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for key, value := range m {

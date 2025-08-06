@@ -1,7 +1,6 @@
 package admin_pro
 
 import (
-	"github.com/77d88/go-kit/basic/xconfig"
 	"github.com/77d88/go-kit/basic/xconfig/str_scanner"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth/aes_auth"
