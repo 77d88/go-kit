@@ -34,7 +34,7 @@ $tagPrefix = if ($subPath) { "$subPath/" } else { "" }
 
 # 3. 获取最新的版本 Tag
 $tagPattern = if ($tagPrefix) { "${tagPrefix}v*.*.*" } else { "v*.*.*" }
-$latestTag = git describe --tags --abbrev=0 --match $tagPattern 2>$null
+$latestTag = git describe --tags --abbrev=0 --match tagPattern 2>$null
 
 if (-not $latestTag) {
     # 如果没有找到匹配的 Tag，尝试从主版本继承或使用默认值
