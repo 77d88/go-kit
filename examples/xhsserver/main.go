@@ -22,9 +22,6 @@ func main() {
 		MustProvide(xredis.InitWith).
 		MustProvide(func() xe.EngineServer {
 			server := xhs.New(engine)
-			engine.MustProvide(func() *xhs.HttpServer {
-				return server
-			})
 			server.Use(limiter.Limiter(server.Config.Rate))
 			server.Use(cors.New(server.Config))
 			server.Use(auth.NewMw(aes_auth.New()))

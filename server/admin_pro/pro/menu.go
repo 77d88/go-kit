@@ -25,7 +25,7 @@ type Menu struct {
 	MetaHide      bool           `gorm:"comment:隐藏"`
 	Sort          int            `gorm:"comment:排序"`
 	MetaNoLevel   bool           `gorm:"comment:无级"`      // 不自动提升等级 默认情况下只有一个子集菜单时自动升级为上级菜单
-	Permission    *xdb.TextArray `gorm:"comment:权限"`      // 权限 对应权限表的code
+	Permission    string         `gorm:"comment:权限"`      // 权限 对应权限表的code
 	RouteParams   string         `gorm:"comment:路由访问时参数"` //
 	Children      *xdb.Int8Array `gorm:"comment:子菜单"`
 	IsSystem      bool           `gorm:"comment:系统菜单"` // 系统菜单只能手动调整

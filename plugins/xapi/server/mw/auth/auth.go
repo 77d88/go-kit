@@ -19,6 +19,7 @@ type Manager interface {
 	VerificationToken(jwtStr string) *VerificationData
 	VerificationRefreshToken(token string) *VerificationData
 	Login(id int64, roles ...string) (*LoginResponse, error)
+	Logout(token string) error
 	IsAutoRenewal() bool
 }
 
@@ -129,7 +130,7 @@ func (c *ApiAuth) TokenInfo() xhs.HandlerMw {
 			return
 		}
 		x.SetUserId(data.Id)
-		x.SetRoles(data.Roles...)
+		x.SetPermission(data.Roles...)
 		x.SetToken(token)
 
 		x.Next()
@@ -138,7 +139,7 @@ func (c *ApiAuth) TokenInfo() xhs.HandlerMw {
 
 func ForceAuth(c *xhs.Ctx) {
 	if c.GetUserId() == 0 {
-		c.Send(xerror.New("auth error!").SetCode(xhs.CodeTokenError))
+		c.Send(xerror.New("登录异常!").SetCode(xhs.CodeTokenError))
 		c.Abort()
 		return
 	}

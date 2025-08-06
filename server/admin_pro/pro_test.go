@@ -1,17 +1,23 @@
 package admin_pro
 
 import (
-	"github.com/77d88/go-kit/basic/xconfig/json_scanner"
-	"github.com/77d88/go-kit/plugins/xapi/auth"
+	"github.com/77d88/go-kit/basic/xconfig"
+	"github.com/77d88/go-kit/basic/xconfig/str_scanner"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth/aes_auth"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/cors"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/limiter"
+	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
 	"github.com/77d88/go-kit/plugins/xdb"
 	"github.com/77d88/go-kit/plugins/xe"
 	"github.com/77d88/go-kit/plugins/xjob"
 	"github.com/77d88/go-kit/plugins/xredis"
+	"github.com/77d88/go-kit/server/admin_pro/proapi"
 	"testing"
 )
 
 func TestRun(t *testing.T) {
-	sc := json_scanner.Default(`{
+	sc := xconfig.Init(str_scanner.New(`{
   "server": {
     "port": 9981,
     "debug": true,
@@ -26,15 +32,18 @@ func TestRun(t *testing.T) {
     "pass": "jerry123!",
     "db": 0
   }
-}`)
-	api := xe.New(sc).
-		Add(xdb.InitWith).
-		Add(xredis.InitWith).
-		Add(xjob.Init).
-		Add(RegisterApi).
-		AddAfter(func() auth.ICache {
-			return xredis.NewUserBlackCache("black:")
-		})
-	api.Start()
+}`), "")
+	xe.New(sc).
+		MustProvide(xdb.InitWith).
+		MustProvide(xredis.InitWith).
+		MustProvide(xjob.Init).
+		MustProvide(func(e *xe.Engine) xe.EngineServer {
+			server := xhs.New(e)
+			server.Use(limiter.Limiter(server.Config.Rate))
+			server.Use(cors.New(server.Config))
+			server.Use(auth.NewMw(aes_auth.New()))
+			proapi.Register(server)
+			return server
+		}).Start()
 
 }

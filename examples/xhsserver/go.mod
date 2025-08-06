@@ -4,9 +4,7 @@ go 1.24.2
 
 require github.com/77d88/go-kit v0.0.11
 
-replace (
-	github.com/77d88/go-kit => ../..
-)
+replace github.com/77d88/go-kit => ../..
 
 require (
 	github.com/bytedance/sonic v1.12.10 // indirect

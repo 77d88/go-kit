@@ -77,6 +77,10 @@ func (a *JwtAuth) Login(id int64, roles ...string) (*auth.LoginResponse, error) 
 		RefreshToken: longToken,
 	}, nil
 }
+func (a *JwtAuth) Logout(token string) error {
+	// jwt 暂时不支持登出
+	return xerror.New("jwt not support logout")
+}
 
 // verificationToken 校验token
 func verificationToken(jwtStr string, key []byte) *auth.VerificationData {

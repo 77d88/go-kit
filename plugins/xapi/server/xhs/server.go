@@ -50,6 +50,9 @@ func New(e *xe.Engine) *HttpServer {
 	})
 	engine.Use(WarpHandleMw(serverHandler))
 	generatedDefaultRegister(server)
+	e.MustProvide(func() *HttpServer {
+		return server
+	})
 	return server
 }
 

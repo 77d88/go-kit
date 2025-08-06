@@ -14,7 +14,7 @@ func init() {
 type Dict struct {
 	xdb.BaseModel        // 这个表都物理删除哦
 	UpdateUser    int64  `gorm:"comment:更新人"`
-	Type          int64  `gorm:"comment:字典分类;index"`
+	TypeId        int64  `gorm:"comment:字典分类;index"` //对应字典类型ID
 	Val           int    `gorm:"comment:字典值"`
 	Desc          string `gorm:"comment:字典描述"`
 	Sort          int    `gorm:"comment:字典排序"`
@@ -32,7 +32,7 @@ func (d *Dict) ToResponse() *DictDst {
 		Desc: d.Desc,
 		Sort: d.Sort,
 		Val:  d.Val,
-		Type: d.Type,
+		Type: d.TypeId,
 	}
 }
 

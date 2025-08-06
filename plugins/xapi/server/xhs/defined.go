@@ -1,6 +1,8 @@
 package xhs
 
-import "github.com/77d88/go-kit/basic/xerror"
+import (
+	"github.com/77d88/go-kit/basic/xerror"
+)
 
 type IdRequest struct {
 	Id int64 `json:"id,string"`
@@ -14,8 +16,12 @@ type Response struct {
 	Total *int        `json:"total,omitempty"`
 }
 
-func NewResp(data interface{}) *Response {
-
+func NewResp(data interface{}, total ...int64) *Response {
+	var t *int
+	if len(total) > 0 {
+		x := int(total[0])
+		t = &x
+	}
 	// 如果data已经是response，则直接返回
 	if r, ok := data.(*Response); ok {
 		return r
@@ -23,29 +29,19 @@ func NewResp(data interface{}) *Response {
 	if r, ok := data.(Response); ok {
 		return &r
 	}
-	if r, ok := data.(xerror.Error); ok {
+	if r, ok := data.(xerror.XError); ok {
+		info := r.XError().Info
 		return &Response{
-			Code: r.Code,
-			Msg:  r.Msg,
-			Info: &r.Info,
+			Code:  r.XError().Code,
+			Msg:   r.XError().Msg,
+			Info:  &info,
+			Total: t,
 		}
 	}
-	if r, ok := data.(*xerror.Error); ok {
-		return &Response{
-			Code: r.Code,
-			Msg:  r.Msg,
-			Info: &r.Info,
-		}
-	}
-
 	return &Response{
-		Code: CodeSuccess,
-		Msg:  "ok",
-		Data: data,
+		Code:  CodeSuccess,
+		Msg:   "ok",
+		Data:  data,
+		Total: t,
 	}
-}
-
-func (r *Response) SetTotal(total int) *Response {
-	r.Total = &total
-	return r
 }

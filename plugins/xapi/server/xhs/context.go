@@ -81,9 +81,6 @@ func (c *Ctx) Send(v interface{}) {
 	}
 }
 
-func (c *Ctx) SendPage(result interface{}, total int64) {
-	c.Result = NewResp(result).SetTotal(int(total))
-}
 func (c *Ctx) SendError(err interface{}) {
 	e := xerror.New(err)
 	c.Result = e

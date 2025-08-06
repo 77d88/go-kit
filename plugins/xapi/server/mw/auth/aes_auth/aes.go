@@ -60,6 +60,11 @@ func (a *AesAuth) Login(id int64, roles ...string) (*auth.LoginResponse, error) 
 	}, nil
 }
 
+func (a *AesAuth) Logout(token string) error {
+	// 这个授权 暂时不支持登出
+	return xerror.New("ass not support logout")
+}
+
 func (a *AesAuth) SetAutoRenewal(autoRenewal bool) *AesAuth {
 	a.AutoRenewal = autoRenewal
 	return a

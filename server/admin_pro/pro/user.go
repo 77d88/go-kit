@@ -44,62 +44,28 @@ func (*User) TableName() string {
 	return TableNameUser
 }
 
-func (d *User) ToResponse() *UserDst {
-	return &UserDst{
-		Id:          d.ID,
-		Disabled:    d.Disabled,
-		Nickname:    d.Nickname,
-		Username:    d.Username,
-		Avatar:      d.Avatar,
-		Roles:       d.Roles,
-		Permission:  d.Permission,
-		IsReLogin:   d.IsReLogin,
-		ReLoginDesc: d.ReLoginDesc,
-	}
-}
+
 
 // AllPermissionCode 获取所有权限码 去重
 func (d *User) AllPermissionCode() []string {
 	if d._isCalcCodes {
 		return d._codes
 	}
-	codes := make([]string, 0)
-	codes = append(codes, d.PermissionCodes.ToSlice()...)
-	codes = append(codes, d.RolePermissionCodes.ToSlice()...)
-	codes = xarray.Unique(codes)
+	per := d.PermissionCodes.ToSlice()
+	rolePer := d.RolePermissionCodes.ToSlice()
+	codes := make([]string, 0, len(per)+len(rolePer)+1)
+	codes = append(codes, per...)
+	codes = append(codes, rolePer...)
 	if d.IsSuperAdmin {
-		codes = append(codes, RoleSuperAdmin)
+		codes = append(codes, Per_SuperAdmin)
 	}
+	codes = xarray.Unique(codes)
 	d._codes = codes
 	d._isCalcCodes = true
 	return codes
 }
 
-type UserDst struct {
-	Id          int64          `json:"id,string"`
-	Password    string         `json:"password,omitempty"`
-	Disabled    bool           `json:"disabled"`
-	Username    string         `json:"username"`
-	Nickname    string         `json:"nickname"`
-	Avatar      *xdb.Int8Array `json:"avatar"`
-	Roles       *xdb.Int8Array `json:"roles"`
-	Permission  *xdb.Int8Array `json:"permission"`
-	Email       string         `json:"email"`
-	IsReLogin   bool           `json:"isReLogin"`
-	ReLoginDesc string         `json:"reLoginDesc"`
-}
 
-func ToUserResponses(dicts []*User) []*UserDst {
-	res := make([]*UserDst, 0)
-	if len(dicts) == 0 {
-		return res
-	}
-
-	for _, dict := range dicts {
-		res = append(res, dict.ToResponse())
-	}
-	return res
-}
 
 func (*User) InitData() []xdb.GromModel {
 	return []xdb.GromModel{

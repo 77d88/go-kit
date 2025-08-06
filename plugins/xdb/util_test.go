@@ -54,7 +54,7 @@ func TestSession(t *testing.T) {
 
 	var users []MuDbUser
 	var total int64
-	Ctx(context.Background()).Unscoped().Where("id in ? ", []int64{1, 2, 3}).FindPage(&ApiPageRequest{
+	Ctx(context.Background()).Unscoped().Where("id in ? ", []int64{1, 2, 3}).FindPage(&PageSearch{
 		Page: PageRequestImpl{
 			Page:       1,
 			Size:       20,

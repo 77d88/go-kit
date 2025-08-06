@@ -56,7 +56,7 @@ func (i *Int8Array) ToSlice() []int64 {
 	return goArray
 }
 
-func NewInt8Array[T integer](s ...T) *Int8Array {
+func NewInt8Array(s ...int64) *Int8Array {
 	// 初始化一个空的 pgtype.Int8Array
 	var pgArray = Int8Array{}
 	// 尝试将 int64 值切片设置到 pgtype.Int8Array

@@ -9,7 +9,7 @@ const (
 )
 
 type XError interface {
-	XError() error
+	XError() Error
 }
 
 type Error struct {

@@ -29,8 +29,8 @@ type Config struct {
 
 func InitWith(e *xe.Engine) *DB {
 	var config Config
-	e.Cfg.ScanKey(dbStr, &config)
-	config.DbLinkName = dbStr
+	e.Cfg.ScanKey(DefaultDbLinkStr, &config)
+	config.DbLinkName = DefaultDbLinkStr
 	return Init(&config)
 }
 
@@ -61,7 +61,7 @@ func Init(c *Config) *DB {
 		c.ConnMaxLifetime = 1800
 	}
 	if c.DbLinkName == "" {
-		c.DbLinkName = dbStr
+		c.DbLinkName = DefaultDbLinkStr
 
 	}
 
@@ -97,6 +97,10 @@ func Init(c *Config) *DB {
 	maskedStr := re.ReplaceAllString(c.Dns, "password=******* ")
 	xlog.Infof(nil, "init db conn success %s link -> %s", maskedStr, c.DbLinkName)
 	dbs[c.DbLinkName] = gormDb
+	RegisterModels[c.DbLinkName] = make(map[string]GromModel)
+	if DefaultDB == nil {
+		DefaultDB = gormDb
+	}
 	return &DB{
 		DB:     gormDb,
 		Config: c,

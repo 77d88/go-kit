@@ -88,6 +88,7 @@ func (e *Engine) MustProvide(a interface{}, options ...dig.ProvideOption) *Engin
 	return e
 }
 
+
 func (e *Engine) MustInvoke(a interface{}, options ...dig.InvokeOption) *Engine {
 	var err error
 	err = e.Invoke(a, options...)

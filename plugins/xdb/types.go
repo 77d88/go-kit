@@ -19,15 +19,15 @@ func (r SearchRequest) ToIntIds() []int64 {
 	return xarray.Union(ids)
 }
 
-type ApiPageRequest struct {
+type PageSearch struct {
 	Page PageRequestImpl `form:"page" json:"page"`
 }
 
-func (a ApiPageRequest) Limit() (offset, limit int) {
+func (a PageSearch) Limit() (offset, limit int) {
 	return a.Page.Limit()
 }
 
-func (a ApiPageRequest) IsNotCounted() bool {
+func (a PageSearch) IsNotCounted() bool {
 	return a.Page.IsNotCounted()
 }
 

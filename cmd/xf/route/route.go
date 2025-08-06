@@ -172,8 +172,8 @@ type response struct {
 type request struct {
 }
 
-func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	return
+func handler(c *xhs.Ctx, r *request) (interface{},error) {
+	return nil,nil
 }
 
 func Register(path string,xsh *xhs.HttpServer) {

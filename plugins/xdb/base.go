@@ -4,7 +4,6 @@ import (
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
-	"github.com/77d88/go-kit/basic/xreflect"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"sync"
 	"time"
@@ -13,16 +12,20 @@ import (
 )
 
 var (
-	RegisterModels = make(map[string]GromModel)
+	RegisterModels = make(map[string]map[string]GromModel)
 	mu             sync.Mutex
 	dbs            = make(map[string]*gorm.DB)
+	DefaultDB      *gorm.DB
 )
 
-const dbStr string = "db"
+const DefaultDbLinkStr string = "db"
 
 // GetDB 获取数据库链接
 func GetDB(name ...string) (*gorm.DB, error) {
-	firstOrDefault := xarray.FirstOrDefault(name, dbStr)
+	if len(name) == 0 {
+		return DefaultDB, nil
+	}
+	firstOrDefault := xarray.FirstOrDefault(name, DefaultDbLinkStr)
 	database, ok := dbs[firstOrDefault]
 	if !ok {
 		xlog.Errorf(nil, "数据库[%s]链接不存在", firstOrDefault)
@@ -40,31 +43,14 @@ func AddModels(dist ...GromModel) {
 		if v == nil {
 			continue
 		}
-		key := xreflect.Warp(v).InstPath()
-		if _, ok := RegisterModels[key]; ok {
-			continue
-		}
-		RegisterModels[key] = v
-		xlog.Tracef(nil, "register model %s table %s", key, v.TableName())
-	}
-}
+		var dbname = DefaultDbLinkStr
 
-// AutoMigrateModel RegisterModels 自动迁移
-func AutoMigrateModel(name ...string) error {
-	db, err := GetDB(name...)
-	if err != nil {
-		return err
+		if v, ok := v.(DBNamer); ok {
+			dbname = v.DbName()
+		}
+		RegisterModels[dbname][v.TableName()] = v
+		xlog.Tracef(nil, "register %s => table %s", dbname, v.TableName())
 	}
-	i := make([]interface{}, 0, len(RegisterModels))
-	for _, v := range RegisterModels {
-		i = append(i, v)
-	}
-	xlog.Tracef(nil, "auto migrate model %v", i)
-	err = db.AutoMigrate(i...)
-	if err != nil {
-		xlog.Errorf(nil, "自动迁移失败: %+v", err)
-	}
-	return err
 }
 
 // KeyModel 模型主键
@@ -83,7 +69,7 @@ type BaseModel struct {
 	DeletedTime gorm.DeletedAt `gorm:"comment:删除时间;index" json:"deletedTime"`          // 删除时间
 }
 
-func (b Key) GetID() int64 {
+func (b *Key) GetID() int64 {
 	return b.ID
 }
 
@@ -96,6 +82,10 @@ func (b *Key) BeforeCreate(tx *gorm.DB) (err error) {
 		b.ID = xid.NextId()
 	}
 	return
+}
+
+type DBNamer interface {
+	DbName() string
 }
 
 // GromModel 模型基础
