@@ -27,11 +27,13 @@ type AesAuth struct {
 	AutoRenewal bool
 }
 
-func (a *AesAuth) GenerateToken(id int64, expr time.Duration, roles ...string) (string, error) {
-	return generateToken(id, expr, a.key, roles...)
+func (a *AesAuth) GenerateToken(id int64, opt ...auth.OptionHandler) (string, error) {
+	option := auth.GetOpt(opt...)
+	return generateToken(id, option.Duration, a.key, option.Roles...)
 }
-func (a *AesAuth) GenerateRefreshToken(id int64, expr time.Duration, roles ...string) (string, error) {
-	return generateToken(id, expr, a.refreshKey, roles...)
+func (a *AesAuth) GenerateRefreshToken(id int64, opt ...auth.OptionHandler) (string, error) {
+	option := auth.GetOpt(opt...)
+	return generateToken(id, option.Duration, a.refreshKey, option.Roles...)
 }
 
 func (a *AesAuth) VerificationToken(jwtStr string) *auth.VerificationData {
@@ -42,14 +44,15 @@ func (a *AesAuth) VerificationRefreshToken(token string) *auth.VerificationData 
 }
 
 // Login api登录
-func (a *AesAuth) Login(id int64, roles ...string) (*auth.LoginResponse, error) {
+func (a *AesAuth) Login(id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, error) {
+	option := auth.GetOpt(opt...)
 	// 生成一个短期有效的token 10分钟
-	token, err := a.GenerateToken(id, time.Minute*30, roles...)
+	token, err := generateToken(id, time.Minute*30, a.key, option.Roles...)
 	if err != nil {
 		return nil, err
 	}
 	// 生成一个长期有效的token 30 天
-	longToken, err := a.GenerateToken(id, time.Hour*24*30, roles...)
+	longToken, err := generateToken(id, time.Hour*24*30, a.refreshKey, option.Roles...)
 	if err != nil {
 		return nil, err
 	}

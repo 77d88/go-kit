@@ -13,6 +13,7 @@ import (
 const Nil = redis.Nil
 const redisStr string = "redis"
 
+
 var (
 	dbs = make(map[string]*Client)
 )

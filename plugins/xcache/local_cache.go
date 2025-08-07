@@ -1,7 +1,7 @@
 package xcache
 
 import (
-	"fmt"
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"time"
 
@@ -21,6 +21,7 @@ func NewLocalCache(namespace string, defaultExpire, cleanupInterval time.Duratio
 		Namespace: Namespace{Namespace: namespace},
 	}
 }
+
 
 func (l *LocalCache) Set(key string, val any, expire time.Duration) {
 	l.Cache.Set(l.WarpKey(key), val, expire)
@@ -49,7 +50,7 @@ func (l *LocalCache) Once(key string, val any, expire time.Duration, fci00 func(
 		v, err := fci00()
 		if err != nil {
 			xlog.Errorf(nil, "xcache once %v %v", key, err)
-			return fmt.Errorf("xcache once %v %v", key, err)
+			return xerror.Newf("xcache once %v %v", key, err)
 		}
 		l.Set(key, v, expire)
 		get = v

@@ -5,6 +5,7 @@ import (
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xencrypt/xmd5"
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xparse"
 	"github.com/77d88/go-kit/basic/xstr"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
 	"github.com/golang-jwt/jwt/v5"
@@ -39,11 +40,13 @@ func NewCustomize(key, refreshKey []byte) *JwtAuth {
 	}
 }
 
-func (a *JwtAuth) GenerateToken(id int64, expr time.Duration, roles ...string) (string, error) {
-	return generateToken(id, expr, a.key, roles...)
+func (a *JwtAuth) GenerateToken(id int64, opt ...auth.OptionHandler) (string, error) {
+	getOpt := auth.GetOpt(opt...)
+	return generateToken(id, getOpt.Duration, a.key, getOpt.Roles...)
 }
-func (a *JwtAuth) GenerateRefreshToken(id int64, expr time.Duration, roles ...string) (string, error) {
-	return generateToken(id, expr, a.refreshKey, roles...)
+func (a *JwtAuth) GenerateRefreshToken(id int64, opt ...auth.OptionHandler) (string, error) {
+	getOpt := auth.GetOpt(opt...)
+	return generateToken(id, getOpt.Duration, a.refreshKey, getOpt.Roles...)
 }
 func (a *JwtAuth) VerificationToken(jwtStr string) *auth.VerificationData {
 	return verificationToken(jwtStr, a.key)
@@ -61,14 +64,15 @@ func (a *JwtAuth) IsAutoRenewal() bool {
 }
 
 // Login api登录
-func (a *JwtAuth) Login(id int64, roles ...string) (*auth.LoginResponse, error) {
+func (a *JwtAuth) Login(id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, error) {
+	getOpt := auth.GetOpt(opt...)
 	// 生成一个短期有效的token 10分钟
-	token, err := a.GenerateToken(id, time.Minute*10, roles...)
+	token, err := generateToken(id, time.Minute*30, a.key, getOpt.Roles...)
 	if err != nil {
 		return nil, err
 	}
 	// 生成一个长期有效的token 30 天
-	longToken, err := a.GenerateToken(id, time.Hour*24*30, roles...)
+	longToken, err := generateToken(id, time.Hour*7*30, a.refreshKey, getOpt.Roles...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +144,7 @@ func buildContent(id int64, roles []string) string {
 
 func parseContent(str string) (int64, []string, error) {
 	split := strings.Split(str, "&")
-	id, err := xstr.ToInt[int64](split[0])
+	id, err := xparse.ToNumber[int64](split[0])
 	if err != nil {
 		return 0, nil, err
 	}

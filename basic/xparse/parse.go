@@ -134,15 +134,23 @@ func ToJSON[T any](v T) (string, error) {
 	return string(b), err
 }
 
-// FromJSON JSON字符串转结构体
-func FromJSON[T any](s string) (T, error) {
+// FromJSONNew JSON字符串转结构体
+func FromJSONNew[T any](s string) (T, error) {
 	var zero T
-	if xcore.IsZero(s) {
+	if s == "" {
 		return zero, xerror.New("empty string")
 	}
 	var v T
 	err := json.Unmarshal([]byte(s), &v)
 	return v, err
+}
+
+func FromJSON(s string, dist interface{}) error {
+	if s == "" {
+		return xerror.New("empty string")
+	}
+	err := json.Unmarshal([]byte(s), dist)
+	return err
 }
 
 // GetInst 获取指向实例

@@ -1,4 +1,4 @@
-package admin_pro
+package main
 
 import (
 	"github.com/77d88/go-kit/basic/xconfig/str_scanner"
@@ -12,14 +12,11 @@ import (
 	"github.com/77d88/go-kit/plugins/xjob"
 	"github.com/77d88/go-kit/plugins/xredis"
 	"github.com/77d88/go-kit/server/admin_pro/proapi"
-	"github.com/77d88/go-kit/server/xaliyun/aliyunaddress"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin"
-	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossginsts"
-	"testing"
 )
 
-func TestRun(t *testing.T) {
+func main() {
 	sc := str_scanner.Default(`{
 	 "server": {
 	   "port": 9981,
@@ -47,10 +44,9 @@ func TestRun(t *testing.T) {
 			server.Use(cors.New(server.Config))
 			server.Use(auth.NewMw(aes_auth.New()))
 			proapi.Register(server)
-			aliyunossginsts.DefaultRegister("/aliyun/sts", server)
-			aliyunaddress.DefaultRegister("/aliyun/address", server)
+			//aliyunossginsts.DefaultRegister("/aliyun/sts", server)
+			//aliyunaddress.DefaultRegister("/aliyun/address", server)
 			aliyunossgin.DefaultRegister("/aliyun/oss", server)
 			return server
 		}).Start()
-
 }
