@@ -33,6 +33,7 @@ type Engine struct {
 	QuitSignal chan os.Signal
 	wait       sync.WaitGroup
 	Server     EngineServer
+	sf         func(e *Engine) (EngineServer, error)
 }
 
 var E *Engine // 持有一个服务实例
@@ -57,10 +58,13 @@ func New(cfg *xconfig.Config) *Engine {
 }
 
 // Use 添加依赖 这里是强制依赖立即初始化
-func (e *Engine) Use(a interface{}) *Engine {
+func (e *Engine) Use(a interface{}, delay ...bool) *Engine {
 	err := Provide(a)
 	if err != nil {
 		panic(err)
+		return e
+	}
+	if len(delay) > 0 && delay[0] {
 		return e
 	}
 	e.wait.Add(1)
@@ -109,27 +113,28 @@ func Provide(a interface{}, options ...dig.ProvideOption) error {
 }
 
 func (e *Engine) UseServer(f func(e *Engine) (EngineServer, error)) *Engine {
-	s, err := f(e)
-	if err != nil {
-		panic(err)
-	}
-	err = e.Invoke(func() EngineServer {
-		return s
-	})
-	e.Server = s
-	if err != nil {
-		panic(err)
-	}
+	e.sf = f
 	return e
 }
 
 func (e *Engine) Start() {
-	if e.Server == nil {
+	if e.sf == nil {
 		panic("server is nil please use UseServer")
 	}
 	e.wait.Wait()
 	go func() {
-		e.Server.Start()
+		s, err := e.sf(e)
+		if err != nil {
+			panic(err)
+		}
+		err = e.Invoke(func() EngineServer {
+			return s
+		})
+		e.Server = s
+		if err != nil {
+			panic(err)
+		}
+		s.Start()
 	}()
 	signal.Notify(e.QuitSignal, os.Interrupt)
 	<-e.QuitSignal

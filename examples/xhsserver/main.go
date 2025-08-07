@@ -31,7 +31,7 @@ func main() {
 			}
 			biz.Register(server)
 			return server, nil
-		})
+		}).
 	Start()
 
 }

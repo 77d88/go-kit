@@ -52,7 +52,7 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 
 	// todo 密码改一下 用加密的比较
 	if r.UserName == "superadmin" && pwd == "super.admin.(^$@^)@admin.com" {
-		authorization, err := manager.Login(-1, pro.Per_SuperAdmin)
+		authorization, err := manager.Login(-1, auth.WithRoles(pro.Per_SuperAdmin))
 		if err != nil {
 			return nil, xerror.New("登录失败")
 		}
@@ -70,7 +70,7 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 		xlog.Infof(c, "用户%d 登录失败，用户被禁用", user.ID)
 		return nil, xerror.New("请联系管理员")
 	}
-	login, err := manager.Login(user.ID, user.AllPermissionCode()...)
+	login, err := manager.Login(user.ID, auth.WithRoles(user.AllPermissionCode()...))
 	if err != nil {
 		return nil, xerror.New("登录失败")
 	}

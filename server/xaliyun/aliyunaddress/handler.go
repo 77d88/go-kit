@@ -64,12 +64,12 @@ func handler(c *xhs.Ctx, r request) (interface{}, error) {
 			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
 			return nil, xerror.New("处理失败")
 		}
-		obj, err := xparse.FromJSON[httpRes](res.GetHttpContentString())
+		obj, err := xparse.FromJSONNew[httpRes](res.GetHttpContentString())
 		if err != nil {
 			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
 			return nil, xerror.New("解析响应失败")
 		}
-		data, err := xparse.FromJSON[httpInfo](obj.Data)
+		data, err := xparse.FromJSONNew[httpInfo](obj.Data)
 		if err != nil {
 			xlog.Errorf(nil, "aliyun address client request failed: %s", err)
 			return nil, xerror.New("解析数据失败")

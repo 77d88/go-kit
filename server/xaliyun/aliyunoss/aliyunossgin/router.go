@@ -1,7 +1,9 @@
 package aliyunossgin
 
 import (
+	"context"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/xlog"
 	ossfilesaveHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/filesave"
 	ossgetdomainHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/getdomain"
 	ossoptimizeallHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/optimizeall"
@@ -15,7 +17,11 @@ import (
 
 func DefaultRegister(path string, r *xhs.HttpServer, handler ...xhs.HandlerMw) {
 	//x.RegisterByGroup(path, func(r *gin.RouterGroup) {
-	r.XE.MustInvoke(func(client *oss.Client) {
+	err := r.XE.Invoke(func(client *oss.Client) {
+		if client == nil {
+			xlog.Warnf(context.TODO(), "oss client is nil oss route notRegister")
+			return
+		}
 		r.POST(path+"/getDomain", ossgetdomainHandler.Run, handler...)       // 获取域名
 		r.POST(path+"/save", osssaveHandler.Run, handler...)                 // oss保存
 		r.POST(path+"/fileSave", ossfilesaveHandler.Run, handler...)         // 文件直传
@@ -26,4 +32,7 @@ func DefaultRegister(path string, r *xhs.HttpServer, handler ...xhs.HandlerMw) {
 		r.POST(path+"/preSign", ossPresign.Run, handler...)                  // put预签名签名上传的地址
 		//})
 	})
+	if err != nil {
+		panic(err)
+	}
 }
