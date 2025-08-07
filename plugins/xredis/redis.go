@@ -8,6 +8,7 @@ import (
 	"github.com/77d88/go-kit/plugins/xe"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/redis/go-redis/v9"
+	"sync"
 )
 
 const Nil = redis.Nil
@@ -16,6 +17,7 @@ const redisStr string = "redis"
 
 var (
 	dbs = make(map[string]*Client)
+	dbLock = sync.RWMutex{} // 添加读写锁保护 dbs map
 )
 
 // Config redis 配置
@@ -59,6 +61,19 @@ func Init(config *Config) *Client {
 		xlog.Errorf(nil, "redis init Fatal addr %+v", config)
 		return nil
 	}
+	// 使用读锁检查是否已经存在相同名称的连接
+	dbLock.RLock()
+	existingClient, exists := dbs[config.DbLinkName]
+	dbLock.RUnlock()
+	// 如果已经存在相同名称的连接，直接返回已存在的实例
+	if exists {
+		xlog.Debugf(nil, "redis connection with name %s already exists, returning existing instance", config.DbLinkName)
+		return existingClient
+	}
+
+	// 使用写锁确保只有一个 goroutine 能够创建连接
+	dbLock.Lock()
+	defer dbLock.Unlock()
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.Addr,
@@ -85,10 +100,37 @@ func Init(config *Config) *Client {
 
 // Get 获取数据库链接
 func Get(name ...string) (*Client, error) {
+	dbLock.RLock()
+	defer dbLock.RUnlock()
+
 	database, ok := dbs[xarray.FirstOrDefault(name, redisStr)]
 	if !ok {
 		xlog.Errorf(nil, "数据库[%s]链接不存在", name)
 		return nil, xerror.New("数据库链接不存在")
 	}
 	return database, nil
+}
+
+// GetAll 获取所有数据库连接
+func GetAll() map[string]*Client {
+	dbLock.RLock()
+	defer dbLock.RUnlock()
+
+	// 返回副本以避免外部修改
+	result := make(map[string]*Client, len(dbs))
+	for k, v := range dbs {
+		result[k] = v
+	}
+	return result
+}
+
+// Remove 移除指定名称的数据库连接
+func Remove(name string) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if client, exists := dbs[name]; exists {
+		client.Dispose()
+		delete(dbs, name)
+	}
 }

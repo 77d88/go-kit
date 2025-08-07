@@ -32,6 +32,7 @@ type Engine struct {
 	registry   []interface{}
 	QuitSignal chan os.Signal
 	wait       sync.WaitGroup
+	Server     EngineServer
 }
 
 var E *Engine // 持有一个服务实例
@@ -46,7 +47,10 @@ func New(cfg *xconfig.Config) *Engine {
 		Cfg:        cfg,
 		QuitSignal: make(chan os.Signal),
 	}
-	x.MustProvide(func() *Engine { return x })
+	err := x.Provide(func() *Engine { return x })
+	if err != nil {
+		panic(err)
+	}
 
 	E = x
 	return x
@@ -54,7 +58,11 @@ func New(cfg *xconfig.Config) *Engine {
 
 // Use 添加依赖 这里是强制依赖立即初始化
 func (e *Engine) Use(a interface{}) *Engine {
-	MustProvide(a)
+	err := Provide(a)
+	if err != nil {
+		panic(err)
+		return e
+	}
 	e.wait.Add(1)
 	go func(a interface{}) {
 		defer func() {
@@ -100,26 +108,15 @@ func Provide(a interface{}, options ...dig.ProvideOption) error {
 	return E.Provide(a, options...)
 }
 
-func MustProvide(a interface{}, options ...dig.ProvideOption) {
-	E.MustProvide(a, options...)
-}
-
-func MustInvoke(a interface{}, options ...dig.InvokeOption) {
-	E.MustInvoke(a, options...)
-}
-
-func (e *Engine) MustProvide(a interface{}, options ...dig.ProvideOption) *Engine {
-	var err error
-	err = e.Provide(a, options...)
+func (e *Engine) UseServer(f func(e *Engine) (EngineServer, error)) *Engine {
+	s, err := f(e)
 	if err != nil {
 		panic(err)
 	}
-	return e
-}
-
-func (e *Engine) MustInvoke(a interface{}, options ...dig.InvokeOption) *Engine {
-	var err error
-	err = e.Invoke(a, options...)
+	err = e.Invoke(func() EngineServer {
+		return s
+	})
+	e.Server = s
 	if err != nil {
 		panic(err)
 	}
@@ -127,14 +124,12 @@ func (e *Engine) MustInvoke(a interface{}, options ...dig.InvokeOption) *Engine 
 }
 
 func (e *Engine) Start() {
+	if e.Server == nil {
+		panic("server is nil please use UseServer")
+	}
 	e.wait.Wait()
 	go func() {
-		err := e.Invoke(func(s EngineServer) {
-			s.Start()
-		})
-		if err != nil {
-			xlog.Errorf(nil, "server start error error: %v", err)
-		}
+		e.Server.Start()
 	}()
 	signal.Notify(e.QuitSignal, os.Interrupt)
 	<-e.QuitSignal

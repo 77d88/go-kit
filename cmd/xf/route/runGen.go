@@ -48,7 +48,7 @@ func generateRunFunctionStr(fileName string) (string, []string, []string) {
 		for _, line := range de {
 			runFunc += `	` + line + "\n"
 		}
-		runFunc += `    xe.MustInvoke(func(`
+		runFunc += `    err := xe.Invoke(func(`
 
 		// 构造参数列表
 		var invokeParams []string
@@ -62,6 +62,12 @@ func generateRunFunctionStr(fileName string) (string, []string, []string) {
 `
 		}
 		runFunc += `    })
+`
+		runFunc += `	if err != nil {
+		return func(c *xhs.Ctx) (interface{}, error) {
+			return nil, xerror.New("系统错误")
+		}
+	}
 `
 	}
 

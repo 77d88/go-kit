@@ -2,7 +2,7 @@ module example.com/xserver
 
 go 1.24.2
 
-require github.com/77d88/go-kit v0.0.11
+require github.com/77d88/go-kit v0.0.18
 
 replace github.com/77d88/go-kit => ../..
 
@@ -36,6 +36,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/redis/go-redis/v9 v9.7.3 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect

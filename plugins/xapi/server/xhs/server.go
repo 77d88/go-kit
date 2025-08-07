@@ -51,9 +51,12 @@ func New(e *xe.Engine) *HttpServer {
 	})
 	engine.Use(WarpHandleMw(serverHandler))
 	generatedDefaultRegister(server)
-	e.MustProvide(func() *HttpServer {
+	err := e.Provide(func() *HttpServer {
 		return server
 	})
+	if err != nil {
+		xlog.Fatalf(nil, "provide error: %v", err)
+	}
 	return server
 }
 
