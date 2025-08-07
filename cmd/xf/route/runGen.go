@@ -64,9 +64,7 @@ func generateRunFunctionStr(fileName string) (string, []string, []string) {
 		runFunc += `    })
 `
 		runFunc += `	if err != nil {
-		return func(c *xhs.Ctx) (interface{}, error) {
-			return nil, xerror.New("系统错误")
-		}
+		panic(err)
 	}
 `
 	}
