@@ -7,6 +7,18 @@ Git 自动提交并递增版本号打 Tag 推送到远程。
 2. 获取最新的版本 Tag（格式 va.b.c 或 path/va.b.c）。
 3. 根据参数递增版本号（1=c+1, 2=b+1, 3=a+1）。
 4. 打上新的 Tag 并推送到远程仓库。
+example:
+# 给主包递增修订号 (v1.0.0 → v1.0.1)
+python git-auto-tag.py --level 1
+
+# 或使用简短参数
+python git-auto-tag.py -lv 1
+
+# 给子包递增次版本号
+python git-auto-tag.py -lv 2 -sp "cmd/xf"
+
+# 默认递增修订号（级别1）
+python git-auto-tag.py
 """
 
 import argparse
