@@ -2,8 +2,9 @@ package main
 
 import (
 	"example.com/xserver/biz"
-	"fmt"
 	"github.com/77d88/go-kit/basic/xconfig/str_scanner"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
+	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth/redis_auth"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/cors"
 	"github.com/77d88/go-kit/plugins/xapi/server/mw/limiter"
 	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
@@ -21,14 +22,7 @@ func main() {
 			server := xhs.New(engine)
 			server.Use(limiter.Limiter(server.Config.Rate))
 			server.Use(cors.New(server.Config))
-			//server.Use(auth.NewMw(redis_auth.New(engine)))
-			for i := 0; i < 100; i++ {
-				go func(i int) {
-					_ = engine.Invoke(func(c *xredis.Client) {
-						fmt.Printf("%d", i)
-					})
-				}(i)
-			}
+			server.Use(auth.NewMw(redis_auth.New(engine)))
 			biz.Register(server)
 			return server, nil
 		}).

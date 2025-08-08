@@ -28,9 +28,12 @@ type Auth struct {
 
 func New(e *xe.Engine) auth.Manager {
 	var client *xredis.Client
-	e.MustInvoke(func(c *xredis.Client) {
+	err := e.Invoke(func(c *xredis.Client) {
 		client = c
 	})
+	if err != nil {
+		return nil
+	}
 	a := &Auth{
 		Client:      client,
 		Prefix:      defaultPrefix,
