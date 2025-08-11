@@ -1,30 +1,46 @@
 package aliyunaddress
 
 import (
+	"context"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xparse"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
+	"sync"
 	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 )
 
 var client *sdk.Client
+var once sync.Once
 
-func Init(ak, sk string) xhs.Handler {
-	credentialsProvider := credentials.NewStaticAKCredentialsProvider(ak, sk)
-	c, err := sdk.NewClientWithOptions("cn-hangzhou", sdk.NewConfig(), credentialsProvider)
-	if err != nil {
-		xlog.Fatalf(nil, "aliyun address client init failed: %s", err)
-	}
-	client = c
-	return func(ctx *xhs.Ctx) (interface{}, error) {
-		return Run(ctx)
-	}
+func Init() *sdk.Client {
+	once.Do(func() {
+		xlog.Infof(context.Background(), "aliyunaddress.Init")
+
+		ak := x.ConfigString("aliyun.address.ak")
+		sk := x.ConfigString("aliyun.address.ak")
+		if ak == "" || sk == "" {
+			xlog.Fatalf(nil, "aliyun address ak or sk is empty")
+		}
+		credentialsProvider := credentials.NewStaticAKCredentialsProvider(ak, sk)
+		//credentialsProvider := credentials.NewStaticAKCredentialsProvider(ak, sk)
+		c, err := sdk.NewClientWithOptions("cn-hangzhou", sdk.NewConfig(), credentialsProvider)
+		if err != nil {
+			xlog.Fatalf(nil, "aliyun address client init failed: %s", err)
+		}
+		client = c
+		if client != nil {
+			x.Use(func() *sdk.Client { return client })
+		}
+	})
+
+	return client
 }
 
 // handler 地址标准化 /address/standardizeAddress
