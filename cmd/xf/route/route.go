@@ -165,9 +165,9 @@ func generateRouteFile(moduleName string, handler HandlerInfo, moduleDir string)
 	tmpl := `package {{.ModuleName}}
 
 import (
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 {{- if .Handler.Auth}}
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 {{- end}}
 )
 
@@ -233,7 +233,7 @@ import (
 {{- range .Modules}}
 	{{.Alias}} "{{.ImportPath}}"
 {{- end}}
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 func Register(xsh *xhs.HttpServer) {

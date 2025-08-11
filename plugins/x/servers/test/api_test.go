@@ -8,7 +8,7 @@ package main
 //	"github.com/77d88/go-kit/basic/xstr"
 //	"github.com/77d88/go-kit/plugins/xapi"
 //	"github.com/77d88/go-kit/plugins/xapi/auth"
-//	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+//	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 //	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 //	"github.com/77d88/go-kit/plugins/xe"
 //	"github.com/77d88/go-kit/plugins/xjob"

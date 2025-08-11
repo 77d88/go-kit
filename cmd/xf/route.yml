@@ -1,4 +1,5 @@
 workPath: "github.com/77d88/go-kit/cmd/xf/route"
+biz: "xf"
 routes:
   - path: /api/v1/users
     module: "user_service/v2"
