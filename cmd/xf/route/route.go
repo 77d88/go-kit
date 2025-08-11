@@ -14,6 +14,7 @@ import (
 // RouteConfig 定义路由配置结构
 type RouteConfig struct {
 	WorkPath string
+	Biz      string
 	Routes   []Route `mapstructure:"routes"`
 }
 
@@ -38,14 +39,19 @@ type Handler struct {
 var biz = "biz"
 
 func GenRouteAll(b string) {
-	if b != "" {
-		biz = b
-	}
+
 	var config RouteConfig
 	if err := util.V.Unmarshal(&config); err != nil {
 		fmt.Printf("Error unmarshaling config: %v\n", err)
 		os.Exit(1)
 	}
+	if b != "" {
+		config.Biz = b
+	}
+	if config.Biz == "" {
+		config.Biz = biz
+	}
+	biz = config.Biz
 	// 获取当前工作目录
 	wd, err := util.GetCurrentWorkingDirectory()
 	if err != nil {
