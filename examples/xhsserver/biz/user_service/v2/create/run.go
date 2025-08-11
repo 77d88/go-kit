@@ -4,13 +4,13 @@ package create
 
 import (
 	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
-	"github.com/77d88/go-kit/plugins/xe"
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
+	"github.com/77d88/go-kit/plugins/x"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 )
 func run() xhs.Handler {
 	var db *xdb.DB
-    err := xe.Invoke(func(p1 *xdb.DB) {
+    err := x.Find(func(p1 *xdb.DB) {
         db = p1
     })
 	if err != nil {

@@ -1,7 +1,7 @@
 package aliyunoss
 
 import (
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"time"
 )
 

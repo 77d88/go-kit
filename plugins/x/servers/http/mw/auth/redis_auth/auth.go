@@ -11,8 +11,8 @@ import (
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/xcache"
+	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xlog"
-	"github.com/77d88/go-kit/plugins/xredis"
 	"time"
 )
 

@@ -4,7 +4,7 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/dbmw"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 )
 
 // 创建用户2

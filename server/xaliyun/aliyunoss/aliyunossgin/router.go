@@ -2,6 +2,7 @@ package aliyunossgin
 
 import (
 	"context"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
 	ossfilesaveHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/filesave"
@@ -17,7 +18,7 @@ import (
 
 func DefaultRegister(path string, r *xhs.HttpServer, handler ...xhs.HandlerMw) {
 	//x.RegisterByGroup(path, func(r *gin.RouterGroup) {
-	err := r.XE.Invoke(func(client *oss.Client) {
+	err := x.Find(func(client *oss.Client) {
 		if client == nil {
 			xlog.Warnf(context.TODO(), "oss client is nil oss route notRegister")
 			return

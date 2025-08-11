@@ -3,7 +3,7 @@ package aliyunaddress
 //import (
 //	"encoding/json"
 //	"github.com/77d88/go-kit/plugins/xapi"
-//	"github.com/77d88/go-kit/plugins/xdb"
+//	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 //	"testing"
 //)
 //

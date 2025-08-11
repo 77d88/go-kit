@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xencrypt/xmd5"
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
@@ -44,8 +44,6 @@ func (*User) TableName() string {
 	return TableNameUser
 }
 
-
-
 // AllPermissionCode 获取所有权限码 去重
 func (d *User) AllPermissionCode() []string {
 	if d._isCalcCodes {
@@ -64,8 +62,6 @@ func (d *User) AllPermissionCode() []string {
 	d._isCalcCodes = true
 	return codes
 }
-
-
 
 func (*User) InitData() []xdb.GromModel {
 	return []xdb.GromModel{

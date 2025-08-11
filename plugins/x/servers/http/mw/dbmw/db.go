@@ -2,7 +2,7 @@ package dbmw
 
 import (
 	xhs2 "github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 

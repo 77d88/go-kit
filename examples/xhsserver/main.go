@@ -21,7 +21,6 @@ func main() {
 	x.Use(xredis.InitWith)
 	x.Use(xjob.Init)
 	x.Use(xcron.Init)
-	x.Use(xredis.InitWith)
 	x.Use(func() x.EngineServer {
 		server := xhs.New()
 		server.Use(limiter.Limiter(server.Config.Rate))

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/plugins/x"
+	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xlog"
-	"github.com/77d88/go-kit/plugins/xredis"
 	"github.com/go-pay/gopay"
 	"time"
 )

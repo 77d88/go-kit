@@ -2,7 +2,7 @@ package redis_auth
 
 import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
-	"github.com/77d88/go-kit/plugins/xredis"
+	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"testing"
 	"time"
 )
@@ -49,6 +49,6 @@ func TestLogout(t *testing.T) {
 }
 
 func Test22(t *testing.T) {
-	t.Log((time.Hour*24*7).Seconds())
+	t.Log((time.Hour * 24 * 7).Seconds())
 	t.Log(time.Duration(604800000000000).Seconds())
 }

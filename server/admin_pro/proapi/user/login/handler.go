@@ -3,9 +3,10 @@ package login
 import (
 	"github.com/77d88/go-kit/basic/xencrypt/xmd5"
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -28,7 +29,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	// 获取登录信息
 	var manager auth.Manager
-	err = c.Server.XE.Invoke(func(ctx auth.Manager) {
+	err = x.Find(func(ctx auth.Manager) {
 		manager = ctx
 	})
 	if err != nil {

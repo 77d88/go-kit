@@ -3,7 +3,7 @@ package smallimgsave
 import (
 	"github.com/77d88/go-kit/basic/xcore"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	aliyunoss2 "github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 )
 
