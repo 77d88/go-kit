@@ -14,6 +14,7 @@ const CtxLogParam = "_xe/CTX_LOG_PARAM"
 type Func = func(f LoggerFields, format string, v ...interface{})
 type Logger struct {
 	*zap.Logger
+	IsTrace bool
 }
 type LoggerFields interface {
 	Fields() Fields
@@ -56,7 +57,7 @@ func WithDebugger() {
 		zap.AddCallerSkip(1),
 	)
 	defer logger.Sync()
-	DefaultLogger = Logger{logger}
+	DefaultLogger = Logger{Logger: logger, IsTrace: false}
 }
 
 func WithRelease() {
@@ -77,7 +78,7 @@ func WithRelease() {
 		zap.AddCallerSkip(1),
 	)
 	defer logger.Sync()
-	DefaultLogger = Logger{logger}
+	DefaultLogger = Logger{Logger: logger, IsTrace: false}
 }
 
 func GetFields(c context.Context) []zap.Field {
@@ -91,8 +92,16 @@ func GetFields(c context.Context) []zap.Field {
 	return []zap.Field{zap.Reflect("ext", f)}
 }
 
+func (l Logger) Trace(format string, fields ...zap.Field) {
+	if !l.IsTrace {
+		return
+	}
+	fields = append(fields, zap.Field{Key: "trace", Type: zapcore.StringType, String: "t"})
+	l.Debug(format, fields...)
+}
+
 func Tracef(f context.Context, format string, v ...interface{}) {
-	DefaultLogger.Debug(fmt.Sprintf(format, v...), GetFields(f)...)
+	DefaultLogger.Trace(fmt.Sprintf(format, v...), GetFields(f)...)
 }
 func Debugf(f context.Context, format string, v ...interface{}) {
 	DefaultLogger.Debug(fmt.Sprintf(format, v...), GetFields(f)...)

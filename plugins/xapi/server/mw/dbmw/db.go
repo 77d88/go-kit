@@ -17,8 +17,10 @@ func TranManager() xhs.HandlerMw {
 				}
 				if r := tran.DB.Rollback(); r.Error != nil {
 					xlog.Errorf(c, "rollback error: %v", r.Error)
+					panic(r.Error)
 				}
 				xlog.Debugf(c, "request error db rollback")
+				panic(err)
 			}
 		}()
 		c.Next() // 先执行业务逻辑
