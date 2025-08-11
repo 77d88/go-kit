@@ -1,8 +1,8 @@
 package wxopen
 
 import (
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xtype"
+	"context"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
@@ -21,10 +21,12 @@ var (
 	Official *officialaccount.OfficialAccount
 )
 
-func InitWith(scanner xtype.Scanner, names ...string) *officialaccount.OfficialAccount {
-	var config offConfig.Config
-	scanner.ScanKey(xarray.FirstOrDefault(names, "wx.open"), &config)
-	return Init(&config)
+func InitWith() *officialaccount.OfficialAccount {
+	config, err := x.Config[offConfig.Config]("wx.open")
+	if err != nil {
+		xlog.Panicf(context.Background(), "wx.open config error: %v", err)
+	}
+	return Init(config)
 }
 func Init(cfg *offConfig.Config) *officialaccount.OfficialAccount {
 	//var redisConfig RedisConfig

@@ -1,8 +1,8 @@
 package wxmini
 
 import (
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xtype"
+	"context"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
@@ -21,11 +21,13 @@ type RedisConfig struct {
 	Db   int    `yaml:"db" json:"db"`     // 数据库
 }
 
-func InitWith(scanner xtype.Scanner, names ...string) *miniprogram.MiniProgram {
+func InitWith() *miniprogram.MiniProgram {
 	//var redisConfig RedisConfig
-	var config miniConfig.Config
-	scanner.ScanKey(xarray.FirstOrDefault(names, "wx.mini"), &config)
-	return Init(&config)
+	config, err := x.Config[miniConfig.Config]("wx.mini")
+	if err != nil {
+		xlog.Panicf(context.Background(), "wx.mini config error: %v", err)
+	}
+	return Init(config)
 }
 
 func Init(config *miniConfig.Config) *miniprogram.MiniProgram {

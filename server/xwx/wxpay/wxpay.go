@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/wechat/v3"
 	"time"
 )
 
@@ -30,13 +30,15 @@ func NotifyUrl() string {
 	return Cfg.NotifyUrl
 }
 
-func InitWith(xe *x.Engine) *wechat.ClientV3 {
-	var config Config
-	xe.Cfg.ScanKey(xarray.FirstOrDefault(names, "wx.pay"), &config)
+func InitWith() *wechat.ClientV3 {
+	config, err := x.Config[Config]("wx.pay")
+	if err != nil {
+		xlog.Panicf(context.Background(), "wx.pay config error: %v", err)
+	}
 	if config.MchName == "" {
 		config.MchName = "商品"
 	}
-	return Init(&config)
+	return Init(config)
 }
 
 func Init(config *Config) *wechat.ClientV3 {
