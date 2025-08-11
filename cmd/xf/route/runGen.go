@@ -48,7 +48,7 @@ func generateRunFunctionStr(fileName string) (string, []string, []string) {
 		for _, line := range de {
 			runFunc += `	` + line + "\n"
 		}
-		runFunc += `    err := xe.Invoke(func(`
+		runFunc += `    err := x.Find(func(`
 
 		// 构造参数列表
 		var invokeParams []string
@@ -144,7 +144,7 @@ func genRunFileContent(fileName string) (string, error) {
 	// 添加import内容
 	fileContent += "import (\n"
 	fileContent += "\t\"github.com/77d88/go-kit/basic/xerror\"\n"
-	fileContent += "\t\"github.com/77d88/go-kit/plugins/xapi/server/xhs\"\n"
+	fileContent += "\t\"github.com/77d88/go-kit/plugins/x/servers/http/xhs\"\n"
 
 	types := make([]string, 0, len(paramsTypes))
 	for _, t := range paramsTypes {
@@ -153,7 +153,7 @@ func genRunFileContent(fileName string) (string, error) {
 	}
 	types = xarray.Union(types)
 	if len(types) > 0 {
-		fileContent += "\t\"github.com/77d88/go-kit/plugins/xe\"\n"
+		fileContent += "\t\"github.com/77d88/go-kit/plugins/x\"\n"
 	}
 
 	// 查询 paramsTypes 在  f.Imports中的引用并加入fileContent

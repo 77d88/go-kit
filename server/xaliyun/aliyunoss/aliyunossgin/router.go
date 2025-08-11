@@ -2,7 +2,7 @@ package aliyunossgin
 
 import (
 	"context"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
 	ossfilesaveHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/filesave"
 	ossgetdomainHandler "github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin/handler/oss/getdomain"

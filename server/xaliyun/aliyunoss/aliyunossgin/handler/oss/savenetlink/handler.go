@@ -1,7 +1,7 @@
 package savenetlink
 
 import (
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 // handler 保存网络图片 /oss/saveNetLink

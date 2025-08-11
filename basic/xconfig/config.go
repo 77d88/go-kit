@@ -3,6 +3,7 @@ package xconfig
 import (
 	"fmt"
 	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xsys"
 	"github.com/spf13/viper"
 )
@@ -85,28 +86,30 @@ func ScanKeyExecute(key string, config any, f func()) {
 	}
 }
 
-
 func (c *Config) Dispose() error {
 	c.listenStop <- struct{}{}
 	return nil
 }
-
 
 // ShutDownListen 关闭配置监听
 func (c *Config) ShutDownListen() {
 	c.listenStop <- struct{}{}
 }
 
-func (c *Config) Scan(config any) {
+func (c *Config) Scan(config any) error {
 	if err := c.viper.Unmarshal(config); err != nil {
-		fmt.Printf("unmarshal conf failed, err:%s \n", err)
+		ErrorLog("unmarshal conf failed, err:%s \n", err)
+		return xerror.Newf("unmarshal conf failed, err:%s \n", err)
 	}
+	return nil
 }
 
-func (c *Config) ScanKey(key string, config any) {
+func (c *Config) ScanKey(key string, config any) error {
 	if err := c.viper.UnmarshalKey(key, config); err != nil {
-		fmt.Printf("unmarshal conf key %s failed, err:%s \n", key, err)
+		ErrorLog("unmarshal conf key %s failed, err:%s \n", key, err)
+		return xerror.Newf("unmarshal conf key %s failed, err:%s \n", key, err)
 	}
+	return nil
 }
 
 func (c *Config) GetString(key string) string {
@@ -115,6 +118,18 @@ func (c *Config) GetString(key string) string {
 
 func (c *Config) GetStringSlice(key string) []string {
 	return c.viper.GetStringSlice(key)
+}
+
+func (c *Config) GetInt(key string) int {
+	return c.viper.GetInt(key)
+}
+
+func (c *Config) GetIntSlice(key string) []int {
+	return c.viper.GetIntSlice(key)
+}
+
+func (c *Config) GetBool(key string) bool {
+	return c.viper.GetBool(key)
 }
 
 func (c *Config) ScanKeyExecute(key string, config any, f func()) {

@@ -2,7 +2,7 @@ package aliyunossginsts
 
 import (
 	"context"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossginsts/handler/oss/gettoken"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"

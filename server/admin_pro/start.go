@@ -2,15 +2,15 @@ package main
 
 import (
 	"github.com/77d88/go-kit/basic/xconfig/str_scanner"
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth/aes_auth"
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/cors"
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/limiter"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth/aes_auth"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/cors"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/limiter"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdb"
-	"github.com/77d88/go-kit/plugins/xe"
-	"github.com/77d88/go-kit/plugins/xjob"
 	"github.com/77d88/go-kit/plugins/xredis"
+	"github.com/77d88/go-kit/plugins/xtask/xcron"
 	"github.com/77d88/go-kit/server/admin_pro/proapi"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunaddress"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
@@ -35,12 +35,12 @@ func main() {
 	   "db": 0
 	 }
 	}`)
-	xe.New(sc).
+	x.New(sc).
 		Use(xdb.InitWith).
 		Use(xredis.InitWith).
-		Use(xjob.Init).
+		Use(xcron.Init).
 		Use(aliyunoss.InitWith, true).
-		UseServer(func(e *xe.Engine) (xe.EngineServer,error) {
+		UseServer(func(e *x.Engine) (x.EngineServer,error) {
 			server := xhs.New(e)
 			server.Use(limiter.Limiter(server.Config.Rate))
 			server.Use(cors.New(server.Config))

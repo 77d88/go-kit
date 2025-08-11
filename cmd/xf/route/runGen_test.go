@@ -16,7 +16,7 @@ func TestName(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	err := UpdateRunFunc("G:\\development\\project\\AAAAtools\\go\\commonv2\\examples\\xhsserver\\biz\\user_service\\v2\\create\\handler.go")
+	err := UpdateRunFunc("G:\\development\\project\\AAAAtools\\go\\commonv2\\cmd\\xf\\route\\test\\user_service\\v2\\create\\handler.go")
 	if err != nil {
 		panic(err)
 	}

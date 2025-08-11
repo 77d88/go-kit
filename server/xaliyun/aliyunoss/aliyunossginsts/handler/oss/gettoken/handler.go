@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/77d88/go-kit/basic/xcore"
 	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"

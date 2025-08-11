@@ -1,7 +1,7 @@
 package aliyunaddress
 
 import (
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 func DefaultRegister(path string, x *xhs.HttpServer, handler ...xhs.HandlerMw) {

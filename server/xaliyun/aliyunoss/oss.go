@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/basic/xstr"
-	"github.com/77d88/go-kit/plugins/xe"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
@@ -51,7 +51,7 @@ var (
 	Config *Oss
 )
 
-func InitWith(x *xe.Engine) *oss.Client {
+func InitWith(x *x.Engine) *oss.Client {
 	var config Oss
 	x.Cfg.ScanKey("oss", &config)
 	return Init(&config)

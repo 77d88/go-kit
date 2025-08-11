@@ -2,7 +2,7 @@ package smallimgsave
 
 import (
 	"github.com/77d88/go-kit/basic/xid"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"time"

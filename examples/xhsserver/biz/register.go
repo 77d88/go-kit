@@ -7,7 +7,7 @@ import (
 	userServiceV2List "example.com/xserver/biz/user_service/v2/list"
 	userServiceV3Create "example.com/xserver/biz/user_service/v3/create"
 	userServiceV3List "example.com/xserver/biz/user_service/v3/list"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 func Register(xsh *xhs.HttpServer) {

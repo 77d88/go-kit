@@ -3,7 +3,7 @@ package aliyunaddress
 import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xparse"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"time"

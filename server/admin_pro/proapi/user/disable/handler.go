@@ -2,8 +2,8 @@ package disable
 
 import (
 	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdb"
 	pro2 "github.com/77d88/go-kit/server/admin_pro/pro"
 )

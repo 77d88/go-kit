@@ -1,8 +1,8 @@
 package info
 
 import (
-	"github.com/77d88/go-kit/plugins/xapi/server/mw/auth"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 // 角色信息

@@ -3,7 +3,7 @@
 package proapi
 
 import (
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	dbAutoMigrate "github.com/77d88/go-kit/server/admin_pro/proapi/db/autoMigrate"
 	dbDbModels "github.com/77d88/go-kit/server/admin_pro/proapi/db/dbModels"
 	dbInitDataRows "github.com/77d88/go-kit/server/admin_pro/proapi/db/initDataRows"

@@ -2,7 +2,7 @@ package pro
 
 import (
 	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/plugins/xapi/server/xhs"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 // Per_SuperAdmin 特殊权限超级管理员
