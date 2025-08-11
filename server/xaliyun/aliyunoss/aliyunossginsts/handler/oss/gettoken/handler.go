@@ -1,11 +1,13 @@
 package gettoken
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/77d88/go-kit/basic/xcore"
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -23,13 +25,26 @@ import (
 var StsClient *sts20150401.Client
 var do sync.Once
 
-func Init() {
-	client, err := newStsClient()
-	if err != nil {
-		xlog.Errorf(nil, "sts client init fail %s", err)
-		return
-	}
-	StsClient = client
+func Init() *sts20150401.Client {
+
+	do.Do(func() {
+		xlog.Infof(context.Background(), "aliyun.sts.Init")
+
+		if aliyunoss.Config.StsArn == "" {
+			xlog.Fatalf(nil, "aliyun.sts.Init: aliyun.sts.arn is empty 请先初始化aliyun oss")
+		}
+		client, err := newStsClient()
+		if err != nil {
+			xlog.Fatalf(nil, "sts client init fail %s", err)
+		}
+		StsClient = client
+		if client != nil {
+			x.Use(func() *sts20150401.Client { return client }, true)
+		}
+	})
+
+	return StsClient
+
 }
 
 func newStsClient() (*sts20150401.Client, error) {

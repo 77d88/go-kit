@@ -90,12 +90,12 @@ func Use(constructor interface{}, delay ...bool) {
 	}(constructor)
 }
 
-func Get[T any]() (*T, error) {
+func Get[T any]() (T, error) {
 	var result T
 	err := x.invoke(func(r T) {
 		result = r
 	})
-	return &result, err
+	return result, err
 }
 func Find(constructor interface{}) error {
 	return x.invoke(constructor)

@@ -27,7 +27,7 @@ type Auth struct {
 }
 
 func New() auth.Manager {
-	client, err := x.Get[xredis.Client]()
+	client, err := x.Get[*xredis.Client]()
 	if err != nil {
 		return nil
 	}

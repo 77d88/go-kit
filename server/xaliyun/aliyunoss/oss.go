@@ -17,6 +17,7 @@ import (
 	"hash"
 	"io"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -49,12 +50,21 @@ type Oss struct {
 var (
 	Client *oss.Client
 	Config *Oss
+	once   sync.Once
 )
 
-func InitWith(x *x.Engine) *oss.Client {
-	var config Oss
-	x.Cfg.ScanKey("oss", &config)
-	return Init(&config)
+func InitWith() *oss.Client {
+	once.Do(func() {
+		o, err := x.Config[Oss]("aliyun.oss")
+		if err != nil {
+			xlog.Fatalf(nil, "load oss config error: %s", err)
+		}
+		Client = Init(o)
+		if Client != nil {
+			x.Use(func() *oss.Client { return Client }, true)
+		}
+	})
+	return Client
 }
 
 func Init(config *Oss) *oss.Client {

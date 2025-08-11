@@ -29,14 +29,13 @@ func Init() *sdk.Client {
 			xlog.Fatalf(nil, "aliyun address ak or sk is empty")
 		}
 		credentialsProvider := credentials.NewStaticAKCredentialsProvider(ak, sk)
-		//credentialsProvider := credentials.NewStaticAKCredentialsProvider(ak, sk)
 		c, err := sdk.NewClientWithOptions("cn-hangzhou", sdk.NewConfig(), credentialsProvider)
 		if err != nil {
 			xlog.Fatalf(nil, "aliyun address client init failed: %s", err)
 		}
 		client = c
 		if client != nil {
-			x.Use(func() *sdk.Client { return client })
+			x.Use(func() *sdk.Client { return client }, true)
 		}
 	})
 
