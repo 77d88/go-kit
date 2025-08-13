@@ -1,9 +1,10 @@
 package xqueue
 
 import (
+	"time"
+
 	"github.com/77d88/go-kit/basic/xparse"
 	"github.com/hibiken/asynq"
-	"time"
 )
 
 type Client struct {

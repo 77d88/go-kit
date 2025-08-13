@@ -21,6 +21,7 @@ type Ctx struct {
 	TraceId    int64
 	test       bool
 	Server     *HttpServer
+	errors     []*xerror.Error
 }
 
 type CopyContext struct {
@@ -84,7 +85,18 @@ func (c *Ctx) Send(v interface{}) {
 func (c *Ctx) SendError(err interface{}) {
 	e := xerror.New(err)
 	c.Result = e
-	_ = c.Error(e)
+	if c.errors == nil {
+		c.errors = make([]*xerror.Error, 0)
+	}
+	c.errors = append(c.errors, e)
+}
+
+func (c *Ctx) GetError() error {
+	if c.errors == nil {
+		return nil
+	}
+	// 只获取最后一个
+	return c.errors[len(c.errors)-1]
 }
 
 // Copy 拷贝最终上下文 用于传输获其他现场调用

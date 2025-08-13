@@ -3,10 +3,11 @@ package xlog
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const CtxLogParam = "_xe/CTX_LOG_PARAM"

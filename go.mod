@@ -10,6 +10,7 @@ require (
 	github.com/hibiken/asynq v0.25.1
 	github.com/jackc/pgtype v1.14.4
 	github.com/jinzhu/copier v0.4.0
+	github.com/lib/pq v1.10.2
 	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/redis/go-redis/v9 v9.7.3
@@ -19,7 +20,7 @@ require (
 	go.uber.org/zap v1.13.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/time v0.11.0
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.30.1
 )
@@ -72,5 +73,4 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

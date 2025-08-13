@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xcore"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -11,8 +14,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"regexp"
-	"time"
 )
 
 // Config 数据库配置
@@ -27,11 +28,14 @@ type Config struct {
 	DbLinkName                string `yaml:"dbLinkName"`                // 数据库链接名称
 }
 
-func InitWith(e *x.Engine) *DB {
-	var config Config
-	e.Cfg.ScanKey(DefaultDbLinkStr, &config)
-	config.DbLinkName = DefaultDbLinkStr
-	return Init(&config)
+func InitWith() *DB {
+	c, err := x.Config[Config](DefaultDbLinkStr)
+	if err != nil {
+		xlog.Fatalf(nil, "init db error %s", err)
+		return nil
+	}
+	c.DbLinkName = DefaultDbLinkStr
+	return Init(c)
 }
 
 func Init(c *Config) *DB {
@@ -96,14 +100,15 @@ func Init(c *Config) *DB {
 	re := regexp.MustCompile(`password=.+? `)
 	maskedStr := re.ReplaceAllString(c.Dns, "password=******* ")
 	xlog.Infof(nil, "init db conn success %s link -> %s", maskedStr, c.DbLinkName)
-	dbs[c.DbLinkName] = gormDb
-	if DefaultDB == nil {
-		DefaultDB = gormDb
-	}
-	return &DB{
+	db := &DB{
 		DB:     gormDb,
 		Config: c,
 	}
+	dbs[c.DbLinkName] = db
+	if DefaultDB == nil {
+		DefaultDB = db
+	}
+	return db
 }
 
 type gormLogger struct {

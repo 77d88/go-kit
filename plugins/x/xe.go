@@ -1,15 +1,17 @@
 package x
 
 import (
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xconfig"
-	"github.com/77d88/go-kit/plugins/xlog"
-	"go.uber.org/dig"
 	"os"
 	"reflect"
 	"sync"
 	"time"
+
+	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/basic/xconfig"
+	"github.com/77d88/go-kit/plugins/xlog"
+	"go.uber.org/dig"
 )
+
 
 type Disposer interface {
 	Dispose() error // 释放资源

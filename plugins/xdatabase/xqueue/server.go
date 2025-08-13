@@ -2,6 +2,7 @@ package xqueue
 
 import (
 	"context"
+
 	"github.com/77d88/go-kit/basic/xconfig"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/hibiken/asynq"

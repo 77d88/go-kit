@@ -3,6 +3,7 @@ package xdb
 import (
 	"context"
 	"database/sql"
+
 	"github.com/77d88/go-kit/basic/xctx"
 	"gorm.io/gorm"
 )
@@ -16,25 +17,25 @@ type TranOpt struct {
 
 func (d *DB) Tran(fc func(tx *DB) error, opts ...*sql.TxOptions) (err error) {
 	return d.DB.Transaction(func(tx *gorm.DB) error {
-		return fc(wrap(tx))
+		return fc(d.wrap(tx))
 	}, opts...)
 
 }
 
 func (d *DB) Begin(opts ...*sql.TxOptions) *DB {
-	return wrap(d.DB.Begin(opts...))
+	return d.wrap(d.DB.Begin(opts...))
 }
 
 func (d *DB) Commit() *DB {
-	return wrap(d.DB.Commit())
+	return d.wrap(d.DB.Commit())
 }
 
 func (d *DB) SavePoint(name string) *DB {
-	return wrap(d.DB.SavePoint(name))
+	return d.wrap(d.DB.SavePoint(name))
 }
 
 func (d *DB) RollbackTo(name string) *DB {
-	return wrap(d.DB.RollbackTo(name))
+	return d.wrap(d.DB.RollbackTo(name))
 }
 
 func GetCtxTran(c context.Context) *DB {

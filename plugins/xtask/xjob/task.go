@@ -13,10 +13,11 @@ import (
 
 // Task 定义任务结构体
 type Task struct {
-	ID      string        // 任务唯一标识
-	Job     func() error  // 实际执行的函数
-	Retry   int           // 最大重试次数
-	Timeout time.Duration // 任务超时时间
+	ID      string                          // 任务唯一标识
+	Job     func(ctx context.Context) error // 实际执行的函数
+	Retry   int                             // 最大重试次数
+	Timeout time.Duration                   // 任务超时时间
+	Ctx     context.Context                 // 调用任务执行附带的上下文
 }
 
 // TaskHandler 任务处理器核心结构
@@ -87,6 +88,9 @@ func (th *TaskHandler) Submit(task *Task) error {
 			return xerror.Newf("task with ID %s already exists", task.ID)
 		}
 	}
+	if task.Ctx == nil {
+		task.Ctx = defaultCtx
+	}
 
 	th.taskQueue <- task // 发送到任务队列
 	th.wg.Add(1)         // 增加等待计数
@@ -121,7 +125,7 @@ func (th *TaskHandler) dispatch() {
 				// 创建带取消功能的任务执行
 				done := make(chan error, 1)
 				go func() {
-					done <- currentTask.Job()
+					done <- currentTask.Job(currentTask.Ctx)
 				}()
 
 				var err error
@@ -137,11 +141,11 @@ func (th *TaskHandler) dispatch() {
 				}
 
 				if err == nil {
-					xlog.Tracef(defaultCtx, "Task %s completed successfully", currentTask.ID)
+					xlog.Tracef(currentTask.Ctx, "Task %s completed successfully", currentTask.ID)
 					return // 成功则退出
 				}
 
-				xlog.Warnf(defaultCtx, "Task %s failed (attempt %d/%d): %v",
+				xlog.Warnf(currentTask.Ctx, "Task %s failed (attempt %d/%d): %v",
 					currentTask.ID, i+1, currentTask.Retry+1, err)
 
 				if i < currentTask.Retry {
@@ -157,7 +161,7 @@ func (th *TaskHandler) dispatch() {
 			if currentTask.ID != "" {
 				th.tasks.Delete(currentTask.ID)
 			}
-			xlog.Errorf(defaultCtx, "Failed to submit task %s: %v", currentTask.ID, err)
+			xlog.Errorf(currentTask.Ctx, "Failed to submit task %s: %v", currentTask.ID, err)
 		}
 	}
 }
@@ -206,4 +210,6 @@ func (th *TaskHandler) GetPanicChan() <-chan interface{} {
 	return th.panicChan
 }
 
-
+func Submit(t *Task) error {
+	return Init().Submit(t)
+}

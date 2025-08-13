@@ -1,14 +1,15 @@
 package xdb
 
 import (
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/basic/xid"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"reflect"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xid"
+	"github.com/77d88/go-kit/plugins/xlog"
 
 	"gorm.io/gorm"
 )
@@ -16,14 +17,14 @@ import (
 var (
 	RegisterModels = make(map[string]map[string]GromModel)
 	mu             sync.Mutex
-	dbs            = make(map[string]*gorm.DB)
-	DefaultDB      *gorm.DB
+	dbs            = make(map[string]*DB)
+	DefaultDB      *DB
 )
 
 const DefaultDbLinkStr string = "db"
 
 // GetDB 获取数据库链接
-func GetDB(name ...string) (*gorm.DB, error) {
+func GetDB(name ...string) (*DB, error) {
 	if len(name) == 0 {
 		return DefaultDB, nil
 	}

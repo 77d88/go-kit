@@ -341,3 +341,8 @@ func (l Logger) Info(msg string, keysAndValues ...interface{}) {
 func (l Logger) Error(err error, msg string, keysAndValues ...interface{}) {
 	xlog.Errorf(defaultCtx, msg, keysAndValues...)
 }
+
+func Submit(task *CronTask) error {
+	_, err := Init().SubmitCronTask(task)
+	return err
+}

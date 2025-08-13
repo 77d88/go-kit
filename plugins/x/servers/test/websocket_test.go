@@ -22,7 +22,7 @@ package main
 //		Auth: true,
 //	})
 //	engine.RegisterMsgHandler(1, func(c *Context) error {
-//		xlog.Infof(c, "收到消息 %s", c.Msg.Message)
+//		xlog.Infof(c, "收到消息 %s", c.Msg.mqMessage)
 //		return nil
 //	})
 //	engine.StartStatistics()

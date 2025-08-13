@@ -2,12 +2,14 @@ package xdb
 
 import (
 	"context"
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xreflect"
-	"github.com/77d88/go-kit/plugins/xlog"
+	"database/sql"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/basic/xreflect"
+	"github.com/77d88/go-kit/plugins/xlog"
 
 	"gorm.io/gorm"
 )
@@ -20,7 +22,7 @@ import (
 // dbname为需要连接的具体实例库名
 
 type DB struct {
-	DB *gorm.DB
+	DB     *gorm.DB
 	Config *Config
 }
 
@@ -30,14 +32,13 @@ func New(name ...string) *DB {
 	if err != nil {
 		return nil
 	}
-	return &DB{
-		DB: db,
-	}
+	return db
 }
 
-func wrap(db *gorm.DB) *DB {
+func (d *DB) wrap(db *gorm.DB) *DB {
 	return &DB{
-		DB: db,
+		DB:     db,
+		Config: d.Config,
 	}
 }
 
@@ -45,21 +46,21 @@ func Ctx(c context.Context, names ...string) *DB {
 	db := New(names...)
 	return db.WithCtx(c)
 }
+func (d *DB) SQLDB() (*sql.DB, error) {
+	return d.DB.DB()
+}
 func (d *DB) WithCtx(c context.Context) *DB {
 	get := GetCtxTran(c) // 有事务优先获取事务
 	if get != nil {
 		return get
 	}
-	return wrap(d.DB.WithContext(c))
+	return d.wrap(d.DB.WithContext(c))
 }
 func (d *DB) Session(session ...*gorm.Session) *DB {
 	if session == nil || len(session) == 0 {
 		session = append(session, &gorm.Session{})
 	}
-	if d == nil {
-		return wrap(d.DB.Session(session[0]))
-	}
-	return wrap(d.DB.Session(session[0]))
+	return d.wrap(d.DB.Session(session[0]))
 }
 
 func (d *DB) Table(name string, args ...interface{}) *DB {
@@ -226,7 +227,7 @@ func (d *DB) FindLinks(source interface{}, to interface{}, fields ...string) *Re
 	}
 	return warpResult(d.DB.Find(to, "id in (?)", ids))
 }
-func (d *DB) Take(dest interface{}) *Result  {
+func (d *DB) Take(dest interface{}) *Result {
 	return warpResult(d.DB.Take(dest))
 }
 func (d *DB) First(dest interface{}, conds ...interface{}) *Result {
