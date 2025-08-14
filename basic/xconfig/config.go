@@ -2,6 +2,7 @@ package xconfig
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
@@ -18,6 +19,7 @@ type Config struct {
 }
 
 var XConfig *Config
+var once sync.Once
 
 // ConfigLoader 配置加载器
 type ConfigLoader interface {
@@ -26,22 +28,24 @@ type ConfigLoader interface {
 }
 
 func Init(loader ConfigLoader, dataIds ...string) *Config {
-	dataIds = xarray.Union(dataIds) // 去重
-	cfg := Config{
-		loader:      loader,
-		cacheConfig: make(map[string]string),
-		dataIds:     dataIds,
-		listenStop:  make(chan struct{}),
-	}
-	cfg.readToViper()
-	cfg.startListen() // 开启监听
-	InfoLog("config init success from to %s ==> successful:%v error:%v all:%v", loader.Type(), cfg.ListenDataIds, xarray.Difference(cfg.dataIds, cfg.ListenDataIds), cfg.dataIds)
-	if len(cfg.ListenDataIds) > 0 {
-	} else {
-		WarnLog("no config to listen input %v", dataIds)
-	}
-	XConfig = &cfg
-	return &cfg
+	once.Do(func() {
+		dataIds = xarray.Union(dataIds) // 去重
+		cfg := Config{
+			loader:      loader,
+			cacheConfig: make(map[string]string),
+			dataIds:     dataIds,
+			listenStop:  make(chan struct{}),
+		}
+		cfg.readToViper()
+		cfg.startListen() // 开启监听
+		InfoLog("config init success from to %s ==> successful:%v error:%v all:%v", loader.Type(), cfg.ListenDataIds, xarray.Difference(cfg.dataIds, cfg.ListenDataIds), cfg.dataIds)
+		if len(cfg.ListenDataIds) > 0 {
+		} else {
+			WarnLog("no config to listen input %v", dataIds)
+		}
+		XConfig = &cfg
+	})
+	return XConfig
 }
 
 func Scan(config any) {
