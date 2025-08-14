@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"reflect"
+	"runtime"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"reflect"
-	"runtime"
-	"time"
 )
 
 type ServerConfig struct {
@@ -30,6 +31,7 @@ type HttpServer struct {
 	Config *ServerConfig
 	routes []string
 }
+
 
 func New() *HttpServer {
 	c, err := x.Config[ServerConfig]("server")

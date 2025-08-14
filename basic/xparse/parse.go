@@ -3,12 +3,13 @@ package xparse
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xcore"
-	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/basic/xtype"
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/77d88/go-kit/basic/xcore"
+	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xtype"
 )
 
 type Parser = func(any) (any, error)
@@ -63,8 +64,18 @@ func ToNumber[T xtype.Numer](s string) (T, error) {
 	}
 }
 
+// ToNumbers 批量字符串转数字
+func ToNumbers[T xtype.Numer](ss ...string) []T {
+	var is []T
+	for _, s := range ss {
+		if toInt, err := ToNumber[T](s); err == nil {
+			is = append(is, toInt)
+		}
+	}
+	return is
+}
+
 // ToString 任意类型转字符串
-// ToString 任意类型转字符串（优化版）
 func ToString[T any](v T, defaultValue ...T) string {
 	if xcore.IsZero(v) {
 		if len(defaultValue) > 0 {
@@ -107,6 +118,14 @@ func ToString[T any](v T, defaultValue ...T) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
+}
+// ToStrings 批量字符串转字符串
+func ToStrings[T any](vs ...T) []string {
+	var is []string
+	for _, s := range vs {
+		is = append(is, ToString(s))
+	}
+	return is
 }
 
 // ToTime 字符串转时间
