@@ -162,8 +162,15 @@ func (d *DB) Page(page, size int) *DB {
 	return d.Offset((page - 1) * size).Limit(size)
 }
 
-func (d *DB) Scopes(funcs ...func(*gorm.DB) *gorm.DB) *DB {
-	d.DB = d.DB.Scopes(funcs...)
+func (d *DB) Scopes(funcs ...func(*DB) *DB) *DB {
+	gormFuncs := make([]func(*gorm.DB) *gorm.DB, len(funcs))
+	for i, fn := range funcs {
+		f := fn
+		gormFuncs[i] = func(gdb *gorm.DB) *gorm.DB {
+			return f(d.wrap(gdb)).unWrap()
+		}
+	}
+	d.DB = d.DB.Scopes(gormFuncs...)
 	return d
 }
 func (d *DB) Unscoped() *DB {

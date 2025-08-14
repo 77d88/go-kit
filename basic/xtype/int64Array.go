@@ -1,4 +1,4 @@
-package rtype
+package xtype
 
 import (
 	"encoding/json"

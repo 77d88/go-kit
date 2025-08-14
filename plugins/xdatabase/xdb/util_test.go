@@ -2,19 +2,18 @@ package xdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/plugins/xlog"
-	"github.com/bytedance/sonic"
 	"testing"
 	"time"
+
+	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type MuDbUser struct {
 	BaseModel
-	Name     string
+	Username string
 	WxOpenId string
 }
 
@@ -24,11 +23,16 @@ func (m *MuDbUser) TableName() string {
 
 type MuDbProduct struct {
 	BaseModel
-	BaseModeFunc[MuDbProduct]
 }
 
 func (m *MuDbProduct) TableName() string {
 	return "s_product"
+}
+
+func idMaxScope(id int64) func(db *DB) *DB {
+	return func(db *DB) *DB {
+		return db.Where("id > ?", id)
+	}
 }
 
 func TestBaseFunc(t *testing.T) {
@@ -36,6 +40,15 @@ func TestBaseFunc(t *testing.T) {
 		Dns:    FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 		Logger: true,
 	})
+	var dbusers []MuDbUser
+
+	find := Ctx(context.Background()).Scopes(idMaxScope(12)).Model(&dbusers).Limit(3).Find(&dbusers)
+	if find.Error != nil {
+		t.Error(find.Error)
+	}
+	for _, item := range dbusers {
+		t.Log(item)
+	}
 }
 func TestSession(t *testing.T) {
 
@@ -191,13 +204,7 @@ func TestToSqlMap(t *testing.T) {
 
 func TestAcv(t *testing.T) {
 	var a *TextArray
-	marshal2, _ := json.Marshal(a)
 	NewTextArray("1", "2", "3")
-	marshal, _ := json.Marshal(NewTextArray("1", "2", "3"))
-	bytes, _ := sonic.Marshal(a)
-	t.Log(string(marshal))
-	t.Log(string(marshal2))
-	t.Log(string(bytes))
 }
 
 func TestFindIDs(t *testing.T) {

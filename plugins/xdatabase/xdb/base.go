@@ -10,7 +10,6 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
-
 	"gorm.io/gorm"
 )
 
@@ -107,7 +106,7 @@ type BaseModel struct {
 	DeletedTime gorm.DeletedAt `gorm:"comment:删除时间;index" json:"deletedTime"`          // 删除时间
 }
 
-func (b *Key) GetID() int64 {
+func (b Key) GetID() int64 {
 	return b.ID
 }
 
