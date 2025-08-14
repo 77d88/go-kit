@@ -3,6 +3,8 @@ package redis_auth
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xencrypt/xbase64"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
@@ -13,12 +15,11 @@ import (
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xlog"
-	"time"
 )
 
 const defaultPrefix = "xapi_auth:"
 
-var localCache = xcache.NewLocalCache(defaultPrefix, 5*time.Minute, 10*time.Minute)
+var localCache = xcache.New(5*time.Minute, 10*time.Minute)
 
 type Auth struct {
 	Client      *xredis.Client

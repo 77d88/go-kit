@@ -2,6 +2,9 @@ package aliyunaddress
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xparse"
 	"github.com/77d88/go-kit/plugins/x"
@@ -9,8 +12,6 @@ import (
 	"github.com/77d88/go-kit/plugins/xcache"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
-	"sync"
-	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
@@ -45,8 +46,7 @@ func Init() *sdk.Client {
 // handler 地址标准化 /address/standardizeAddress
 func handler(c *xhs.Ctx, r request) (interface{}, error) {
 
-	var res response
-	err := xcache.Once("aliyun_address_cache_"+r.Text, &res, time.Minute*30, func() (interface{}, error) {
+	return xcache.Once("aliyun_address_cache_"+r.Text, time.Minute*30, func() (interface{}, error) {
 		// 构造一个公共请求
 		request := requests.NewCommonRequest()
 		// 设置请求方式
@@ -104,9 +104,6 @@ func handler(c *xhs.Ctx, r request) (interface{}, error) {
 			TelNumber:    data.ExpressExtract.Tel,
 		}, nil
 	})
-
-	return res, err
-
 }
 
 // Run 地址标准化

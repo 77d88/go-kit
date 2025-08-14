@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xcore"
-	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
@@ -17,9 +20,6 @@ import (
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/google/uuid"
-	"strings"
-	"sync"
-	"time"
 )
 
 var StsClient *sts20150401.Client
@@ -62,8 +62,7 @@ func newStsClient() (*sts20150401.Client, error) {
 
 // handler 获取token /oss/getToken
 func handler(c *xhs.Ctx, r request) (interface{}, error) {
-	var res response
-	err := xcache.Once("oss:sts", &res, time.Minute*30, func() (interface{}, error) {
+	return xcache.Once("oss:sts", time.Minute*30, func() (interface{}, error) {
 		assumeRoleRequest := &sts20150401.AssumeRoleRequest{
 			DurationSeconds: xcore.V2p(int64(60 * 60)), // 设置STS令牌的有效期为1小时。
 			RoleArn:         &aliyunoss.Config.StsArn,
@@ -139,11 +138,6 @@ func handler(c *xhs.Ctx, r request) (interface{}, error) {
 		}
 		return s, nil
 	})
-	if err != nil {
-		xlog.Errorf(c, "获取token失败 %v", err)
-		return nil, xerror.New("获取token失败")
-	}
-	return res, nil
 }
 
 // Run 获取token

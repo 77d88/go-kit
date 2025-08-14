@@ -1,9 +1,10 @@
 package xcache
 
 import (
-	"github.com/77d88/go-kit/plugins/xlog"
 	"testing"
 	"time"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type Res struct {
@@ -17,17 +18,18 @@ func TestLocalCache_Set(t *testing.T) {
 	fci00 := func() (interface{}, error) {
 		println("123133")
 		return &Res{
-			ID: 1,
+			ID: 2,
 		}, nil
 	}
-	err := Once("test", nil, time.Minute, fci00)
-	err = Once("test", nil, time.Minute, fci00)
-	err = Once("test", nil, time.Minute, fci00)
-	err = Once("test", nil, time.Minute, fci00)
-	err = Once("test", nil, time.Minute, fci00)
+	_, err := Once("test", time.Minute, fci00)
+	_, err = Once("test", time.Minute, fci00)
+	_, err = Once("test", time.Minute, fci00)
+	_, err = Once("test2", time.Minute, fci00)
+	res, err2 := Once("test", time.Minute, fci00)
 
 	xlog.Errorf(nil, "err %v %v", err, nil)
 	xlog.Errorf(nil, "err %v %v", err, nil)
+	xlog.Errorf(nil, "err %+v %v", res, err2)
 	//xlog.Errorf(nil, "err %v %v", err, nil == nil)
 
 }

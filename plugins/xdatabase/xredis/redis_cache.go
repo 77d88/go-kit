@@ -18,7 +18,7 @@ package xredis
 // // NewRedisCache creates a new RedisCache instance.
 // func NewRedisCache(namespace string, c *Get) xcache.Cached {
 //	return CacheOnce{
-//		CacheOnce: xcache.CacheOnce{Namespace: namespace},
+//		CacheOnce: xcache.CacheOnce{Warper: namespace},
 //		c:     c,
 //	}
 // }
