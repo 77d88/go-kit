@@ -57,7 +57,7 @@ func NewEnv() *RedisConfigLoader {
 
 }
 func (c *RedisConfigLoader) Load(dataId string) (string, error) {
-	sprintf := fmt.Sprintf("%s:%s", c.redisPrefix, dataId)
+	sprintf := fmt.Sprintf("%s%s", c.redisPrefix, dataId)
 	str, err := c.configClient.Get(context.TODO(), sprintf).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		xconfig.ErrorLog("config get %s  error : %s", dataId, err)
@@ -66,5 +66,5 @@ func (c *RedisConfigLoader) Load(dataId string) (string, error) {
 	return str, nil
 }
 func (c *RedisConfigLoader) Type() string {
-	return fmt.Sprintf("redis(%s:%d/%d)", c.cnn.Host, c.cnn.Port, c.cnn.ToIntDatabase())
+	return fmt.Sprintf("redis(%s:%d/%d) prefix(%s)", c.cnn.Host, c.cnn.Port, c.cnn.ToIntDatabase(), c.redisPrefix)
 }
