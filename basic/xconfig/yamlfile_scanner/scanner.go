@@ -3,17 +3,18 @@ package file_scanner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xconfig"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
+
+	"github.com/77d88/go-kit/basic/xconfig"
+	"gopkg.in/yaml.v3"
 )
 
 type YamlConfigLoader struct {
 	path string
 }
 
-func (c *YamlConfigLoader) Load(group, dataId string) (string, error) {
+func (c *YamlConfigLoader) Load(dataId string) (string, error) {
 	file, err := os.Open(c.path)
 	if err != nil {
 		return "", err

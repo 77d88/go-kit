@@ -1,9 +1,8 @@
-package xqueue
+package redismq
 
 import (
 	"context"
 
-	"github.com/77d88/go-kit/basic/xconfig"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/hibiken/asynq"
 )
@@ -15,7 +14,7 @@ type Server struct {
 
 var Srv *Server
 
-func NewServer(cfg asynq.Config, consumers map[string]ConsumerFunc) *Server {
+func NewServer(c *Config, cfg asynq.Config, consumers map[string]ConsumerFunc) *Server {
 	if len(consumers) == 0 {
 		return nil
 	}
@@ -28,7 +27,11 @@ func NewServer(cfg asynq.Config, consumers map[string]ConsumerFunc) *Server {
 	}
 
 	Srv = &Server{
-		Server:    asynq.NewServer(getRedisConfig(), cfg),
+		Server: asynq.NewServer(asynq.RedisClientOpt{
+			Addr:     c.Addr,
+			Password: c.Pass,
+			DB:       c.Db,
+		}, cfg),
 		consumers: consumers,
 	}
 
@@ -40,17 +43,6 @@ func NewServer(cfg asynq.Config, consumers map[string]ConsumerFunc) *Server {
 }
 
 type ConsumerFunc func(ctx context.Context, message string) error
-
-func getRedisConfig() asynq.RedisClientOpt {
-	var c RedisConfig
-	xconfig.ScanKey("redis", &c)
-
-	return asynq.RedisClientOpt{
-		Addr:     c.Addr,
-		Password: c.Pass,
-		DB:       c.Db,
-	}
-}
 
 type AsynqLogger struct{}
 

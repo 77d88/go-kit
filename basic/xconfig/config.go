@@ -2,9 +2,9 @@ package xconfig
 
 import (
 	"fmt"
+
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/basic/xsys"
 	"github.com/spf13/viper"
 )
 
@@ -15,33 +15,19 @@ type Config struct {
 	dataIds       []string          // 配置文件
 	ListenDataIds []string          // 监听的配置文件
 	listenStop    chan struct{}
-	group         string
 }
 
 var XConfig *Config
 
 // ConfigLoader 配置加载器
 type ConfigLoader interface {
-	Load(group, dataId string) (string, error)
+	Load(dataId string) (string, error)
 	Type() string
 }
 
-func Init(loader ConfigLoader, group string, dataIds ...string) *Config {
-
-	baseConfig := xsys.OsEnvGet("V_DEFAULT_CONFIG_KEY", "base")
-	if baseConfig != "ignore" {
-		var bdataIds = make([]string, 1)
-		bdataIds[0] = baseConfig
-		dataIds = append(bdataIds, dataIds...)
-	}
+func Init(loader ConfigLoader, dataIds ...string) *Config {
 	dataIds = xarray.Union(dataIds) // 去重
-
-	if len(dataIds) == 0 {
-		panic("dataIds is empty")
-	}
-
 	cfg := Config{
-		group:       group,
 		loader:      loader,
 		cacheConfig: make(map[string]string),
 		dataIds:     dataIds,
@@ -49,10 +35,10 @@ func Init(loader ConfigLoader, group string, dataIds ...string) *Config {
 	}
 	cfg.readToViper()
 	cfg.startListen() // 开启监听
-	InfoLog("config init success from to %s : [%s]==> successful:%v error:%v all:%v", loader.Type(), cfg.group, cfg.ListenDataIds, xarray.Difference(cfg.dataIds, cfg.ListenDataIds), cfg.dataIds)
+	InfoLog("config init success from to %s ==> successful:%v error:%v all:%v", loader.Type(), cfg.ListenDataIds, xarray.Difference(cfg.dataIds, cfg.ListenDataIds), cfg.dataIds)
 	if len(cfg.ListenDataIds) > 0 {
 	} else {
-		WarnLog("no config to listen input %s->%v", cfg.group, dataIds)
+		WarnLog("no config to listen input %v", dataIds)
 	}
 	XConfig = &cfg
 	return &cfg
@@ -112,16 +98,28 @@ func (c *Config) ScanKey(key string, config any) error {
 	return nil
 }
 
-func (c *Config) GetString(key string) string {
-	return c.viper.GetString(key)
+func (c *Config) GetString(key string, defaultValue ...string) string {
+	str := c.viper.GetString(key)
+	if str == "" {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+	}
+	return str
 }
 
 func (c *Config) GetStringSlice(key string) []string {
 	return c.viper.GetStringSlice(key)
 }
 
-func (c *Config) GetInt(key string) int {
-	return c.viper.GetInt(key)
+func (c *Config) GetInt(key string, defaultValue ...int) int {
+	i := c.viper.GetInt(key)
+	if i == 0 {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+	}
+	return i
 }
 
 func (c *Config) GetIntSlice(key string) []int {

@@ -2,9 +2,10 @@ package xdbutil
 
 import (
 	"fmt"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"strconv"
 	"strings"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type ConnectionInfo struct {

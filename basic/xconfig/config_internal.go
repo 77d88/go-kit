@@ -1,13 +1,12 @@
 package xconfig
 
 import (
-	"github.com/77d88/go-kit/basic/xsys"
-	"github.com/spf13/viper"
 	"strings"
 	"time"
+
+	"github.com/77d88/go-kit/basic/xsys"
+	"github.com/spf13/viper"
 )
-
-
 
 // startListen 开启配置监听 每分钟 监听配置文件变化
 func (c *Config) startListen() {
@@ -27,7 +26,7 @@ func (c *Config) startListen() {
 			select {
 			case <-ticker.C:
 				for _, id := range c.dataIds { // 监听所有数据源
-					config, err := c.loader.Load(c.group, id)
+					config, err := c.loader.Load(id)
 					if err != nil {
 						if err.Error() != "config data not exist" && id != "base" {
 							ErrorLog("sync xconfig error:%s", err)
@@ -51,13 +50,19 @@ func (c *Config) startListen() {
 	}()
 }
 
-
 func (c *Config) readToViper() {
 	c.viper = viper.New()         // 重置viper
 	c.viper.SetConfigType("json") // 统一使用json格式
+	// 添加环境变量支持
+	c.viper.AutomaticEnv() // 自动绑定环境变量
+	// 可选：设置环境变量前缀，例如 "APP_"
+	c.viper.SetEnvPrefix("x")
+	// 可选：替换环境变量中的 "." 为 "_"（Viper 默认将 "." 替换为 "_"）
+	// c.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	successKeys := make([]string, 0)
 	for _, id := range c.dataIds {
-		config, err := c.loader.Load(c.group, id)
+		config, err := c.loader.Load(id)
 
 		if err != nil {
 			continue
@@ -67,7 +72,7 @@ func (c *Config) readToViper() {
 		}
 		err = c.viper.MergeConfig(strings.NewReader(config)) // 读取配置文件到viper
 		if err != nil {
-			ErrorLog("viper read config 【%s:%s】 error:%s", c.group, id, err)
+			ErrorLog("viper read config 【%s】 error:%s", id, err)
 			continue
 		}
 		c.cacheConfig[id] = config

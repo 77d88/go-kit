@@ -2,10 +2,10 @@ package xconfig
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/spf13/viper"
-	"strings"
-	"testing"
 )
 
 type (
@@ -25,14 +25,25 @@ type (
 	}
 )
 
-func Test(t *testing.T) {
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("v")                                // 设置读取环境变量前缀，会自动转为大写 v_APP_CLIENT_ID=1 v_db.dns =
-	viper.AllowEmptyEnv(true)                              // 将空环境变量视为已设置
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // 环境变量中配置的.替换为_书写
+type StringLoader struct {
+	data string
+}
 
-	fmt.Printf("%s\n", viper.GetString("NACOS_ADDR"))
-	fmt.Printf("%s\n", viper.GetString("NACOS_NAMESPACE"))
+func (c *StringLoader) Load(group, dataId string) (string, error) {
+	return c.data, nil
+}
+
+func (c *StringLoader) Type() string {
+	return "static json string"
+}
+
+func Test(t *testing.T) {
+	config := Init(&StringLoader{data: `{"server":{"port":9981,"debug":false},"db":{"dns":"host=127.0.0.1 port=5432 user=postgres password=jerry123! dbname=zyv2 sslmode=disable TimeZone=Asia/Shanghai","logger":true}}`},"")
+
+
+	fmt.Printf("%d\n", config.GetInt("server.port",8080)) // 环境变量设置 x_server.port=80 输出80 不设置输出 9981. 配置值
+	fmt.Printf("%s\n", config.GetString("db.dns")) // 环境变量设置 x_db.dns=tesxx 则输出tesxx 不设置输出 host.... 配置值
+	fmt.Printf("%s\n", config.GetString("test")) // 环境变量设置为x_test=x_test_value
 	fmt.Printf("%s\n", viper.GetString("timeZone"))
 	fmt.Printf("appid %s\n", viper.GetString("wx.mini.appid"))
 }

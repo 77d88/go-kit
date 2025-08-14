@@ -10,7 +10,7 @@ func New(data string) *StringLoader {
 	return &StringLoader{data: data}
 }
 
-func (c *StringLoader) Load(group, dataId string) (string, error) {
+func (c *StringLoader) Load(dataId string) (string, error) {
 	return c.data, nil
 }
 
