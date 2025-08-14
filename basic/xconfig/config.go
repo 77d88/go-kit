@@ -48,34 +48,6 @@ func Init(loader ConfigLoader, dataIds ...string) *Config {
 	return XConfig
 }
 
-func Scan(config any) {
-	if err := XConfig.viper.Unmarshal(config); err != nil {
-		fmt.Printf("unmarshal conf failed, err:%s \n", err)
-	}
-}
-
-func ScanKey(key string, config any) {
-	if err := XConfig.viper.UnmarshalKey(key, config); err != nil {
-		fmt.Printf("unmarshal conf key %s failed, err:%s \n", key, err)
-	}
-}
-
-func GetString(key string) string {
-	return XConfig.viper.GetString(key)
-}
-
-func GetStringSlice(key string) []string {
-	return XConfig.viper.GetStringSlice(key)
-}
-
-func ScanKeyExecute(key string, config any, f func()) {
-	if err := XConfig.viper.UnmarshalKey(key, config); err != nil {
-		fmt.Printf("unmarshal conf key %s failed, err:%s \n", key, err)
-	} else {
-		f()
-	}
-}
-
 func (c *Config) Dispose() error {
 	c.listenStop <- struct{}{}
 	return nil

@@ -5,11 +5,11 @@ import (
 	"os/signal"
 	"reflect"
 
+	"github.com/77d88/go-kit/basic/xconfig"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 func Start() {
-	Init()
 	if x.sf == nil {
 		panic("server is nil please use UseServer")
 	}
@@ -41,8 +41,6 @@ func Start() {
 }
 
 func Use(constructor interface{}, delay ...bool) {
-	Init()
-
 	if reflect.TypeOf(constructor).Kind() == reflect.Func {
 		// 判断这个构造函数的第一个返回值是否是 func() (EngineServer, error)
 		switch f := constructor.(type) {
@@ -56,6 +54,20 @@ func Use(constructor interface{}, delay ...bool) {
 			return
 		}
 	} else {
+
+		switch t := constructor.(type) {
+		case *xconfig.Config:
+			x.Cfg = t
+			err := x.provide(func() (*xconfig.Config, error) {
+				return x.Cfg, nil
+			})
+			if err != nil {
+				panic(err)
+				return
+			}
+
+		}
+
 		return
 	}
 
@@ -110,7 +122,6 @@ func Info() *XInfo {
 }
 
 func Config[T any](key string) (*T, error) {
-	Init()
 	var result T
 	err := x.Cfg.ScanKey(key, &result)
 	return &result, err

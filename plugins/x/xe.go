@@ -12,7 +12,6 @@ import (
 	"go.uber.org/dig"
 )
 
-
 type Disposer interface {
 	Dispose() error // 释放资源
 }
@@ -38,26 +37,28 @@ type Engine struct {
 }
 
 var x *Engine // 持有一个服务实例
-var once sync.Once
 
-func Init() {
-	once.Do(func() {
-		Container := dig.New()
+func init() {
+	engine := &Engine{
+		Container: dig.New(),
+		Info: &XInfo{
+			StartTime: time.Now(),
+		},
+		Cfg:        nil, // 这个通过 use 注入 或者setConfig
+		QuitSignal: make(chan os.Signal),
+	}
+	err := engine.provide(func() *Engine { return engine })
+	if err != nil {
+		panic(err)
+	}
+}
 
-		engine := &Engine{
-			Container: Container,
-			Info: &XInfo{
-				StartTime: time.Now(),
-			},
-			Cfg:        xconfig.XConfig,
-			QuitSignal: make(chan os.Signal),
-		}
-		err := engine.provide(func() *Engine { return engine })
-		if err != nil {
-			panic(err)
-		}
-		x = engine
-	})
+func SetConfig(config *xconfig.Config) {
+	x.Cfg = config
+	err := x.provide(func() *xconfig.Config { return x.Cfg })
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (e *Engine) provide(constructor interface{}, options ...dig.ProvideOption) error {
@@ -119,7 +120,6 @@ func (e *Engine) getInst(types ...reflect.Type) ([]interface{}, error) {
 	}), nil
 }
 func GetInst(types ...reflect.Type) ([]interface{}, error) {
-	Init()
 	return x.getInst(types...)
 }
 
@@ -138,6 +138,5 @@ func (e *Engine) getInstValue(types ...reflect.Type) ([]reflect.Value, error) {
 }
 
 func GetInstValue(types ...reflect.Type) ([]reflect.Value, error) {
-	Init()
 	return x.getInstValue(types...)
 }
