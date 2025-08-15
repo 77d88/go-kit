@@ -26,7 +26,6 @@ type DB struct {
 	Config *Config
 }
 
-
 func (d *DB) wrap(db *gorm.DB) *DB {
 	return &DB{
 		DB:     db,
@@ -272,6 +271,10 @@ func (d *DB) FindPage(page PageRequest, result any, count *int64) *Result {
 
 func (d *DB) SaveMap(s GromModel, obj interface{}, mapping ...interface{}) *Result {
 	m := toSqlMap(obj, mapping...)
+	mdb := d
+	if s != nil {
+		mdb = d.Model(s)
+	}
 	var id int64
 	// 获取出ID 单独处理
 	for k, v := range m {
@@ -283,7 +286,7 @@ func (d *DB) SaveMap(s GromModel, obj interface{}, mapping ...interface{}) *Resu
 		}
 	}
 	if id > 0 {
-		result := d.Model(s).Where("id = ?", id).Updates(m)
+		result := mdb.Where("id = ?", id).Updates(m)
 		result.RowId = id
 		return result
 	} else {
@@ -292,7 +295,7 @@ func (d *DB) SaveMap(s GromModel, obj interface{}, mapping ...interface{}) *Resu
 		m["created_time"] = time.Now()
 		m["updated_time"] = time.Now()
 		m["deleted_time"] = nil
-		result := d.Model(s).Create(m)
+		result := mdb.Create(m)
 		result.RowId = saveId
 		return result
 	}

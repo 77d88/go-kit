@@ -1,9 +1,10 @@
 package xhs
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+
+	"github.com/77d88/go-kit/basic/xctx"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -25,7 +26,7 @@ type Ctx struct {
 }
 
 type CopyContext struct {
-	context.Context
+	xctx.Context
 	ContextAuth
 	ApiCache
 	TraceId int64
@@ -48,13 +49,30 @@ func newCtx(c *gin.Context, x *HttpServer) *Ctx {
 	return d
 }
 
-func NewTestContext() *Ctx {
-	return &Ctx{
+func NewTestContext(data ...interface{}) *Ctx {
+	c := &Ctx{
 		test:    true,
 		Context: &gin.Context{},
 	}
+	if len(data) > 0 {
+		c.Set("testdata", data[0])
+	}
+	return c
 }
 
+func (c *Ctx) ShouldBind(obj any) error {
+	if obj == nil {
+		return nil
+	}
+	// 如果请求的body是空的，则返回错误
+	if c.Request.ContentLength == 0 {
+		return nil
+	}
+	if c.test {
+		obj = c.Value("testdata")
+	}
+	return c.Context.ShouldBind(obj)
+}
 func (c *Ctx) Value(key any) any {
 	if key == ctxThisKey {
 		return c
@@ -100,9 +118,9 @@ func (c *Ctx) GetError() error {
 }
 
 // Copy 拷贝最终上下文 用于传输获其他现场调用
-func (c *Ctx) Copy() context.Context {
+func (c *Ctx) Copy() xctx.Context {
 	return CopyContext{
-		Context:     context.WithValue(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
+		Context:     xctx.WithVal(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
 		ContextAuth: c.ContextAuth,
 		ApiCache: ApiCache{
 			cache: c.CopyCacheMap(),

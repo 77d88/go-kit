@@ -8,6 +8,12 @@ import (
 
 type Int64Array []int64
 
+func (i *Int64Array) ToSlice() []int64 {
+	if i == nil {
+		return make([]int64, 0)
+	}
+	return *i
+}
 func (i *Int64Array) IsEmpty() bool {
 	return i == nil || len(*i) == 0
 }

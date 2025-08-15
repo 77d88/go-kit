@@ -110,7 +110,7 @@ func (b Key) GetID() int64 {
 	return b.ID
 }
 
-func (b *Key) DefaultIgnoreUpdateFields() []string {
+func (b Key) DefaultIgnoreUpdateFields() []string {
 	return []string{}
 }
 
@@ -133,7 +133,7 @@ type GromModel interface {
 	InitData() []GromModel
 }
 
-func (b *BaseModel) DefaultIgnoreUpdateFields() []string {
+func (b BaseModel) DefaultIgnoreUpdateFields() []string {
 	return []string{"created_time", "deleted_time"}
 }
 
@@ -146,7 +146,7 @@ func (b *BaseModel) SetID(id int64) *BaseModel {
 	b.ID = id
 	return b
 }
-func (b *Key) InitData() []GromModel {
+func (b Key) InitData() []GromModel {
 	return make([]GromModel, 0)
 }
 
