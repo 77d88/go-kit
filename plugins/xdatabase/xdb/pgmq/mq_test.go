@@ -8,12 +8,12 @@ import (
 
 func TestName(t *testing.T) {
 
-	xdb.Init(&xdb.Config{
+	xdb.New(&xdb.Config{
 		Dns:    xdb.FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 		Logger: true,
 	})
 
-	mq := NewMq(&Config{})
+	mq := New(&Config{})
 	mq.RegisterHandler(MsgType(0), func(msg *Queue) (bool, error) {
 		t.Logf("收到消息,%v", msg)
 		return true, nil

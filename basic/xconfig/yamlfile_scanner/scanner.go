@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/77d88/go-kit/basic/xconfig"
+	"github.com/77d88/go-kit/plugins/x"
 	"gopkg.in/yaml.v3"
 )
 
@@ -35,6 +36,7 @@ func New(path string) *YamlConfigLoader {
 }
 func Default(data string) *xconfig.Config {
 	config := xconfig.Init(New(data), "")
+	x.Use(config)
 	return config
 }
 func convertMap(m map[interface{}]interface{}) map[string]interface{} {

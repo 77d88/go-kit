@@ -3,11 +3,12 @@ package wxent
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/77d88/go-kit/basic/xparse"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/77d88/go-kit/basic/xparse"
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 const (

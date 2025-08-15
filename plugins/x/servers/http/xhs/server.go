@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"reflect"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/77d88/go-kit/basic/xarray"
@@ -17,7 +19,7 @@ import (
 )
 
 type ServerConfig struct {
-	Port     int      `json:"port"`
+	Port     string   `json:"port"`
 	Rate     int      `json:"rate"`
 	Name     string   `json:"name"`
 	Debug    bool     `json:"debug"`
@@ -29,9 +31,9 @@ type HttpServer struct {
 	Engine *gin.Engine
 	srv    *http.Server
 	Config *ServerConfig
-	routes []string
+	fcs    []func()
+	mws    []HandlerMw
 }
-
 
 func New() *HttpServer {
 	c, err := x.Config[ServerConfig]("server")
@@ -56,7 +58,7 @@ func New() *HttpServer {
 	generatedDefaultRegister(server)
 	x.Use(func() *HttpServer {
 		return server
-	}, true)
+	})
 	if err != nil {
 		xlog.Fatalf(nil, "provide error: %v", err)
 	}
@@ -64,13 +66,32 @@ func New() *HttpServer {
 }
 
 func (h *HttpServer) Start() {
+	// 初始化路由
+	group := sync.WaitGroup{}
+	// 初始化基础mw
+	for _, mw := range h.mws {
+		group.Add(1)
+		go func(h *HttpServer) {
+			defer group.Done()
+			h.Engine.Use(WarpHandleMw(mw))
+		}(h)
+	}
+	group.Wait()
+	for _, fc := range h.fcs {
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			fc()
+		}()
+	}
+	group.Wait()
 	// 初始化http 服务
 	h.srv = &http.Server{
-		Addr:    fmt.Sprintf(":%d", h.Config.Port),
+		Addr:    net.JoinHostPort("", h.Config.Port),
 		Handler: h.Engine,
 	}
 	// 服务连接
-	xlog.Infof(nil, "start success  prot: %d  production %v name: %v [%dms] [%droute]", h.Config.Port, !h.Config.Debug, h.Config.Name, time.Since(x.Info().StartTime).Milliseconds(), len(h.routes))
+	xlog.Infof(nil, "start success  prot: %s  production %v name: %v [%dms] [%droute]", h.Config.Port, !h.Config.Debug, h.Config.Name, time.Since(x.Info().StartTime).Milliseconds(), len(h.fcs))
 	if err := h.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		xlog.Fatalf(nil, "listen: %s\n", err)
 	}
@@ -86,7 +107,7 @@ func (h *HttpServer) Shutdown() {
 }
 
 func (h *HttpServer) Use(fs HandlerMw) *HttpServer {
-	h.Engine.Use(WarpHandleMw(fs))
+	h.mws = append(h.mws, fs)
 	return h
 }
 
@@ -111,25 +132,26 @@ func (h *HttpServer) ANY(path string, handler Handler, fs ...HandlerMw) *HttpSer
 }
 
 func (h *HttpServer) register(fc func(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes, method string, path string, handler Handler, fs ...HandlerMw) *HttpServer {
-	// 获取 handler 的文件名和行号
-	handlerPtr := runtime.FuncForPC(reflect.ValueOf(handler).Pointer())
-	var location string
-	if handlerPtr != nil {
-		file, line := handlerPtr.FileLine(handlerPtr.Entry())
-		location = fmt.Sprintf("%s:%d", file, line)
-	} else {
-		location = "unknown"
-	}
-	xlog.Debugf(nil, "register %s %s %s mw[%d] ", method, path, location, len(fs))
-	h.routes = append(h.routes, fmt.Sprintf("%s %s %s", method, path, location))
-	fc(path, append(xarray.Map(fs, func(index int, item HandlerMw) gin.HandlerFunc {
-		return WarpHandleMw(item)
-	}), WarpHandle(handler))...)
+	h.fcs = append(h.fcs, func() {
+		// 获取 handler 的文件名和行号
+		handlerPtr := runtime.FuncForPC(reflect.ValueOf(handler).Pointer())
+		var location string
+		if handlerPtr != nil {
+			file, line := handlerPtr.FileLine(handlerPtr.Entry())
+			location = fmt.Sprintf("%s:%d", file, line)
+		} else {
+			location = "unknown"
+		}
+		xlog.Debugf(nil, "register %s %s %s mw[%d] ", method, path, location, len(fs))
+		fc(path, append(xarray.Map(fs, func(index int, item HandlerMw) gin.HandlerFunc {
+			return WarpHandleMw(item)
+		}), WarpHandle(handler))...)
+	})
 	return h
 }
 
 func (h *HttpServer) Name() string {
-	return fmt.Sprintf("http server  prot: %d  production %v name: %v ", h.Config.Port, !h.Config.Debug, h.Config.Name)
+	return fmt.Sprintf("http server  prot: %s  production %v name: %v ", h.Config.Port, !h.Config.Debug, h.Config.Name)
 }
 
 func loggerInit(cfg *ServerConfig) {

@@ -8,6 +8,7 @@ import (
 	"github.com/77d88/go-kit/basic/xconfig"
 	"github.com/77d88/go-kit/basic/xdbutil"
 	"github.com/77d88/go-kit/basic/xsys"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -19,6 +20,7 @@ type RedisConfigLoader struct {
 
 func Default(dataIds ...string) *xconfig.Config {
 	config := xconfig.Init(NewEnv(), dataIds...)
+	x.Use(config)
 	return config
 }
 

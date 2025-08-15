@@ -36,7 +36,7 @@ func idMaxScope(id int64) func(db *DB) *DB {
 }
 
 func TestBaseFunc(t *testing.T) {
-	Init(&Config{
+	New(&Config{
 		Dns:    FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 		Logger: true,
 	})
@@ -53,7 +53,7 @@ func TestBaseFunc(t *testing.T) {
 func TestSession(t *testing.T) {
 
 	xlog.WithDebugger()
-	Init(&Config{
+	New(&Config{
 		Dns:    FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 		Logger: true,
 	})
@@ -88,10 +88,10 @@ func TestSession(t *testing.T) {
 }
 
 func TestMuDb(t *testing.T) {
-	Init(&Config{
+	New(&Config{
 		Dns: FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 	})
-	Init(&Config{
+	New(&Config{
 		Dns:        FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "gamev2"),
 		DbLinkName: "game",
 	})
@@ -203,8 +203,6 @@ func TestToSqlMap(t *testing.T) {
 }
 
 func TestAcv(t *testing.T) {
-	var a *TextArray
-	NewTextArray("1", "2", "3")
 }
 
 func TestFindIDs(t *testing.T) {

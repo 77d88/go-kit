@@ -2,6 +2,7 @@ package wxmini
 
 import (
 	"context"
+
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/silenceper/wechat/v2"
@@ -9,6 +10,17 @@ import (
 	"github.com/silenceper/wechat/v2/miniprogram"
 	miniConfig "github.com/silenceper/wechat/v2/miniprogram/config"
 )
+
+func init() {
+	x.Use(func() *miniprogram.MiniProgram {
+		//var redisConfig RedisConfig
+		config, err := x.Config[miniConfig.Config]("wx.mini")
+		if err != nil {
+			xlog.Panicf(context.Background(), "wx.mini config error: %v", err)
+		}
+		return New(config)
+	})
+}
 
 var (
 	Mini *miniprogram.MiniProgram
@@ -21,16 +33,7 @@ type RedisConfig struct {
 	Db   int    `yaml:"db" json:"db"`     // 数据库
 }
 
-func InitWith() *miniprogram.MiniProgram {
-	//var redisConfig RedisConfig
-	config, err := x.Config[miniConfig.Config]("wx.mini")
-	if err != nil {
-		xlog.Panicf(context.Background(), "wx.mini config error: %v", err)
-	}
-	return Init(config)
-}
-
-func Init(config *miniConfig.Config) *miniprogram.MiniProgram {
+func New(config *miniConfig.Config) *miniprogram.MiniProgram {
 	Cfg = config
 	if Cfg.AppID == "" {
 		xlog.Errorf(nil, "wx mini xconfig is empty")

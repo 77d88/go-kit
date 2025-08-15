@@ -2,14 +2,30 @@ package xjob
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/panjf2000/ants/v2"
-	"sync"
-	"sync/atomic"
-	"time"
 )
+
+func init() {
+	x.Use(func() *Manager {
+		configInt := x.ConfigInt("task.maxWorkers")
+		if configInt == 0 {
+			configInt = 200
+		}
+		handler, err := New(configInt)
+		if err != nil {
+			panic(err)
+		}
+		defaultHandler = handler
+		return defaultHandler
+	})
+}
 
 // Task 定义任务结构体
 type Task struct {
@@ -20,8 +36,8 @@ type Task struct {
 	Ctx     context.Context                 // 调用任务执行附带的上下文
 }
 
-// TaskHandler 任务处理器核心结构
-type TaskHandler struct {
+// Manager 任务处理器核心结构
+type Manager struct {
 	pool       *ants.Pool       // ants协程池实例
 	taskQueue  chan *Task       // 任务缓冲通道
 	wg         sync.WaitGroup   // 等待组控制优雅退出
@@ -31,30 +47,14 @@ type TaskHandler struct {
 	tasks      sync.Map         // 正在执行的任务映射
 }
 
-var defaultHandler *TaskHandler
-var once sync.Once
+var defaultHandler *Manager
 var defaultCtx = context.WithValue(context.Background(), xlog.CtxLogParam, map[string]interface{}{
 	"origin": "xjob",
 })
 
-func Init() *TaskHandler {
-	once.Do(func() {
-		configInt := x.ConfigInt("task.maxWorkers")
-		if configInt == 0 {
-			configInt = 200
-		}
-		handler, err := NewTaskHandler(configInt)
-		if err != nil {
-			panic(err)
-		}
-		defaultHandler = handler
-	})
-	return defaultHandler
-}
-
-// NewTaskHandler 初始化处理器
-func NewTaskHandler(maxWorkers int) (*TaskHandler, error) {
-	th := &TaskHandler{
+// New 初始化处理器
+func New(maxWorkers int) (*Manager, error) {
+	th := &Manager{
 		taskQueue:  make(chan *Task, 1000),    // 带缓冲的任务队列
 		panicChan:  make(chan interface{}, 1), // panic缓冲通道
 		maxWorkers: maxWorkers,
@@ -76,7 +76,7 @@ func NewTaskHandler(maxWorkers int) (*TaskHandler, error) {
 }
 
 // Submit 提交任务到处理器
-func (th *TaskHandler) Submit(task *Task) error {
+func (th *Manager) Submit(task *Task) error {
 	// 检查是否已经关闭
 	if atomic.LoadInt32(&th.closed) == 1 {
 		return xerror.Newf("task handler is closed")
@@ -98,7 +98,7 @@ func (th *TaskHandler) Submit(task *Task) error {
 }
 
 // dispatch 任务分发器（运行在独立goroutine）
-func (th *TaskHandler) dispatch() {
+func (th *Manager) dispatch() {
 	for task := range th.taskQueue {
 		currentTask := task // 闭包捕获当前任务
 		// 将 wg.Add 移动到更靠近执行的地方，减少时间差
@@ -167,19 +167,19 @@ func (th *TaskHandler) dispatch() {
 }
 
 // CancelTask 取消任务（如果任务支持取消）
-func (th *TaskHandler) CancelTask(taskID string) bool {
+func (th *Manager) CancelTask(taskID string) bool {
 	_, loaded := th.tasks.LoadAndDelete(taskID)
 	return loaded
 }
 
 // IsTaskRunning 检查任务是否正在运行
-func (th *TaskHandler) IsTaskRunning(taskID string) bool {
+func (th *Manager) IsTaskRunning(taskID string) bool {
 	_, ok := th.tasks.Load(taskID)
 	return ok
 }
 
 // handlePanic 全局panic处理（符合ants.PanicHandler类型）
-func (th *TaskHandler) handlePanic(p interface{}) {
+func (th *Manager) handlePanic(p interface{}) {
 	xlog.Errorf(defaultCtx, "[SYSTEM RECOVER] panic: %v", p)
 
 	// 同时发送到panicChan以供外部监听
@@ -191,7 +191,7 @@ func (th *TaskHandler) handlePanic(p interface{}) {
 }
 
 // Dispose 等待所有任务完成并释放资源
-func (th *TaskHandler) Dispose() error {
+func (th *Manager) Dispose() error {
 	// 使用原子操作检查是否已经关闭
 	if !atomic.CompareAndSwapInt32(&th.closed, 0, 1) {
 		return xerror.Newf("task handler is already closed")
@@ -206,10 +206,10 @@ func (th *TaskHandler) Dispose() error {
 }
 
 // GetPanicChan 返回panic通知通道
-func (th *TaskHandler) GetPanicChan() <-chan interface{} {
+func (th *Manager) GetPanicChan() <-chan interface{} {
 	return th.panicChan
 }
 
 func Submit(t *Task) error {
-	return Init().Submit(t)
+	return defaultHandler.Submit(t)
 }

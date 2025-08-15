@@ -1,8 +1,9 @@
 package wxent
 
 import (
-	"github.com/77d88/go-kit/plugins/xlog"
 	"testing"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 func TestEntRobotMsg_Send(t *testing.T) {

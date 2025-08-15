@@ -10,10 +10,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/plugins/xtask/xjob"
 )
+
+func init() {
+	x.Use(func() *XQueue {
+		return New(&Config{})
+	})
+}
 
 // Queue states
 const (
@@ -35,7 +42,7 @@ type XQueue struct {
 	db             *xdb.DB
 	handlers       map[MsgType][]Handler
 	runExecutor    *time.Ticker
-	executorThread *xjob.TaskHandler
+	executorThread *xjob.Manager
 	stopChan       chan struct{}
 	mu             sync.RWMutex
 }
@@ -45,8 +52,8 @@ type Config struct {
 	MaxWorks int    // 最大处理任务队列
 }
 
-// NewMq 创建新的队列服务实例
-func NewMq(cfg *Config) *XQueue {
+// New 创建新的队列服务实例
+func New(cfg *Config) *XQueue {
 
 	if cfg == nil {
 		cfg = &Config{}
@@ -58,7 +65,7 @@ func NewMq(cfg *Config) *XQueue {
 		cfg.MaxWorks = 50
 	}
 
-	handler, err := xjob.NewTaskHandler(cfg.MaxWorks) // 创建任务处理器
+	handler, err := xjob.New(cfg.MaxWorks) // 创建任务处理器
 	if err != nil {
 		panic(err)
 	}
@@ -246,10 +253,14 @@ func (xq *XQueue) processQueue(ctx context.Context, queue *Queue) error {
 			xlog.Warnf(ctx, "Handler execution nack for queue %d: %v", queue.ID, err)
 		}
 		if !ack || err != nil {
+			var errmsg string
+			if err != nil {
+				errmsg = err.Error()
+			}
 			if queue.Num < queue.Retry {
-				xq.updateQueueState(queue.ID, QueueStatePending, err.Error())
+				xq.updateQueueState(queue.ID, QueueStatePending, errmsg)
 			} else {
-				xq.updateQueueState(queue.ID, QueueStateNACK, err.Error())
+				xq.updateQueueState(queue.ID, QueueStateNACK, errmsg)
 			}
 			break // 不再处理下面的
 		}

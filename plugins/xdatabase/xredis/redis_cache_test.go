@@ -17,7 +17,7 @@ package xredis
 // }
 //
 // func TestLocalCache_Set(t *testing.T) {
-//	Init(Config{
+//	New(Config{
 //		Addr: "127.0.0.1:6379",
 //		Pass: "",
 //		Db:   0,

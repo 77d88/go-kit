@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Init 创建pgSql链接
+// New 创建pgSql链接
 // host对应着远程postgresql数据库地址
 // port为数据库端口,默认5432
 // user为数据库用户,在安装的时候会创建postgres用户,也可使用自己创建的用户
@@ -26,14 +26,6 @@ type DB struct {
 	Config *Config
 }
 
-// New 创建链接 DB
-func New(name ...string) *DB {
-	db, err := GetDB(name...)
-	if err != nil {
-		return nil
-	}
-	return db
-}
 
 func (d *DB) wrap(db *gorm.DB) *DB {
 	return &DB{
@@ -43,8 +35,12 @@ func (d *DB) wrap(db *gorm.DB) *DB {
 }
 
 func Ctx(c context.Context, names ...string) *DB {
-	db := New(names...)
-	return db.WithCtx(c)
+	getDB, err := GetDB(names...)
+	if err != nil {
+		xlog.Errorf(nil, "数据库[%v]链接不存在", names)
+		return nil
+	}
+	return getDB.WithCtx(c)
 }
 func (d *DB) SQLDB() (*sql.DB, error) {
 	return d.DB.DB()

@@ -6,7 +6,7 @@ import (
 )
 
 func TestName(t *testing.T) {
-	manager, err := NewCronTaskManager()
+	manager, err := New()
 	if err != nil {
 		t.Fatal(err)
 	}

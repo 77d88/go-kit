@@ -39,7 +39,7 @@ func Init() *sts20150401.Client {
 		}
 		StsClient = client
 		if client != nil {
-			x.Use(func() *sts20150401.Client { return client }, true)
+			x.Use(func() *sts20150401.Client { return client })
 		}
 	})
 

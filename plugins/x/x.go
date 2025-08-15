@@ -51,6 +51,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	x = engine
 }
 
 func SetConfig(config *xconfig.Config) {

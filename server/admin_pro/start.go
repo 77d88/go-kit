@@ -10,15 +10,13 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
-	"github.com/77d88/go-kit/plugins/xtask/xcron"
 	"github.com/77d88/go-kit/server/admin_pro/proapi"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunaddress"
-	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossginsts"
 )
 
-func main() {
+func init() {
 	str_scanner.Default(`{
 	 "server": {
 	   "port": 9981,
@@ -35,14 +33,14 @@ func main() {
 	   "db": 0
 	 }
 	}`)
-	x.Use(xdb.InitWith)
-	x.Use(xredis.InitWith)
-	x.Use(xcron.Init)
-	x.Use(aliyunoss.InitWith, true)
+}
+
+func main() {
+	x.FastInit(func(*xdb.DB,xredis.Client) {})
 	x.Use(func() x.EngineServer {
 		server := xhs.New()
-		server.Use(limiter.Limiter(server.Config.Rate))
-		server.Use(cors.New(server.Config))
+		server.Use(limiter.New())
+		server.Use(cors.New())
 		server.Use(auth.NewMw(aes_auth.New()))
 		proapi.Register(server)
 		aliyunossginsts.DefaultRegister("/aliyun/sts", server)

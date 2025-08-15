@@ -18,7 +18,7 @@ const (
 func BenchmarkTaskHandlerHighLoad(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
-		handler, err := NewTaskHandler(benchmarkWorkers)
+		handler, err := New(benchmarkWorkers)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -53,7 +53,7 @@ func BenchmarkConcurrency(b *testing.B) {
 		b.Run(fmt.Sprintf("Workers-%d", workers), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
-				handler, err := NewTaskHandler(workers)
+				handler, err := New(workers)
 				if err != nil {
 					b.Fatal(err)
 				}
@@ -92,7 +92,7 @@ func BenchmarkConcurrency(b *testing.B) {
 
 func TestTask(t *testing.T) {
 	// 示例使用
-	handler, err := NewTaskHandler(10) // 初始化10个worker的处理器
+	handler, err := New(10) // 初始化10个worker的处理器
 	if err != nil {
 		panic(fmt.Errorf("failed to create task handler: %w", err))
 	}

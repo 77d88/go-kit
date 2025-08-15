@@ -10,7 +10,7 @@ import (
 func TestName(t *testing.T) {
 
 	a2 := &Auth{
-		Client: xredis.Init(&xredis.Config{
+		Client: xredis.New(&xredis.Config{
 			Addr: "127.0.0.1:6379",
 			Db:   0,
 			Pass: "jerry123!",
@@ -31,7 +31,7 @@ func TestName(t *testing.T) {
 func TestLogout(t *testing.T) {
 
 	a2 := &Auth{
-		Client: xredis.Init(&xredis.Config{
+		Client: xredis.New(&xredis.Config{
 			Addr: "127.0.0.1:6379",
 			Db:   0,
 			Pass: "jerry123!",

@@ -3,20 +3,32 @@ package xredis
 import (
 	"context"
 	"errors"
+	"sync"
+
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/redis/go-redis/v9"
-	"sync"
 )
+
+func init() {
+	x.Use(func() *Client {
+		c, err := x.Config[Config](redisStr)
+		if err != nil {
+			xlog.Errorf(nil, "redis init Fatal %+v", err)
+			return nil
+		}
+		c.DbLinkName = redisStr
+		return New(c)
+	})
+}
 
 const Nil = redis.Nil
 const redisStr string = "redis"
 
-
 var (
-	dbs = make(map[string]*Client)
+	dbs    = make(map[string]*Client)
 	dbLock = sync.RWMutex{} // 添加读写锁保护 dbs map
 )
 
@@ -44,14 +56,7 @@ func (c *Client) Dispose() error {
 	return err
 }
 
-func InitWith(e *x.Engine) *Client {
-	var config Config
-	e.Cfg.ScanKey(redisStr, &config)
-	config.DbLinkName = redisStr
-	return Init(&config)
-}
-
-func Init(config *Config) *Client {
+func New(config *Config) *Client {
 
 	if config == nil {
 		xlog.Errorf(nil, "redis init Fatal %+v", config)

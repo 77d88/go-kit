@@ -2,6 +2,7 @@ package wxopen
 
 import (
 	"context"
+
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/silenceper/wechat/v2"
@@ -9,6 +10,16 @@ import (
 	"github.com/silenceper/wechat/v2/officialaccount"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
 )
+
+func init() {
+	x.Use(func() *officialaccount.OfficialAccount {
+		config, err := x.Config[offConfig.Config]("wx.open")
+		if err != nil {
+			xlog.Panicf(context.Background(), "wx.open config error: %v", err)
+		}
+		return New(config)
+	})
+}
 
 type RedisConfig struct {
 	Addr string `yaml:"addr" json:"addr"` // 地址 ip:端口
@@ -21,14 +32,7 @@ var (
 	Official *officialaccount.OfficialAccount
 )
 
-func InitWith() *officialaccount.OfficialAccount {
-	config, err := x.Config[offConfig.Config]("wx.open")
-	if err != nil {
-		xlog.Panicf(context.Background(), "wx.open config error: %v", err)
-	}
-	return Init(config)
-}
-func Init(cfg *offConfig.Config) *officialaccount.OfficialAccount {
+func New(cfg *offConfig.Config) *officialaccount.OfficialAccount {
 	//var redisConfig RedisConfig
 	Cfg = cfg
 	if Cfg.AppID == "" {

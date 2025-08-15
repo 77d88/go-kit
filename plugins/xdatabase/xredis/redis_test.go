@@ -8,12 +8,12 @@ import (
 )
 
 func TestGetUserNum(t *testing.T) {
-	Init(&Config{
+	New(&Config{
 		Addr: "127.0.0.1:6379",
 		Pass: "jerry123!",
 		Db:   0,
 	})
-	Init(&Config{
+	New(&Config{
 		Addr:       "127.0.0.1:6379",
 		Pass:       "jerry123!",
 		Db:         1,
@@ -34,7 +34,7 @@ func TestGetUserNum(t *testing.T) {
 
 //
 //func TestConcurrentLimit(t *testing.T) {
-//	with := Init(&Config{
+//	with := New(&Config{
 //		Addr: "127.0.0.1:6379",
 //		Pass: "jerry123!",
 //		Db:   0,
@@ -58,7 +58,7 @@ func TestGetUserNum(t *testing.T) {
 //}
 //
 //func TestConcurrentLock(t *testing.T) {
-//	Init(&Config{
+//	New(&Config{
 //		Addr: "127.0.0.1:6379",
 //		Pass: "jerry123!",
 //		Db:   0,
@@ -86,7 +86,7 @@ func TestGetUserNum(t *testing.T) {
 //
 //func Test_str(t *testing.T) {
 //	ctx := context.Background()
-//	with := Init(&Config{
+//	with := New(&Config{
 //		Addr: "127.0.0.1:6379",
 //		Pass: "jerry123!",
 //		Db:   0,

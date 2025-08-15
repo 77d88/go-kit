@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/77d88/go-kit/basic/xconfig"
-	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 func Start() {
@@ -40,7 +39,7 @@ func Start() {
 	return
 }
 
-func Use(constructor interface{}, delay ...bool) {
+func Use(constructor interface{}) {
 	if reflect.TypeOf(constructor).Kind() == reflect.Func {
 		// 判断这个构造函数的第一个返回值是否是 func() (EngineServer, error)
 		switch f := constructor.(type) {
@@ -54,12 +53,11 @@ func Use(constructor interface{}, delay ...bool) {
 			return
 		}
 	} else {
-
 		switch t := constructor.(type) {
 		case *xconfig.Config:
 			x.Cfg = t
-			err := x.provide(func() (*xconfig.Config, error) {
-				return x.Cfg, nil
+			err := x.provide(func() *xconfig.Config {
+				return x.Cfg
 			})
 			if err != nil {
 				panic(err)
@@ -75,31 +73,6 @@ func Use(constructor interface{}, delay ...bool) {
 	if err != nil {
 		panic(err)
 	}
-	if len(delay) > 0 && delay[0] {
-		return
-	}
-
-	x.wait.Add(1)
-	go func(a interface{}) {
-		defer func() {
-			if err := recover(); err != nil {
-				xlog.Errorf(nil, "use init panic: %v", err)
-			}
-			x.wait.Done()
-		}()
-		methodValue := reflect.ValueOf(a)
-		methodType := methodValue.Type()
-		allTypes := make([]reflect.Type, 0, methodType.NumOut())
-		if methodType.Kind() == reflect.Func {
-			for i := 0; i < methodType.NumOut(); i++ {
-				allTypes = append(allTypes, methodType.Out(i))
-			}
-		}
-		_, err := x.getInst(allTypes...)
-		if err != nil {
-			xlog.Fatalf(nil, "engine use error: %v", err)
-		}
-	}(constructor)
 }
 
 func Get[T any]() (T, error) {
@@ -111,6 +84,25 @@ func Get[T any]() (T, error) {
 }
 func Find(constructor interface{}) error {
 	return x.invoke(constructor)
+}
+
+// FastInit 快速初始化
+func FastInit(constructor interface{}) {
+	methodValue := reflect.ValueOf(constructor)
+	methodType := methodValue.Type()
+	if methodType.Kind() == reflect.Func {
+		for i := 0; i < methodType.NumIn(); i++ {
+			inType := methodType.In(i)
+			x.wait.Add(1)
+			go func() {
+				defer x.wait.Done()
+				_, err := x.getInst(inType)
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
+	}
 }
 
 func Close() {

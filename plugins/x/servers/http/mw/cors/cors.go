@@ -1,11 +1,13 @@
 package cors
 
 import (
-	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xerror"
-	xhs2 "github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"net/http"
 	"strings"
+
+	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/plugins/x"
+	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
 type CorsConfig struct {
@@ -33,7 +35,8 @@ func Check(origin string) bool {
 	return Cors.CorsCheck(origin)
 }
 
-func New(cfg *xhs2.ServerConfig) xhs2.HandlerMw {
+func New() xhs.HandlerMw {
+	cs := x.ConfigStringSlice("server.cors")
 	oriCors := []string{
 		"://localhost",
 		"null",
@@ -42,15 +45,15 @@ func New(cfg *xhs2.ServerConfig) xhs2.HandlerMw {
 		"i-ii.top",
 	}
 	c := &CorsConfig{
-		origins: append(oriCors, cfg.Cors...),
+		origins: append(oriCors, cs...),
 	}
 	Cors = c
 	return corsMw(c)
 }
 
 // corsMw 处理跨域请求,支持options访问
-func corsMw(config *CorsConfig) xhs2.HandlerMw {
-	return func(c *xhs2.Ctx) {
+func corsMw(config *CorsConfig) xhs.HandlerMw {
+	return func(c *xhs.Ctx) {
 		// Access-Control-Allow-Credentials=true和Access-Control-Allow-Origin="*"有冲突
 		// 故Access-Control-Allow-Origin需要指定具体得跨域origin
 		method := c.Request.Method               // 请求方法
@@ -68,7 +71,7 @@ func corsMw(config *CorsConfig) xhs2.HandlerMw {
 			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE,UPDATE") // 服务器支持的所有跨域请求的方法,为了避免浏览次请求的多次'预检'请求
 			//  header的类型
 			c.Header("Access-Control-Allow-Headers", "Authorization,Device,Authorization, Content-Length, X-CSRF-Token, Token,session,X_Requested_With,Accept, Origin, Host, Connection, Accept-Encoding, Accept-Language,DNT, X-CustomHeader, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-TypeId, Pragma") // 所有头部
-			c.Header("Access-Control-Max-Age", "172800")                                                                                                                                                                                                                                                                                          // 缓存请求信息 单位为秒
+			c.Header("Access-Control-Max-Age", "172800")                                                                                                                                                                                                                                                                                            // 缓存请求信息 单位为秒
 		}
 
 		// 放行所有OPTIONS方法

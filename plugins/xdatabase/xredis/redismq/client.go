@@ -10,6 +10,18 @@ import (
 	"github.com/hibiken/asynq"
 )
 
+func init() {
+	x.Use(func() *Client {
+		c, err := x.Config[Config]("redis") // 使用默认的redis配置
+		if err != nil {
+			xlog.Errorf(nil, "xqueue redis config error: %v", err)
+			return nil
+		}
+		// 创建一个客户端
+		return New(c)
+	})
+}
+
 type Client struct {
 	*asynq.Client
 }
@@ -17,23 +29,14 @@ type Client struct {
 var client *Client
 var once sync.Once
 
-func NewClient() *Client {
-	c, err := x.Config[Config]("redis") // 使用默认的redis配置
-	if err != nil {
-		xlog.Panicf(nil, "xqueue redis config error: %v", err)
-	}
-	// 创建一个客户端
-	return New(c)
-}
-
 func New(config *Config) *Client {
 	once.Do(func() {
 		if config == nil {
-			xlog.Panicf(nil, "xqueue redis config is nil")
+			xlog.Errorf(nil, "xqueue redis config is nil")
 			return
 		}
 		if config.Addr == "" {
-			xlog.Panicf(nil, "xqueue redis config addr is empty")
+			xlog.Errorf(nil, "xqueue redis config addr is empty")
 			return
 		}
 		c := &Client{
@@ -68,5 +71,11 @@ func send(typename string, msg interface{}, options ...asynq.Option) error {
 }
 
 func (c *Client) Dispose() error {
-	return c.Close()
+	err := c.Close()
+	if err != nil {
+		xlog.Errorf(nil, "redismq close error: %v", err)
+	} else {
+		xlog.Infof(nil, "redismq close successful")
+	}
+	return err
 }

@@ -40,90 +40,100 @@ duration 是可以使用 time.ParseDuration() 解析的格式。
 import (
 	"context"
 	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/plugins/xtask/xjob"
 	"github.com/robfig/cron/v3"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
-var defaultCron *CronTaskManager
-var once sync.Once
-var defaultCtx = context.WithValue(context.Background(), xlog.CtxLogParam, map[string]interface{}{
-	"origin": "xcron",
-})
+var defaultCron *Manager
 
-func Init() *CronTaskManager {
-	once.Do(func() {
+func init() {
+	x.Use(func() *Manager {
 		opts := make([]CronTaskManagerOption, 0, 3)
-		if x.ConfigBool("task.cron.own") { // 是否开启独立处理线程模式 不然使用全局处理线程
-			i := x.ConfigInt("task.cron.ownWorks") // 独立工作线程数量默认50
-			if i == 0 {
-				i = 50
-			}
-			handler, err := xjob.NewTaskHandler(i)
+		i := x.ConfigInt("task.cron.ownWorks") // 独立工作线程数量默认50
+		if i == 0 {
+			i = 50
+		}
+		var own = x.ConfigBool("task.cron.own")
+		if own { // 是否开启独立处理线程模式 不然使用全局处理线程
+			handler, err := xjob.New(i)
 			if err != nil {
-				xlog.Fatalf(nil, "new task handler error: %v", err)
+				xlog.Errorf(nil, "new task handler error: %v", err)
+				return nil
 			}
 			opts = append(opts, WithTaskPool(handler))
 		} else {
-			opts = append(opts, WithTaskPool(xjob.Init()))
+			get, err := x.Get[*xjob.Manager]()
+			if err != nil {
+				xlog.Errorf(nil, "get task handler error: %v", err)
+				return nil
+			}
+			opts = append(opts, WithTaskPool(get))
 		}
 		if x.ConfigBool("task.cron.seconds") { // 是否开启秒级任务
 			opts = append(opts, WithSeconds())
 		}
 
-		handler, err := NewCronTaskManager(opts...)
+		handler, err := New(opts...)
+		handler.own = own
 		if err != nil {
 			xlog.Fatalf(nil, "new cron task manager error: %v", err)
 		}
 		defaultCron = handler
+		return handler
 	})
-	return defaultCron
 }
+
+var defaultCtx = context.WithValue(context.Background(), xlog.CtxLogParam, map[string]interface{}{
+	"origin": "xcron",
+})
 
 // CronTask 定义定时任务结构体
 type CronTask struct {
-	ID      string        // 任务唯一标识
-	Spec    string        // cron 表达式
-	Job     func() error  // 实际执行的函数
-	Retry   int           // 最大重试次数
-	Timeout time.Duration // 任务超时时间
+	ID      string                          // 任务唯一标识
+	Spec    string                          // cron 表达式
+	Job     func(ctx context.Context) error // 实际执行的函数
+	Retry   int                             // 最大重试次数
+	Timeout time.Duration                   // 任务超时时间
 }
 
-// CronTaskManager 定时任务管理器核心结构
-type CronTaskManager struct {
+// Manager 定时任务管理器核心结构
+type Manager struct {
 	cron       *cron.Cron         // cron 实例
 	tasks      sync.Map           // 存储任务信息
 	entries    sync.Map           // 存储 entry ID 映射
-	taskPool   *xjob.TaskHandler  // 任务执行池
+	taskPool   *xjob.Manager      // 任务执行池
 	closed     int32              // 标记是否已关闭
 	cancelFunc context.CancelFunc // 用于取消所有任务
+	own        bool               // 是否开启独立任务池
 }
 
 // CronTaskManagerOption 配置选项
-type CronTaskManagerOption func(*CronTaskManager)
+type CronTaskManagerOption func(*Manager)
 
 // WithTaskPool 设置任务池
-func WithTaskPool(pool *xjob.TaskHandler) CronTaskManagerOption {
-	return func(manager *CronTaskManager) {
+func WithTaskPool(pool *xjob.Manager) CronTaskManagerOption {
+	return func(manager *Manager) {
 		manager.taskPool = pool
 	}
 }
 
 // WithSeconds 设置cron 的秒级支持
 func WithSeconds() CronTaskManagerOption {
-	return func(manager *CronTaskManager) {
+	return func(manager *Manager) {
 		cron.WithSeconds()(manager.cron)
 	}
 }
 
-// NewCronTaskManager 创建新的定时任务管理器
-func NewCronTaskManager(opts ...CronTaskManagerOption) (*CronTaskManager, error) {
-	manager := &CronTaskManager{
+// New 创建新的定时任务管理器
+func New(opts ...CronTaskManagerOption) (*Manager, error) {
+	manager := &Manager{
 		cron: cron.New(cron.WithLogger(&Logger{})),
 	}
 
@@ -134,7 +144,7 @@ func NewCronTaskManager(opts ...CronTaskManagerOption) (*CronTaskManager, error)
 
 	// 如果没有提供任务池，则创建一个默认的
 	if manager.taskPool == nil {
-		taskHandler, err := xjob.NewTaskHandler(10)
+		taskHandler, err := xjob.New(10)
 		if err != nil {
 			return nil, xerror.Newf("failed to create default task handler: %s", err)
 		}
@@ -151,7 +161,7 @@ func NewCronTaskManager(opts ...CronTaskManagerOption) (*CronTaskManager, error)
 }
 
 // SubmitCronTask 提交定时任务到管理器
-func (cm *CronTaskManager) SubmitCronTask(task *CronTask) (cron.EntryID, error) {
+func (cm *Manager) SubmitCronTask(task *CronTask) (cron.EntryID, error) {
 	// 检查是否已经关闭
 	if atomic.LoadInt32(&cm.closed) == 1 {
 		return 0, xerror.Newf("cron task manager is closed")
@@ -185,7 +195,7 @@ func (cm *CronTaskManager) SubmitCronTask(task *CronTask) (cron.EntryID, error) 
 }
 
 // wrapJob 包装任务以支持重试和超时
-func (cm *CronTaskManager) wrapJob(task *CronTask) cron.Job {
+func (cm *Manager) wrapJob(task *CronTask) cron.Job {
 	return cron.FuncJob(func() {
 		// 为每次执行生成唯一的任务ID
 		executionID := fmt.Sprintf("%s-exec-%d", task.ID, time.Now().UnixNano())
@@ -207,7 +217,7 @@ func (cm *CronTaskManager) wrapJob(task *CronTask) cron.Job {
 }
 
 // RemoveCronTask 移除定时任务
-func (cm *CronTaskManager) RemoveCronTask(taskID string) error {
+func (cm *Manager) RemoveCronTask(taskID string) error {
 	// 检查是否已经关闭
 	if atomic.LoadInt32(&cm.closed) == 1 {
 		return xerror.Newf("cron task manager is closed")
@@ -229,7 +239,7 @@ func (cm *CronTaskManager) RemoveCronTask(taskID string) error {
 }
 
 // GetCronTask 获取定时任务信息
-func (cm *CronTaskManager) GetCronTask(taskID string) (*CronTask, bool) {
+func (cm *Manager) GetCronTask(taskID string) (*CronTask, bool) {
 	entryIDValue, ok := cm.entries.Load(taskID)
 	if !ok {
 		return nil, false
@@ -245,7 +255,7 @@ func (cm *CronTaskManager) GetCronTask(taskID string) (*CronTask, bool) {
 }
 
 // ListCronTasks 列出所有定时任务
-func (cm *CronTaskManager) ListCronTasks() []CronTaskInfo {
+func (cm *Manager) ListCronTasks() []CronTaskInfo {
 	var tasks []CronTaskInfo
 
 	cm.entries.Range(func(key, value interface{}) bool {
@@ -282,7 +292,7 @@ type CronTaskInfo struct {
 }
 
 // Dispose 停止并释放所有资源
-func (cm *CronTaskManager) Dispose() error {
+func (cm *Manager) Dispose() error {
 	// 使用原子操作检查是否已经关闭
 	if !atomic.CompareAndSwapInt32(&cm.closed, 0, 1) {
 		return xerror.Newf("cron task manager is already closed")
@@ -299,7 +309,7 @@ func (cm *CronTaskManager) Dispose() error {
 	cm.cron.Stop()
 
 	// 等待所有任务完成并释放任务池
-	if cm.taskPool != nil {
+	if cm.taskPool != nil && cm.own {
 		if err := cm.taskPool.Dispose(); err != nil {
 			xlog.Errorf(defaultCtx, "Failed to dispose task pool: %v", err)
 		}
@@ -310,17 +320,17 @@ func (cm *CronTaskManager) Dispose() error {
 }
 
 // GetPanicChan 返回任务池的 panic 通知通道
-func (cm *CronTaskManager) GetPanicChan() <-chan interface{} {
+func (cm *Manager) GetPanicChan() <-chan interface{} {
 	return cm.taskPool.GetPanicChan()
 }
 
 // IsRunning 检查管理器是否正在运行
-func (cm *CronTaskManager) IsRunning() bool {
+func (cm *Manager) IsRunning() bool {
 	return atomic.LoadInt32(&cm.closed) == 0
 }
 
 // IsCronTaskScheduled 检查定时任务是否已调度
-func (cm *CronTaskManager) IsCronTaskScheduled(taskID string) bool {
+func (cm *Manager) IsCronTaskScheduled(taskID string) bool {
 	_, ok := cm.entries.Load(taskID)
 	return ok
 }
@@ -343,6 +353,6 @@ func (l Logger) Error(err error, msg string, keysAndValues ...interface{}) {
 }
 
 func Submit(task *CronTask) error {
-	_, err := Init().SubmitCronTask(task)
+	_, err := defaultCron.SubmitCronTask(task)
 	return err
 }

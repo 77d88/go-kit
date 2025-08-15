@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type RequestBuilder struct {

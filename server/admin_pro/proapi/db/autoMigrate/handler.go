@@ -36,7 +36,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 			}
 		}
 	}
-	err = db.AutoMigrate(i...)
+	err = db.DB.AutoMigrate(i...)
 
 	return
 }

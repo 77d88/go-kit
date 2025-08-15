@@ -222,7 +222,7 @@ func (a *Auth) cleanupExpiredTokenData(expiredTokens []string) {
 // 启动后台清理任务
 func (a *Auth) startBackgroundCleanup() {
 	go func() {
-		ticker := time.NewTicker(10 * time.Second) // 每12小时执行一次
+		ticker := time.NewTicker(1 * time.Minute) // 每12小时执行一次
 		defer ticker.Stop()
 
 		for range ticker.C {

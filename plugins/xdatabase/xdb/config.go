@@ -16,6 +16,18 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+func init() {
+	x.Use(func() *DB {
+		c, err := x.Config[Config](DefaultDbLinkStr)
+		if err != nil {
+			xlog.Fatalf(nil, "init db error %s", err)
+			return nil
+		}
+		c.DbLinkName = DefaultDbLinkStr
+		return New(c)
+	})
+}
+
 // Config 数据库配置
 type Config struct {
 	Dns                       string `json:"dns"`                       // 示例 host=127.0.0.1 port=5432 user=postgres password=yzz123! dbname=yzz sslmode=disable TimeZone=Asia/Shanghai
@@ -28,17 +40,7 @@ type Config struct {
 	DbLinkName                string `yaml:"dbLinkName"`                // 数据库链接名称
 }
 
-func InitWith() *DB {
-	c, err := x.Config[Config](DefaultDbLinkStr)
-	if err != nil {
-		xlog.Fatalf(nil, "init db error %s", err)
-		return nil
-	}
-	c.DbLinkName = DefaultDbLinkStr
-	return Init(c)
-}
-
-func Init(c *Config) *DB {
+func New(c *Config) *DB {
 	if c == nil {
 		xlog.Fatalf(nil, "init db error config is nil ")
 		return nil

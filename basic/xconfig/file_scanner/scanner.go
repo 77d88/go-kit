@@ -2,7 +2,10 @@ package file_scanner
 
 import (
 	"fmt"
+
 	"github.com/77d88/go-kit/basic/xconfig"
+	"github.com/77d88/go-kit/plugins/x"
+
 	"io"
 	"os"
 )
@@ -11,7 +14,8 @@ type FileConfigLoader struct {
 	path string
 }
 
-func (c *FileConfigLoader) Load(group, dataId string) (string, error) {
+
+func (c *FileConfigLoader) Load(dataId string) (string, error) {
 	file, err := os.Open(c.path)
 	if err != nil {
 		return "", err
@@ -29,6 +33,7 @@ func (c *FileConfigLoader) Type() string {
 }
 func Default(path string) *xconfig.Config {
 	config := xconfig.Init(New(path), "")
+	x.Use(config)
 	return config
 }
 func New(path string) *FileConfigLoader {

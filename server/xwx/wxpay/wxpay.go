@@ -4,13 +4,27 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
-	"time"
 )
+
+func init() {
+	x.Use(func() *wechat.ClientV3 {
+		config, err := x.Config[Config]("wx.pay")
+		if err != nil {
+			xlog.Panicf(context.Background(), "wx.pay config error: %v", err)
+		}
+		if config.MchName == "" {
+			config.MchName = "商品"
+		}
+		return New(config)
+	})
+}
 
 var Cli *wechat.ClientV3
 
@@ -30,18 +44,7 @@ func NotifyUrl() string {
 	return Cfg.NotifyUrl
 }
 
-func InitWith() *wechat.ClientV3 {
-	config, err := x.Config[Config]("wx.pay")
-	if err != nil {
-		xlog.Panicf(context.Background(), "wx.pay config error: %v", err)
-	}
-	if config.MchName == "" {
-		config.MchName = "商品"
-	}
-	return Init(config)
-}
-
-func Init(config *Config) *wechat.ClientV3 {
+func New(config *Config) *wechat.ClientV3 {
 	Cfg = config
 	if Cfg.AppID == "" {
 		xlog.Errorf(nil, "wx pay xconfig is empty init error")

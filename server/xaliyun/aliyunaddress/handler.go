@@ -36,7 +36,7 @@ func Init() *sdk.Client {
 		}
 		client = c
 		if client != nil {
-			x.Use(func() *sdk.Client { return client }, true)
+			x.Use(func() *sdk.Client { return client })
 		}
 	})
 

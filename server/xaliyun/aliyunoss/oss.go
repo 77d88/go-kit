@@ -8,17 +8,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash"
+	"io"
+	"log"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/basic/xstr"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
-	"hash"
-	"io"
-	"log"
-	"sync"
-	"time"
 )
 
 // {
@@ -50,21 +50,17 @@ type Oss struct {
 var (
 	Client *oss.Client
 	Config *Oss
-	once   sync.Once
 )
 
-func InitWith() *oss.Client {
-	once.Do(func() {
-		o, err := x.Config[Oss]("aliyun.oss")
-		if err != nil {
-			xlog.Fatalf(nil, "load oss config error: %s", err)
-		}
-		Client = Init(o)
-		if Client != nil {
-			x.Use(func() *oss.Client { return Client }, true)
-		}
-	})
-	return Client
+func init() {
+	o, err := x.Config[Oss]("aliyun.oss")
+	if err != nil {
+		xlog.Errorf(nil, "load oss config error: %s", err)
+	}
+	Client = Init(o)
+	if Client != nil {
+		x.Use(func() *oss.Client { return Client })
+	}
 }
 
 func Init(config *Oss) *oss.Client {
