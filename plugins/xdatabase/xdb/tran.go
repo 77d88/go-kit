@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/77d88/go-kit/basic/xctx"
 	"gorm.io/gorm"
 )
 
@@ -47,20 +46,18 @@ func GetCtxTran(c context.Context) *DB {
 }
 
 // BeginWithCtx 在当前上下文中开始事务
-func BeginWithCtx(c context.Context, opts ...*sql.TxOptions) *DB {
+func BeginWithCtx(c context.Context, opts ...*sql.TxOptions) context.Context {
 	if tx := GetCtxTran(c); tx != nil {
-		return tx // 如果已有事务，返回现有事务
+		return c // 如果已有事务，返回现有事务
 	}
 	begin := Ctx(c).Begin(opts...)
-	xctx.SetVal(c, CtxTransactionKey, begin)
-	return begin
+	return context.WithValue(c, CtxTransactionKey, begin)
 }
 
-func BeginWithCtxAndDbName(c context.Context, name string, opts ...*sql.TxOptions) *DB {
+func BeginWithNameCtx(c context.Context, name string, opts ...*sql.TxOptions) context.Context {
 	if tx := GetCtxTran(c); tx != nil {
-		return tx // 如果已有事务，返回现有事务
+		return c // 如果已有事务，返回现有事务
 	}
 	begin := Ctx(c, name).Begin(opts...)
-	xctx.SetVal(c, CtxTransactionKey, begin)
-	return begin
+	return context.WithValue(c, CtxTransactionKey, begin)
 }

@@ -1,10 +1,10 @@
 package xhs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
-	"github.com/77d88/go-kit/basic/xctx"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -26,7 +26,7 @@ type Ctx struct {
 }
 
 type CopyContext struct {
-	xctx.Context
+	context.Context
 	ContextAuth
 	ApiCache
 	TraceId int64
@@ -118,9 +118,9 @@ func (c *Ctx) GetError() error {
 }
 
 // Copy 拷贝最终上下文 用于传输获其他现场调用
-func (c *Ctx) Copy() xctx.Context {
+func (c *Ctx) Copy() context.Context {
 	return CopyContext{
-		Context:     xctx.WithVal(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
+		Context:     context.WithValue(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
 		ContextAuth: c.ContextAuth,
 		ApiCache: ApiCache{
 			cache: c.CopyCacheMap(),
