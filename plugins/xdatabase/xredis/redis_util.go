@@ -11,7 +11,7 @@ const (
 )
 
 // RandomNum 获取随机数唯一数
-func (c *Client) RandomNum(ctx context.Context, workId uint16) int32 {
+func (c *client) RandomNum(ctx context.Context, workId uint16) int32 {
 	key := IdGeneratorPrefix + fmt.Sprintf(":%d", workId)
 	spop := c.SPop(ctx, key)
 	if spop.Err() == nil {

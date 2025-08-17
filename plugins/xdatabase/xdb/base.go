@@ -16,14 +16,14 @@ import (
 var (
 	RegisterModels = make(map[string]map[string]GromModel)
 	mu             sync.Mutex
-	dbs            = make(map[string]*DB)
-	DefaultDB      *DB
+	dbs            = make(map[string]*gorm.DB)
+	DefaultDB      *gorm.DB
 )
 
 const DefaultDbLinkStr string = "db"
 
 // GetDB 获取数据库链接
-func GetDB(name ...string) (*DB, error) {
+func GetDB(name ...string) (*gorm.DB, error) {
 	if len(name) == 0 {
 		return DefaultDB, nil
 	}

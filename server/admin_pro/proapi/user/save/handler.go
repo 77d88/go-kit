@@ -33,14 +33,14 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 
 	var user pro.User
-	if result := xdb.Ctx(c).Where("username = ?", r.Username).Find(&user); result.Error != nil {
+	if result := xdb.C(c).Where("username = ?", r.Username).Find(&user); result.Error != nil {
 		return nil, result.Error
 	}
 
 	if user.ID > 0 && user.ID != r.Id {
 		return nil, xerror.New("用户名已存在")
 	}
-	if result := xdb.Ctx(c).SaveMap(&pro.User{}, r, map[string]interface{}{
+	if result := xdb.SaveMap[pro.User](xdb.C(c), r, map[string]interface{}{
 		"update_user": c.GetUserId(),
 	}); result.Error != nil {
 		return nil, result.Error

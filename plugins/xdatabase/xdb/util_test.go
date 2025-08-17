@@ -9,6 +9,7 @@ import (
 
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/plugins/xlog"
+	"gorm.io/gorm"
 )
 
 type MuDbUser struct {
@@ -29,8 +30,8 @@ func (m *MuDbProduct) TableName() string {
 	return "s_product"
 }
 
-func idMaxScope(id int64) func(db *DB) *DB {
-	return func(db *DB) *DB {
+func idMaxScope(id int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
 		return db.Where("id > ?", id)
 	}
 }
@@ -42,49 +43,22 @@ func TestBaseFunc(t *testing.T) {
 	})
 	var dbusers []MuDbUser
 
-	find := Ctx(context.Background()).Scopes(idMaxScope(12)).Model(&dbusers).Limit(3).Find(&dbusers)
-	if find.Error != nil {
-		t.Error(find.Error)
-	}
-	for _, item := range dbusers {
-		t.Log(item)
-	}
-}
-func TestSession(t *testing.T) {
+	db, _ := GetDB()
+	//take, err := NewParams[MuDbUser]().
+	//	Eq("id", 1).
+	//	ILike("username", "超").
+	//	BuildC(db).Take(context.Background())
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//xlog.Infof(nil, "take %+v", take)
 
-	xlog.WithDebugger()
-	New(&Config{
-		Dns:    FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
-		Logger: true,
-	})
-	err := Ctx(context.Background()).Tran(func(d *DB) error {
-		update := d.Session().Model(&MuDbUser{}).Where("id = ?", 1).Limit(1).Update("wx_open_id", "123")
-		if update.Error != nil {
-			return update.Error
-		}
-		if err := d.Session().Model(&MuDbProduct{}).Where("id = ?", 1).Limit(1).Update("stock", 2).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		t.Error(err)
+	tx := db.Where("id in ?", []int64{}).Find(&dbusers)
+	if tx.Error != nil {
+		t.Error(tx.Error)
 	}
+	xlog.Infof(nil, "take %+v", dbusers)
 
-	var users []MuDbUser
-	var total int64
-	Ctx(context.Background()).Unscoped().Where("id in ? ", []int64{1, 2, 3}).FindPage(&PageSearch{
-		Page: PageRequestImpl{
-			Page:       1,
-			Size:       20,
-			NotCounted: false,
-		},
-	}, &users, &total)
-	for _, item := range users {
-		t.Log(item)
-	}
-	t.Log(total)
 }
 
 func TestMuDb(t *testing.T) {
@@ -97,7 +71,7 @@ func TestMuDb(t *testing.T) {
 	})
 
 	var db1Users []MuDbUser
-	err := Ctx(context.Background()).Raw(`select id,username  "name" from s_user order by id desc limit 3`).Find(&db1Users)
+	err := C(context.Background()).Raw(`select id,username  "name" from s_user order by id desc limit 3`).Find(&db1Users)
 	if err != nil {
 		t.Error(err)
 	}
@@ -107,7 +81,7 @@ func TestMuDb(t *testing.T) {
 	})
 
 	var db2Users []MuDbUser
-	err = Ctx(context.Background(), "game").Raw("select * from g_user order by id desc limit 3").Find(&db2Users)
+	err = C(context.Background(), "game").Raw("select * from g_user order by id desc limit 3").Find(&db2Users)
 	if err != nil {
 		t.Error(err)
 	}

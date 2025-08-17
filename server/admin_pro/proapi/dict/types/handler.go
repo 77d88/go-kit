@@ -21,19 +21,19 @@ type request struct {
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	var dict []*pro.Dict
-	var total int64
-	if result := xdb.Ctx(c).Where("is_type").Order("sort asc").FindPage(r, &dict, &total); result.Error != nil {
+	if result := xdb.FindPage[pro.Dict](xdb.C(c).Where("is_type").Order("sort asc"), r, true); result.Error != nil {
 		return nil, result.Error
+	} else {
+		return xhs.NewResp(xarray.Map(result.List, func(i int, item pro.Dict) *response {
+			return &response{
+				Id:   item.ID,
+				Desc: item.Desc,
+				Val:  item.Val,
+				Sort: item.Sort,
+			}
+		}), result.Total), nil
 	}
-	return xhs.NewResp(xarray.Map(dict, func(i int, item *pro.Dict) *response {
-		return &response{
-			Id:   item.ID,
-			Desc: item.Desc,
-			Val:  item.Val,
-			Sort: item.Sort,
-		}
-	}), total), nil
+
 }
 
 func Register(path string, xsh *xhs.HttpServer) {

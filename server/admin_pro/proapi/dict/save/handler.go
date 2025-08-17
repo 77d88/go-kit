@@ -24,16 +24,16 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	if r.Id > 0 {
 		dict := pro.Dict{}
-		if result := xdb.Ctx(c).WithId(r.Id).Find(&dict); result.Error != nil {
+		if result := xdb.C(c).Where("id = ?", r.Id).Find(&dict); result.Error != nil {
 			return nil, result.Error
 		}
 		if !dict.IsType {
-			take := xdb.Ctx(c).Where("val = ? and id != ?", dict.Val, r.Id).Take(&pro.Dict{})
-			if !take.IsNotFound() {
+			take := xdb.C(c).Where("val = ? and id != ?", dict.Val, r.Id).Take(&pro.Dict{})
+			if !xdb.IsNotFound(take.Error) {
 				return nil, xerror.New("字典类型已存在")
 			}
 		}
-		if result := xdb.Ctx(c).Model(&pro.Dict{}).WithId(r.Id).Updates(map[string]any{
+		if result := xdb.C(c).Model(&pro.Dict{}).Where("id = ?", r.Id).Updates(map[string]any{
 			"desc":        r.Desc,
 			"sort":        r.Sort,
 			"val":         r.Val,
@@ -46,7 +46,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		if r.Val <= 0 {
 			return nil, xerror.New("参数错误")
 		}
-		if result := xdb.Ctx(c).Model(&pro.Dict{}).Create(&pro.Dict{
+		if result := xdb.C(c).Model(&pro.Dict{}).Create(&pro.Dict{
 			Desc:       r.Desc,
 			Sort:       r.Sort,
 			TypeId:     r.TypeId,

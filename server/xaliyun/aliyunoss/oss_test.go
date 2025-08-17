@@ -10,8 +10,8 @@ package aliyunoss
 //
 //func Test_Run(t *testing.T) {
 //	xapi.InitTestConfig()
-//	xdb.Init()
-//	Init(nil)
+//	xdb.New()
+//	New(nil)
 //	img, err := genOtherImg(context.TODO(), "temp/666623810818118", 100, 100)
 //	if err != nil {
 //		panic(err)
@@ -23,8 +23,8 @@ package aliyunoss
 //
 //func Test_OptimizeAll(t *testing.T) {
 //	xapi.InitTestConfig()
-//	xdb.Init()
-//	Init(nil)
+//	xdb.New()
+//	New(nil)
 //
 //	var res []Res
 //	xdb.Ctx(context.TODO()).Where("id > 0").Find(&res)

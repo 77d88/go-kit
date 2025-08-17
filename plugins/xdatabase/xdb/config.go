@@ -16,18 +16,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func init() {
-	x.Use(func() *DB {
-		c, err := x.Config[Config](DefaultDbLinkStr)
-		if err != nil {
-			xlog.Fatalf(nil, "init db error %s", err)
-			return nil
-		}
-		c.DbLinkName = DefaultDbLinkStr
-		return New(c)
-	})
-}
-
 // Config 数据库配置
 type Config struct {
 	Dns                       string `json:"dns"`                       // 示例 host=127.0.0.1 port=5432 user=postgres password=yzz123! dbname=yzz sslmode=disable TimeZone=Asia/Shanghai
@@ -40,7 +28,17 @@ type Config struct {
 	DbLinkName                string `yaml:"dbLinkName"`                // 数据库链接名称
 }
 
-func New(c *Config) *DB {
+func NewX() *gorm.DB {
+	c, err := x.Config[Config](DefaultDbLinkStr)
+	if err != nil {
+		xlog.Fatalf(nil, "init db error %s", err)
+		return nil
+	}
+	c.DbLinkName = DefaultDbLinkStr
+	return New(c)
+}
+
+func New(c *Config) *gorm.DB {
 	if c == nil {
 		xlog.Fatalf(nil, "init db error config is nil ")
 		return nil
@@ -86,7 +84,7 @@ func New(c *Config) *DB {
 		return nil
 	}
 
-	// 获取通用数据库对象 sql.DB ，然后使用其提供的功能
+	// 获取通用数据库对象 sql.db ，然后使用其提供的功能
 	sqlDB, err := gormDb.DB()
 	if err != nil {
 		xlog.Fatalf(nil, "db init error -2 %s", err)
@@ -102,15 +100,16 @@ func New(c *Config) *DB {
 	re := regexp.MustCompile(`password=.+? `)
 	maskedStr := re.ReplaceAllString(c.Dns, "password=******* ")
 	xlog.Infof(nil, "init db conn success %s link -> %s", maskedStr, c.DbLinkName)
-	db := &DB{
+	db := &db{
 		DB:     gormDb,
 		Config: c,
 	}
-	dbs[c.DbLinkName] = db
+	dbs[c.DbLinkName] = gormDb
 	if DefaultDB == nil {
-		DefaultDB = db
+		DefaultDB = gormDb
 	}
-	return db
+	x.Use(db, "_xdb.gorm."+c.DbLinkName)
+	return gormDb
 }
 
 type gormLogger struct {

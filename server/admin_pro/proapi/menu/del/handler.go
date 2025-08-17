@@ -22,7 +22,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误")
 	}
 
-	if result := xdb.Ctx(c).WithId(r.Id).Updates(map[string]interface{}{
+	if result := xdb.C(c).Where("id = ?", r.Id).Updates(map[string]interface{}{
 		"deleted_time": time.Now(),
 		"update_user":  c.GetUserId(),
 	}); result.Error != nil {

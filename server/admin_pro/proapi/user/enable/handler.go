@@ -20,7 +20,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.Id <= 0 {
 		return nil, xerror.New("参数错误")
 	}
-	if result := xdb.Ctx(c).Model(&pro2.User{}).WithId(r.Id).
+	if result := xdb.C(c).Model(&pro2.User{}).Where("id = ?", r.Id).
 		Updates(map[string]interface{}{
 			"disabled":    false,
 			"update_user": c.GetUserId(),

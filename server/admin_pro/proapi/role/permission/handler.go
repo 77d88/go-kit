@@ -24,7 +24,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误:Id不能为空")
 	}
 	var permissions []pro.Permission
-	if result := xdb.Ctx(c).FindByIds(&permissions, r.Permission.ToSlice()...); result.Error != nil {
+	if result := xdb.C(c).Where("id in ?", r.Permission.ToSlice()).Find(&permissions); result.Error != nil {
 		return nil, result.Error
 	}
 	codes := make([]string, 0, len(permissions))
@@ -32,7 +32,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		codes = append(codes, p.Code)
 	}
 	codes = xarray.Union(codes)
-	if result := xdb.Ctx(c).Model(&pro.Role{}).WithId(r.Id).
+	if result := xdb.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).
 		Updates(map[string]interface{}{
 			"permission":       r.Permission,
 			"update_user":      c.GetUserId(),

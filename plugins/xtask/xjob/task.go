@@ -12,21 +12,6 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
-func init() {
-	x.Use(func() *Manager {
-		configInt := x.ConfigInt("task.maxWorkers")
-		if configInt == 0 {
-			configInt = 200
-		}
-		handler, err := New(configInt)
-		if err != nil {
-			panic(err)
-		}
-		defaultHandler = handler
-		return defaultHandler
-	})
-}
-
 // Task 定义任务结构体
 type Task struct {
 	ID      string                          // 任务唯一标识
@@ -51,6 +36,19 @@ var defaultHandler *Manager
 var defaultCtx = context.WithValue(context.Background(), xlog.CtxLogParam, map[string]interface{}{
 	"origin": "xjob",
 })
+
+func NewX() *Manager {
+	configInt := x.ConfigInt("task.maxWorkers")
+	if configInt == 0 {
+		configInt = 200
+	}
+	handler, err := New(configInt)
+	if err != nil {
+		panic(err)
+	}
+	defaultHandler = handler
+	return defaultHandler
+}
 
 // New 初始化处理器
 func New(maxWorkers int) (*Manager, error) {

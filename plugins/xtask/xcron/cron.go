@@ -53,43 +53,6 @@ import (
 
 var defaultCron *Manager
 
-func init() {
-	x.Use(func() *Manager {
-		opts := make([]CronTaskManagerOption, 0, 3)
-		i := x.ConfigInt("task.cron.ownWorks") // 独立工作线程数量默认50
-		if i == 0 {
-			i = 50
-		}
-		var own = x.ConfigBool("task.cron.own")
-		if own { // 是否开启独立处理线程模式 不然使用全局处理线程
-			handler, err := xjob.New(i)
-			if err != nil {
-				xlog.Errorf(nil, "new task handler error: %v", err)
-				return nil
-			}
-			opts = append(opts, WithTaskPool(handler))
-		} else {
-			get, err := x.Get[*xjob.Manager]()
-			if err != nil {
-				xlog.Errorf(nil, "get task handler error: %v", err)
-				return nil
-			}
-			opts = append(opts, WithTaskPool(get))
-		}
-		if x.ConfigBool("task.cron.seconds") { // 是否开启秒级任务
-			opts = append(opts, WithSeconds())
-		}
-
-		handler, err := New(opts...)
-		handler.own = own
-		if err != nil {
-			xlog.Fatalf(nil, "new cron task manager error: %v", err)
-		}
-		defaultCron = handler
-		return handler
-	})
-}
-
 var defaultCtx = context.WithValue(context.Background(), xlog.CtxLogParam, map[string]interface{}{
 	"origin": "xcron",
 })
@@ -129,6 +92,41 @@ func WithSeconds() CronTaskManagerOption {
 	return func(manager *Manager) {
 		cron.WithSeconds()(manager.cron)
 	}
+}
+
+func NewX() *Manager {
+	opts := make([]CronTaskManagerOption, 0, 3)
+	i := x.ConfigInt("task.cron.ownWorks") // 独立工作线程数量默认50
+	if i == 0 {
+		i = 50
+	}
+	var own = x.ConfigBool("task.cron.own")
+	if own { // 是否开启独立处理线程模式 不然使用全局处理线程
+		handler, err := xjob.New(i)
+		if err != nil {
+			xlog.Errorf(nil, "new task handler error: %v", err)
+			return nil
+		}
+		opts = append(opts, WithTaskPool(handler))
+	} else {
+		get, err := x.Get[*xjob.Manager]()
+		if err != nil {
+			xlog.Errorf(nil, "get task handler error: %v", err)
+			return nil
+		}
+		opts = append(opts, WithTaskPool(get))
+	}
+	if x.ConfigBool("task.cron.seconds") { // 是否开启秒级任务
+		opts = append(opts, WithSeconds())
+	}
+
+	handler, err := New(opts...)
+	handler.own = own
+	if err != nil {
+		xlog.Fatalf(nil, "new cron task manager error: %v", err)
+	}
+	defaultCron = handler
+	return handler
 }
 
 // New 创建新的定时任务管理器

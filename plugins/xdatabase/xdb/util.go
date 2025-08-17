@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/basic/xreflect"
@@ -128,4 +131,77 @@ func FastDsn(host string, port int, user, password, dbName string) string {
 
 func Param(name string, val any) sql.NamedArg {
 	return sql.Named(name, val)
+}
+
+type PageResult[T any] struct {
+	Total int64
+	List  []T
+	Error error
+}
+
+func FindPage[T any](db *gorm.DB, page Pager, count bool) PageResult[T] {
+	var pageResult PageResult[T]
+	offset, limit := page.Limit()
+	if count {
+		if result := db.Count(&pageResult.Total); result.Error != nil {
+			pageResult.Error = result.Error
+			return pageResult
+		}
+		if pageResult.Total <= int64(offset) {
+			return pageResult
+		}
+	}
+	find := db.Offset(offset).Limit(limit).Find(&pageResult.List)
+	pageResult.Error = find.Error
+	return pageResult
+}
+
+func Session(db *gorm.DB, session ...*gorm.Session) *gorm.DB {
+	return db.Session(xarray.FirstOrDefault(session, &gorm.Session{}))
+}
+
+func XWhere(db *gorm.DB, condition bool, query string, args ...interface{}) *gorm.DB {
+	if query == "" {
+		return db
+	}
+	if !condition {
+		return db
+	}
+	return db.Where(query, args...)
+}
+
+type SaveMapResult struct {
+	Error error
+	RowId int64
+}
+
+func SaveMap[T any](db *gorm.DB, obj interface{}, mapping ...interface{}) *SaveMapResult {
+	m := toSqlMap(obj, mapping...)
+	mdb := db.Model(new(T))
+	var id int64
+	var r SaveMapResult
+	// 获取出ID 单独处理
+	for k, v := range m {
+		if strings.ToLower(k) == "id" {
+			delete(m, k)
+			if i, ok := v.(int64); ok {
+				id = i
+			}
+		}
+	}
+	if id > 0 {
+		result := mdb.Where("id = ?", id).Updates(m)
+		r.RowId = id
+		r.Error = result.Error
+	} else {
+		saveId := NextId()
+		m["id"] = saveId
+		m["created_time"] = time.Now()
+		m["updated_time"] = time.Now()
+		m["deleted_time"] = nil
+		result := mdb.Create(m)
+		r.RowId = saveId
+		r.Error = result.Error
+	}
+	return &r
 }

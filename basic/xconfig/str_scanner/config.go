@@ -2,7 +2,6 @@ package str_scanner
 
 import (
 	"github.com/77d88/go-kit/basic/xconfig"
-	"github.com/77d88/go-kit/plugins/x"
 )
 
 type StringLoader struct {
@@ -19,7 +18,6 @@ func (c *StringLoader) Load(dataId string) (string, error) {
 
 func Default(data string) *xconfig.Config {
 	config := xconfig.Init(New(data), "")
-	x.Use(config)
 	return config
 }
 

@@ -32,7 +32,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误:Id不能为空")
 	}
 	var user pro.User
-	if result := xdb.Ctx(c).WithId(r.Id).First(&user); result.Error != nil {
+	if result := xdb.C(c).Where("id = ?", r.Id).First(&user); result.Error != nil {
 		return nil, result.Error
 	}
 	return &response{

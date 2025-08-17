@@ -17,18 +17,22 @@ type request struct {
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	var menu pro.Menu
-	if result := xdb.Ctx(c).WithId(r.ParentId).Find(&menu); result.Error != nil {
-		if result.IsNotFound() {
-			return make([]*pro.Menu, 0), nil
+	if result := xdb.C(c).Where("id = ?", r.ParentId).Take(&menu); result.Error != nil {
+		if xdb.IsNotFound(result.Error) {
+			return make([]struct{}, 0), nil
+		} else {
+			return nil, result.Error
 		}
 	}
 	if menu.Children.IsEmpty() {
-		return make([]*pro.Menu, 0), nil
+		return make([]struct{}, 0), nil
 	}
 	var menus []pro.Menu
-	if result := xdb.Ctx(c).WithId(menu.Children.ToSlice()...).Find(&menus); result.Error != nil {
-		if result.IsNotFound() {
+	if result := xdb.C(c).Where("id in ?", menu.Children.ToSlice()).Find(&menus); result.Error != nil {
+		if xdb.IsNotFound(result.Error) {
 			return nil, nil
+		} else {
+			return nil, result.Error
 		}
 	}
 	return menus, nil

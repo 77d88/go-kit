@@ -4,20 +4,19 @@ import (
 	"github.com/77d88/go-kit/basic/xconfig/str_scanner"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
-	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth/aes_auth"
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth/redis_auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/cors"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/limiter"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
+	_ "github.com/77d88/go-kit/plugins/xdatabase/xredis"
+	"github.com/77d88/go-kit/plugins/xtask/xjob"
 	"github.com/77d88/go-kit/server/admin_pro/proapi"
-	"github.com/77d88/go-kit/server/xaliyun/aliyunaddress"
-	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossgin"
-	"github.com/77d88/go-kit/server/xaliyun/aliyunoss/aliyunossginsts"
 )
 
 func init() {
-	str_scanner.Default(`{
+	x.Must(str_scanner.Default(`{
 	 "server": {
 	   "port": 9981,
 	   "debug": true,
@@ -28,24 +27,26 @@ func init() {
 	   "logger": true
 	 },
 	 "redis": {
-	   "addr": "127.0.0.1:6379",
-	   "pass": "jerry123!",
+	   "addr": "127.0.0.1:6666",
+	   "pass": "test",
 	   "db": 0
 	 }
-	}`)
+	}`))
 }
 
 func main() {
-	x.FastInit(func(*xdb.DB,xredis.Client) {})
+	x.Must(xdb.NewX)
+	x.Must(xredis.NewX)
+	x.Must(xjob.NewX)
 	x.Use(func() x.EngineServer {
 		server := xhs.New()
 		server.Use(limiter.New())
 		server.Use(cors.New())
-		server.Use(auth.NewMw(aes_auth.New()))
+		server.Use(auth.NewMw(redis_auth.New()))
 		proapi.Register(server)
-		aliyunossginsts.DefaultRegister("/aliyun/sts", server)
-		aliyunaddress.DefaultRegister("/aliyun/address", server)
-		aliyunossgin.DefaultRegister("/aliyun/oss", server)
+		//aliyunossginsts.DefaultRegister("/aliyun/sts", server)
+		//aliyunaddress.DefaultRegister("/aliyun/address", server)
+		//aliyunossgin.DefaultRegister("/aliyun/oss", server)
 		return server
 	})
 	x.Start()

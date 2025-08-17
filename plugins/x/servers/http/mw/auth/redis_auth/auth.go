@@ -13,8 +13,8 @@ import (
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/xcache"
-	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xlog"
+	"github.com/redis/go-redis/v9"
 )
 
 const defaultPrefix = "xapi_auth:"
@@ -22,13 +22,13 @@ const defaultPrefix = "xapi_auth:"
 var localCache = xcache.New(5*time.Minute, 10*time.Minute)
 
 type Auth struct {
-	Client      *xredis.Client
+	Client      *redis.Client
 	Prefix      string
 	AutoRenewal bool // 自动续签
 }
 
 func New() auth.Manager {
-	client, err := x.Get[*xredis.Client]()
+	client, err := x.Get[*redis.Client]()
 	if err != nil {
 		return nil
 	}

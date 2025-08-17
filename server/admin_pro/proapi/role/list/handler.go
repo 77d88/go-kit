@@ -12,21 +12,17 @@ type response struct {
 }
 
 type request struct {
-	xdb.PageSearch
-	Name string `json:"name"`
+	Page xdb.PageSearch `json:"page"`
+	Name string         `json:"name"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	var (
-		list  []pro.Role
-		total int64
-	)
-	if result := xdb.Ctx(c).Model(&pro.Role{}).
-		XWhere(r.Name != "", "name ilike ?", xdb.WarpLike(r.Name)).FindPage(r, &list, &total); result.Error != nil {
-
+	db := xdb.XWhere(xdb.C(c), r.Name != "", "name ilike @name", xdb.Param("name", xdb.WarpLike(r.Name)))
+	if result := xdb.FindPage[pro.Role](db, r.Page, true); result.Error != nil {
 		return nil, result.Error
+	} else {
+		return xhs.NewResp(result.List, result.Total), nil
 	}
-	return xhs.NewResp(list, total), nil
 }
 
 func Register(path string, xsh *xhs.HttpServer) {

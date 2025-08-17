@@ -21,7 +21,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误")
 	}
 	var dict []*pro.Dict
-	if result := xdb.Ctx(c).Where("not is_type and type = ?", r.TypeId).Order("sort asc").Find(&dict); result.Error != nil {
+	if result := xdb.C(c).Where("not is_type and type = ?", r.TypeId).Order("sort asc").Find(&dict); result.Error != nil {
 		return nil, result.Error
 	}
 	return dict, nil

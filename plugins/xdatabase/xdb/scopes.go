@@ -18,34 +18,54 @@ const (
 	SC_OrderIdDesc
 )
 
-var sc_empty = func(db *gorm.DB) *gorm.DB {
-	return db
-}
+var sc_empty = func(*gorm.Statement) {}
 
-// SC_ZeroIgnore 忽略空值的条件查询
+
+// SC_ZeroWhere 忽略空值的条件查询
 // 示例：
 //
-//	SC_ZeroIgnore(0, func(db *gorm.DB, r int){
+//	SC_ZeroIgnore(0, func(db *gorm.db, r int){
 //			db.Where("id = ?", r)
 //		}) 这样是不会添加 id = 0 这个条件
-func SC_ZeroIgnore[T any](value T, f func(db *gorm.DB, v T) *gorm.DB) func(db *gorm.DB) *gorm.DB {
+func SC_ZeroWhere(value any, query interface{}, args ...interface{}) func(*gorm.Statement) {
 	if xcore.IsZero(value) {
 		return sc_empty
 	}
-	return func(db *gorm.DB) *gorm.DB {
-		return f(db, value)
+	return func(s *gorm.Statement) {
+		s.Where(query, args...)
 	}
 }
 
-// SC_NullIgnore 忽略 nil 的条件查询 和 SC_ZeroIgnore 差不多只是条件值可以为零值
-// 示例：SC_NullIgnore(0, func(db *gorm.DB, r int){ db.Where("id = ?", r)  }) 这样会添加 id = 0 这个条件
-// 示例：SC_NullIgnore(nil, func(db *gorm.DB, r int){ db.Where("id = ?", r)  }) 这样不会添加 id = 0 这个条件
-func SC_NullIgnore[T any](value T, f func(db *gorm.DB, v T) *gorm.DB) func(db *gorm.DB) *gorm.DB {
+// SC_NilWhere 忽略 nil 的条件查询 和 SC_ZeroWhere 差不多只是条件值可以为零值
+func SC_NilWhere(value any, query interface{}, args ...interface{}) func(*gorm.Statement) {
 	if xreflect.IsNil(value) {
 		return sc_empty
 	}
-	return func(db *gorm.DB) *gorm.DB {
+	return func(s *gorm.Statement) {
+		s.Where(query, args...)
+	}
+}
 
-		return f(db, value)
+func SC_Page(page, size int) func(*gorm.Statement) {
+	if size <= 0 {
+		size = 10
+	}
+	if page <= 0 {
+		page = 1
+	}
+	return func(s *gorm.Statement) {
+		s.Offset((page - 1) * size).Limit(size)
+	}
+}
+
+func SC_Ilike(field, page string) func(*gorm.Statement) {
+	return func(s *gorm.Statement) {
+		s.Where(field+" ILIKE ?", "%"+page+"%")
+	}
+}
+
+func SC_ID(id int64) func(*gorm.Statement) {
+	return func(s *gorm.Statement) {
+		s.Where("id =  ?", id)
 	}
 }

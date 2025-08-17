@@ -16,23 +16,27 @@ type response struct {
 }
 
 type request struct {
-	xdb.PageSearch
-	Code string `json:"code,omitempty"`
+	Page xdb.PageSearch `json:"page"`
+	Code string         `json:"code,omitempty"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	var permission []pro.Permission
-	var total int64
-	if result := xdb.Ctx(c).XWhere(r.Code != "", "code ilike @code", xdb.Param("code", xdb.WarpLike(r.Code))).FindPage(r, &permission, &total); result.Error != nil {
-		return nil, result.Error
+	db := xdb.C(c)
+	if r.Code != "" {
+		db = db.Where("code ilike @code", xdb.Param("code", xdb.WarpLike(r.Code)))
 	}
-	return xhs.NewResp(xarray.Map(permission, func(index int, item pro.Permission) response {
-		return response{
-			Id:   item.ID,
-			Code: item.Code,
-			Desc: item.Desc,
-		}
-	}), total), nil
+	if result := xdb.FindPage[pro.Permission](db, r.Page, true); result.Error != nil {
+		return nil, result.Error
+	} else {
+		return xhs.NewResp(xarray.Map(result.List, func(index int, item pro.Permission) response {
+			return response{
+				Id:   item.ID,
+				Code: item.Code,
+				Desc: item.Desc,
+			}
+		}), result.Total), nil
+	}
+
 }
 
 func Register(path string, xsh *xhs.HttpServer) {

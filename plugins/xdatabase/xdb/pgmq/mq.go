@@ -17,9 +17,7 @@ import (
 )
 
 func init() {
-	x.Use(func() *XQueue {
-		return New(&Config{})
-	})
+	x.Use()
 }
 
 // Queue states
@@ -39,7 +37,7 @@ type Handler func(msg *Queue) (bool, error)
 
 // XQueue 队列主服务
 type XQueue struct {
-	db             *xdb.DB
+	db             *xdb.dsdb
 	handlers       map[MsgType][]Handler
 	runExecutor    *time.Ticker
 	executorThread *xjob.Manager
@@ -50,6 +48,10 @@ type XQueue struct {
 type Config struct {
 	DBName   string // 数据库名称 没有就默认
 	MaxWorks int    // 最大处理任务队列
+}
+
+func NewX() *XQueue {
+	return New(&Config{})
 }
 
 // New 创建新的队列服务实例

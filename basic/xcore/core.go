@@ -5,8 +5,8 @@ import (
 )
 
 // IsZero 检查值是否等于其类型的零值
-func IsZero[T any](val T) bool {
-	switch v := any(val).(type) {
+func IsZero(val any) bool {
+	switch v := val.(type) {
 	// 基础类型处理
 	case bool:
 		return !v

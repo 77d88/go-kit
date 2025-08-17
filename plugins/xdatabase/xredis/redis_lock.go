@@ -6,14 +6,17 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+
 	"github.com/77d88/go-kit/plugins/xlog"
+	"github.com/redis/go-redis/v9"
+
 	"log"
 	"sync"
 	"time"
 )
 
 type RedisLock struct {
-	client    *Client
+	client    *redis.Client
 	key       string
 	value     string // 唯一标识锁持有者
 	ttl       time.Duration
@@ -41,7 +44,7 @@ func NewLock(key string, ttl time.Duration, name ...string) *RedisLock {
 }
 
 // NewLockByClient 创建Redis锁实例 自定义客户端
-func NewLockByClient(client *Client, key string, ttl time.Duration) *RedisLock {
+func NewLockByClient(client *redis.Client, key string, ttl time.Duration) *RedisLock {
 	return &RedisLock{
 		client: client,
 		key:    key,

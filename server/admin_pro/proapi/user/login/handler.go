@@ -28,10 +28,7 @@ type request struct {
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	// 获取登录信息
-	var manager auth.Manager
-	err = x.Find(func(ctx auth.Manager) {
-		manager = ctx
-	})
+	manager, err := x.Get[auth.Manager]()
 	if err != nil {
 		return nil, xerror.New("获取登录信息失败")
 	}
@@ -64,7 +61,7 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 	}
 
 	var user *pro.User
-	if result := xdb.Ctx(c).Where(" password = ? and username = ? ", pwd, r.UserName).First(&user); result.Error != nil {
+	if result := xdb.C(c).Where(" password = ? and username = ? ", pwd, r.UserName).First(&user); result.Error != nil {
 		return nil, xerror.New("用户名或密码错误")
 	}
 	if user.Disabled {

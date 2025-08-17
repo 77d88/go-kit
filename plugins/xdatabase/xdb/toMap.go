@@ -3,10 +3,11 @@ package xdb
 import (
 	"context"
 	"fmt"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type states string

@@ -24,37 +24,35 @@ type response struct {
 }
 
 type request struct {
-	xdb.PageSearch
-	Name     string `json:"name"`
-	Disabled *bool  `json:"disabled"`
+	Page     xdb.PageSearch `json:"page"`
+	Name     string         `json:"name"`
+	Disabled *bool          `json:"disabled"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
-	var (
-		total int64
-		users []*pro.User
-	)
-	if result := xdb.Ctx(c).Model(&pro.User{}).
-		Where("not is_super_admin"). // 超级管理员不显示出来
-		XWhere(r.Name != "", "username ilike @name || nickname ilike @name", xdb.Param("name", xdb.WarpLike(r.Name))).
-		XWhere(r.Disabled != nil, "disabled = ?", r.Disabled).
-		IdDesc().FindPage(r, &users, &total); result.Error != nil {
+	tx := xdb.C(c).Model(&pro.User{}).Where("not is_super_admin").Order("id desc")
+	tx = xdb.XWhere(tx, r.Name != "", "username ilike @name || nickname ilike @name", xdb.Param("name", xdb.WarpLike(r.Name)))
+	tx = xdb.XWhere(tx, r.Disabled != nil, "disabled = ?", r.Disabled)
+
+	if result := xdb.FindPage[pro.User](tx, r.Page, true); result.Error != nil {
 		return nil, result.Error
+	} else {
+		return xhs.NewResp(xarray.Map(result.List, func(i int, d pro.User) *response {
+			return &response{
+				Id:          d.ID,
+				Disabled:    d.Disabled,
+				Nickname:    d.Nickname,
+				Username:    d.Username,
+				Avatar:      d.Avatar,
+				Roles:       d.Roles,
+				Permission:  d.Permission,
+				IsReLogin:   d.IsReLogin,
+				ReLoginDesc: d.ReLoginDesc,
+			}
+		}), result.Total), nil
 	}
-	return xhs.NewResp(xarray.Map(users, func(i int, d *pro.User) *response {
-		return &response{
-			Id:          d.ID,
-			Disabled:    d.Disabled,
-			Nickname:    d.Nickname,
-			Username:    d.Username,
-			Avatar:      d.Avatar,
-			Roles:       d.Roles,
-			Permission:  d.Permission,
-			IsReLogin:   d.IsReLogin,
-			ReLoginDesc: d.ReLoginDesc,
-		}
-	})), nil
+
 }
 
 func Register(path string, xsh *xhs.HttpServer) {

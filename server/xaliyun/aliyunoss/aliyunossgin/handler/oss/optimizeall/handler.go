@@ -11,16 +11,16 @@ import (
 func handler(c *xhs.Ctx, r request) (interface{}, error) {
 
 	var res []aliyunoss2.Res
-	if result := xdb.Ctx(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res); result.Error != nil {
+	if result := xdb.C(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res); result.Error != nil {
 
 		return nil, result.Error
 	}
-
+	db := xdb.DB()
 	for _, r := range res {
 		if r.IsOptimize {
 			continue
 		}
-		err := aliyunoss2.OptimizeRes(c, r, aliyunoss2.OFile{
+		err := aliyunoss2.OptimizeRes(c, db, r, aliyunoss2.OFile{
 			ETag: r.AliEtag,
 			Id:   r.ID,
 			Key:  r.Path,

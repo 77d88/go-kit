@@ -11,17 +11,6 @@ import (
 	miniConfig "github.com/silenceper/wechat/v2/miniprogram/config"
 )
 
-func init() {
-	x.Use(func() *miniprogram.MiniProgram {
-		//var redisConfig RedisConfig
-		config, err := x.Config[miniConfig.Config]("wx.mini")
-		if err != nil {
-			xlog.Panicf(context.Background(), "wx.mini config error: %v", err)
-		}
-		return New(config)
-	})
-}
-
 var (
 	Mini *miniprogram.MiniProgram
 	Cfg  *miniConfig.Config
@@ -33,6 +22,14 @@ type RedisConfig struct {
 	Db   int    `yaml:"db" json:"db"`     // 数据库
 }
 
+func NewX() *miniprogram.MiniProgram {
+	//var redisConfig RedisConfig
+	config, err := x.Config[miniConfig.Config]("wx.mini")
+	if err != nil {
+		xlog.Panicf(context.Background(), "wx.mini config error: %v", err)
+	}
+	return New(config)
+}
 func New(config *miniConfig.Config) *miniprogram.MiniProgram {
 	Cfg = config
 	if Cfg.AppID == "" {

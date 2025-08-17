@@ -19,19 +19,19 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	userId := c.GetUserId()
 
 	var user pro.User
-	if result := xdb.Ctx(c).WithId(userId).Take(&user); result.Error != nil {
+	if result := xdb.C(c).Where("id = ?", userId).Take(&user); result.Error != nil {
 		return nil, result.Error
 	}
 
 	var menus []*pro.Menu
 
 	if user.IsSuperAdmin {
-		result := xdb.Ctx(c).Find(&menus)
+		result := xdb.C(c).Find(&menus)
 		if result.Error != nil {
 			return nil, result.Error
 		}
 	} else {
-		result := xdb.Ctx(c).Where("permission in (?)", user.AllPermissionCode()).Find(&menus)
+		result := xdb.C(c).Where("permission in (?)", user.AllPermissionCode()).Find(&menus)
 		if result.Error != nil {
 			return nil, result.Error
 		}

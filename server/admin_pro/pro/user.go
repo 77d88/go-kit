@@ -85,7 +85,7 @@ func (d *User) HasPermission(code ...string) bool {
 // GetUserAllPermissionCode 获取用户所有权限
 func GetUserAllPermissionCode(c context.Context, userId int64) ([]string, error) {
 	var user User
-	result := xdb.Ctx(c).Model(&User{}).WithId(userId).First(&user)
+	result := xdb.C(c).Model(&User{}).Take(&user, userId)
 	if result.Error != nil {
 		xlog.Errorf(c, "获取用户%d 异常", userId)
 		return nil, result.Error

@@ -14,9 +14,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/silenceper/wechat/v2 v2.1.9
 )
-replace (
-	 github.com/77d88/go-kit => ..
-)
+
+replace github.com/77d88/go-kit => ..
 
 require (
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5 // indirect
@@ -36,6 +35,12 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.10.0 // indirect
+	github.com/go-pay/crypto v0.0.1 // indirect
+	github.com/go-pay/errgroup v0.0.3 // indirect
+	github.com/go-pay/smap v0.0.2 // indirect
+	github.com/go-pay/util v0.0.4 // indirect
+	github.com/go-pay/xlog v0.0.3 // indirect
+	github.com/go-pay/xtime v0.0.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
@@ -59,11 +64,9 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // indirect
-	github.com/panjf2000/ants/v2 v2.11.3 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/redis/go-redis/v9 v9.7.3 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

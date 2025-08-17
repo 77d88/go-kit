@@ -28,10 +28,10 @@ var do sync.Once
 func Init() *sts20150401.Client {
 
 	do.Do(func() {
-		xlog.Infof(context.Background(), "aliyun.sts.Init")
+		xlog.Infof(context.Background(), "aliyun.sts.New")
 
 		if aliyunoss.Config.StsArn == "" {
-			xlog.Fatalf(nil, "aliyun.sts.Init: aliyun.sts.arn is empty 请先初始化aliyun oss")
+			xlog.Fatalf(nil, "aliyun.sts.New: aliyun.sts.arn is empty 请先初始化aliyun oss")
 		}
 		client, err := newStsClient()
 		if err != nil {

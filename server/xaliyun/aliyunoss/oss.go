@@ -52,18 +52,15 @@ var (
 	Config *Oss
 )
 
-func init() {
+func NewX() *oss.Client {
 	o, err := x.Config[Oss]("aliyun.oss")
 	if err != nil {
 		xlog.Errorf(nil, "load oss config error: %s", err)
 	}
-	Client = Init(o)
-	if Client != nil {
-		x.Use(func() *oss.Client { return Client })
-	}
+	return New(o)
 }
 
-func Init(config *Oss) *oss.Client {
+func New(config *Oss) *oss.Client {
 	Config = config
 
 	region := Config.Region

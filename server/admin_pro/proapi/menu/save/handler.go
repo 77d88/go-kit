@@ -33,7 +33,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.Name == "" {
 		return nil, xerror.New("参数错误:名称不能为空")
 	}
-	if result := xdb.Ctx(c).SaveMap(&pro.Menu{}, r, map[string]interface{}{
+	if result := xdb.SaveMap[pro.Menu](xdb.C(c), r, map[string]interface{}{
 		"update_user": c.GetUserId(),
 	}); result.Error != nil {
 		return nil, result.Error

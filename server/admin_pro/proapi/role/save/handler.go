@@ -23,7 +23,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 
 	var role pro.Role
-	if result := xdb.Ctx(c).Where("name = ?", r.Name).Find(&role); result.Error != nil {
+	if result := xdb.C(c).Where("name = ?", r.Name).Find(&role); result.Error != nil {
 		return nil, result.Error
 	}
 	if r.Id > 0 && role.ID != r.Id {
@@ -31,14 +31,14 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 
 	if r.Id > 0 {
-		if result := xdb.Ctx(c).Model(&pro.Role{}).WithId(r.Id).Updates(map[string]interface{}{
+		if result := xdb.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).Updates(map[string]interface{}{
 			"name":        r.Name,
 			"update_user": c.GetUserId(),
 		}); result.Error != nil {
 			return nil, result.Error
 		}
 	} else {
-		if result := xdb.Ctx(c).Model(&pro.Role{}).Create(&pro.Role{
+		if result := xdb.C(c).Model(&pro.Role{}).Create(&pro.Role{
 			Name:       r.Name,
 			UpdateUser: c.GetUserId(),
 		}); result.Error != nil {

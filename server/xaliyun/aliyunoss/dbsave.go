@@ -11,6 +11,7 @@ import (
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
+	"gorm.io/gorm"
 )
 
 type OFile struct {
@@ -59,14 +60,14 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 		o := Config
 
 		var res Res
-		result := xdb.Ctx(c).Where("ali_etag = ?", r.ETag).Limit(1).Find(&res)
+		result := xdb.C(c).Where("ali_etag = ?", r.ETag).Limit(1).Find(&res)
 		if result.Error != nil {
 			return nil, result.Error
 		}
 
 		if res.ID > 0 {
 			if !res.IsOptimize { // 是否优化过
-				err := OptimizeRes(c, res, r)
+				err := OptimizeRes(c, xdb.DB(), res, r)
 				if err != nil {
 					return nil, err
 				}
@@ -74,7 +75,7 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 			return &OFile{Id: res.ID}, nil
 		}
 
-		err := xdb.Ctx(c).Tran(func(tx *xdb.DB) error {
+		err := xdb.C(c).Transaction(func(tx *gorm.DB) error {
 			base := xdb.NewBaseModel()
 			res = Res{
 				BaseModel:  base,
@@ -105,9 +106,9 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 	}
 }
 
-func OptimizeRes(c context.Context, res Res, r OFile) error {
-	return xdb.Ctx(c).Tran(func(d *xdb.DB) error {
-		result := d.Session().Model(&Res{}).Where("id = ?", res.ID).Update("is_optimize", true)
+func OptimizeRes(c context.Context, db *gorm.DB, res Res, r OFile) error {
+	return db.WithContext(c).Transaction(func(d *gorm.DB) error {
+		result := d.Session(&gorm.Session{}).Model(&Res{}).Where("id = ?", res.ID).Update("is_optimize", true)
 		if result.Error != nil {
 			return result.Error
 		}

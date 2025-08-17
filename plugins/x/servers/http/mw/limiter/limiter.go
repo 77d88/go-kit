@@ -10,7 +10,7 @@ import (
 // New 全局的限流器 令牌桶限流
 func New() xhs.HandlerMw {
 	limit := x.ConfigInt("server.rate")
-	if limit > 0 {
+	if limit <= 0 {
 		limit = 100
 	}
 	limiter := rate.NewLimiter(rate.Limit(limit), limit*2)

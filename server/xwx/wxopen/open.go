@@ -11,16 +11,6 @@ import (
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
 )
 
-func init() {
-	x.Use(func() *officialaccount.OfficialAccount {
-		config, err := x.Config[offConfig.Config]("wx.open")
-		if err != nil {
-			xlog.Panicf(context.Background(), "wx.open config error: %v", err)
-		}
-		return New(config)
-	})
-}
-
 type RedisConfig struct {
 	Addr string `yaml:"addr" json:"addr"` // 地址 ip:端口
 	Pass string `yaml:"pass" json:"pass"` // 密码
@@ -31,6 +21,14 @@ var (
 	Cfg      *offConfig.Config
 	Official *officialaccount.OfficialAccount
 )
+
+func NewX() *officialaccount.OfficialAccount {
+	config, err := x.Config[offConfig.Config]("wx.open")
+	if err != nil {
+		xlog.Panicf(context.Background(), "wx.open config error: %v", err)
+	}
+	return New(config)
+}
 
 func New(cfg *offConfig.Config) *officialaccount.OfficialAccount {
 	//var redisConfig RedisConfig

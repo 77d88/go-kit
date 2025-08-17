@@ -12,23 +12,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func init() {
-	x.Use(func() *Client {
-		c, err := x.Config[Config](redisStr)
-		if err != nil {
-			xlog.Errorf(nil, "redis init Fatal %+v", err)
-			return nil
-		}
-		c.DbLinkName = redisStr
-		return New(c)
-	})
-}
-
 const Nil = redis.Nil
 const redisStr string = "redis"
 
 var (
-	dbs    = make(map[string]*Client)
+	dbs    = make(map[string]*redis.Client)
 	dbLock = sync.RWMutex{} // 添加读写锁保护 dbs map
 )
 
@@ -40,14 +28,14 @@ type Config struct {
 	DbLinkName string `yaml:"dbLinkName" json:"dbLinkName"`
 }
 
-// Client redis命令
-type Client struct {
+// client redis命令
+type client struct {
 	*redis.Client
 	DbLinkName string
 	Config     *Config
 }
 
-func (c *Client) Dispose() error {
+func (c *client) Dispose() error {
 	err := c.Close()
 	if err != nil {
 		xlog.Errorf(nil, "redis dispose errror link->%s ", c.DbLinkName)
@@ -56,7 +44,17 @@ func (c *Client) Dispose() error {
 	return err
 }
 
-func New(config *Config) *Client {
+func NewX() *redis.Client {
+	c, err := x.Config[Config](redisStr)
+	if err != nil {
+		xlog.Errorf(nil, "redis init Fatal %+v", err)
+		return nil
+	}
+	c.DbLinkName = redisStr
+	return New(c)
+}
+
+func New(config *Config) *redis.Client {
 
 	if config == nil {
 		xlog.Errorf(nil, "redis init Fatal %+v", config)
@@ -80,13 +78,13 @@ func New(config *Config) *Client {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	client := redis.NewClient(&redis.Options{
+	Client := redis.NewClient(&redis.Options{
 		Addr:     config.Addr,
 		Password: config.Pass, // no password set
 		DB:       config.Db,   // use default Database
 	})
-	cli := Client{
-		Client:     client,
+	cli := client{
+		Client:     Client,
 		DbLinkName: config.DbLinkName,
 		Config:     config,
 	}
@@ -98,13 +96,14 @@ func New(config *Config) *Client {
 	} else {
 		xlog.Infof(nil, "redis init success %s db %d -> %s", config.Addr, config.Db, config.DbLinkName)
 	}
-	dbs[config.DbLinkName] = &cli
-	return &cli
+	dbs[config.DbLinkName] = Client
+	x.Use(&cli, "__xredis."+config.DbLinkName)
+	return Client
 
 }
 
 // Get 获取数据库链接
-func Get(name ...string) (*Client, error) {
+func Get(name ...string) (*redis.Client, error) {
 	dbLock.RLock()
 	defer dbLock.RUnlock()
 
@@ -117,25 +116,14 @@ func Get(name ...string) (*Client, error) {
 }
 
 // GetAll 获取所有数据库连接
-func GetAll() map[string]*Client {
+func GetAll() map[string]*redis.Client {
 	dbLock.RLock()
 	defer dbLock.RUnlock()
 
 	// 返回副本以避免外部修改
-	result := make(map[string]*Client, len(dbs))
+	result := make(map[string]*redis.Client, len(dbs))
 	for k, v := range dbs {
 		result[k] = v
 	}
 	return result
-}
-
-// Remove 移除指定名称的数据库连接
-func Remove(name string) {
-	dbLock.Lock()
-	defer dbLock.Unlock()
-
-	if client, exists := dbs[name]; exists {
-		client.Dispose()
-		delete(dbs, name)
-	}
 }

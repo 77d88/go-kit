@@ -24,17 +24,17 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误")
 	}
 	var role pro.Role
-	if result := xdb.Ctx(c).WithId(r.Id).Take(&role); result.Error != nil {
+	if result := xdb.C(c).Where("id = ?", r.Id).Take(&role); result.Error != nil {
 		return nil, result.Error
 	}
 	var count int64
-	if result := xdb.Ctx(c).Model(&pro.Role{}).Where("deleted_time is null and roles && ?", xdb.NewInt8Array(r.Id)).Count(&count); result.Error != nil {
+	if result := xdb.C(c).Model(&pro.Role{}).Where("deleted_time is null and roles && ?", xdb.NewInt8Array(r.Id)).Count(&count); result.Error != nil {
 		return nil, result.Error
 	}
 	if count > 0 {
 		return nil, xerror.New("角色已分配给用户，不能删除")
 	}
-	if result := xdb.Ctx(c).Model(&pro.Role{}).WithId(r.Id).
+	if result := xdb.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).
 		Updates(map[string]interface{}{
 			"update_user":  c.GetUserId(),
 			"deleted_time": time.Now(),

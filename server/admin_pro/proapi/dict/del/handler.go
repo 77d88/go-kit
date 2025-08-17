@@ -21,11 +21,11 @@ type request struct {
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	var dict pro.Dict
-	if result := xdb.Ctx(c).Model(&pro.Dict{}).WithId(r.ID).First(&dict); result.Error != nil {
+	if result := xdb.C(c).Model(&pro.Dict{}).Where("id = ?", r.ID).First(&dict); result.Error != nil {
 		return nil, err
 	}
 
-	if result := xdb.Ctx(c).Model(&pro.Dict{}).WithId(dict.ID).Updates(map[string]any{
+	if result := xdb.C(c).Model(&pro.Dict{}).Where("id = ?", dict.ID).Updates(map[string]any{
 		"deleted_time": time.Now(),
 		"update_user":  c.GetUserId(),
 	}); result.Error != nil {
@@ -34,7 +34,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	xlog.Warnf(c, "删除字典成功: %d, %d, %d, %s", dict.ID, dict.TypeId, dict.Val, dict.Desc)
 
 	if dict.IsType { // 删除字典类型相关的所有字典
-		if result := xdb.Ctx(c).Model(&pro.Dict{}).Where("type_id = ?", dict.ID).Updates(map[string]any{
+		if result := xdb.C(c).Model(&pro.Dict{}).Where("type_id = ?", dict.ID).Updates(map[string]any{
 			"deleted_time": time.Now(),
 			"update_user":  c.GetUserId(),
 		}); result.Error != nil {

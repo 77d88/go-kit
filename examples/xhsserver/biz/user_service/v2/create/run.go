@@ -5,23 +5,14 @@ package create
 import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/x"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 )
 func run() xhs.Handler {
-	var db *xdb.DB
-    err := x.Find(func(p1 *xdb.DB) {
-        db = p1
-    })
-	if err != nil {
-		panic(err)
-	}
     return func(c *xhs.Ctx) (interface{}, error) {
         r := request{}
         err := c.ShouldBind(&r)
         if err != nil {
             return nil, xerror.New("参数错误").SetCode(xhs.CodeParamError).SetInfo("参数错误: %+v", err)
         }
-        return handler(c, &r, db)
+        return handler(c, &r)
     }
 }

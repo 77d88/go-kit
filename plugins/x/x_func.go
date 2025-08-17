@@ -3,14 +3,11 @@ package x
 import (
 	"os"
 	"os/signal"
-	"reflect"
-
-	"github.com/77d88/go-kit/basic/xconfig"
 )
 
 func Start() {
 	if x.sf == nil {
-		panic("server is nil please use UseServer")
+		panic("server is nil please use Server")
 	}
 	x.wait.Wait()
 	go func() {
@@ -18,9 +15,6 @@ func Start() {
 		if err != nil {
 			panic(err)
 		}
-		err = x.provide(func() EngineServer {
-			return s
-		})
 		x.Server = s
 		if err != nil {
 			panic(err)
@@ -29,80 +23,9 @@ func Start() {
 	}()
 	signal.Notify(x.QuitSignal, os.Interrupt)
 	<-x.QuitSignal
-
-	// 关闭服务
-	_ = x.invoke(func(s EngineServer) {
-		s.Shutdown()
-	})
 	// 释放资源
 	x.Close()
 	return
-}
-
-func Use(constructor interface{}) {
-	if reflect.TypeOf(constructor).Kind() == reflect.Func {
-		// 判断这个构造函数的第一个返回值是否是 func() (EngineServer, error)
-		switch f := constructor.(type) {
-		case func() (EngineServer, error):
-			x.sf = f
-			return
-		case func() EngineServer:
-			x.sf = func() (EngineServer, error) {
-				return f(), nil
-			}
-			return
-		}
-	} else {
-		switch t := constructor.(type) {
-		case *xconfig.Config:
-			x.Cfg = t
-			err := x.provide(func() *xconfig.Config {
-				return x.Cfg
-			})
-			if err != nil {
-				panic(err)
-				return
-			}
-
-		}
-
-		return
-	}
-
-	err := x.provide(constructor)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func Get[T any]() (T, error) {
-	var result T
-	err := x.invoke(func(r T) {
-		result = r
-	})
-	return result, err
-}
-func Find(constructor interface{}) error {
-	return x.invoke(constructor)
-}
-
-// FastInit 快速初始化
-func FastInit(constructor interface{}) {
-	methodValue := reflect.ValueOf(constructor)
-	methodType := methodValue.Type()
-	if methodType.Kind() == reflect.Func {
-		for i := 0; i < methodType.NumIn(); i++ {
-			inType := methodType.In(i)
-			x.wait.Add(1)
-			go func() {
-				defer x.wait.Done()
-				_, err := x.getInst(inType)
-				if err != nil {
-					panic(err)
-				}
-			}()
-		}
-	}
 }
 
 func Close() {

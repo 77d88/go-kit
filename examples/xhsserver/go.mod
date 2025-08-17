@@ -2,7 +2,7 @@ module example.com/xserver
 
 go 1.24.2
 
-require github.com/77d88/go-kit v0.0.34
+require github.com/77d88/go-kit v0.0.35
 
 replace github.com/77d88/go-kit => ../..
 

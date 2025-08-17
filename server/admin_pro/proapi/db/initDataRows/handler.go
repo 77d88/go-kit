@@ -31,9 +31,9 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 				}
 				// 创建一个v实例
 				d := xcore.NewBy(v)
-				result := xdb.Ctx(c, r.DbName).First(&d, v.GetID())
-				if result.IsNotFound() { // 记录不存在，创建新记录
-					result := xdb.Ctx(c, r.DbName).Create(v)
+				result := xdb.C(c, r.DbName).First(&d, v.GetID())
+				if xdb.IsNotFound(result.Error) { // 记录不存在，创建新记录
+					result := xdb.C(c, r.DbName).Create(v)
 					if result.Error != nil {
 						return nil, result.Error
 					}
@@ -41,10 +41,10 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 				} else {
 					// 删除在创建
 					if r.Restore { // 重建建立所有数据
-						if result := xdb.Ctx(c, r.DbName).DeleteUnscoped(v); result.Error != nil {
+						if result := xdb.C(c, r.DbName).Unscoped().Unscoped().Delete(v); result.Error != nil {
 							return nil, result.Error
 						}
-						if result := xdb.Ctx(c, r.DbName).Create(v); result.Error != nil {
+						if result := xdb.C(c, r.DbName).Create(v); result.Error != nil {
 							return nil, result.Error
 						}
 						xlog.Infof(nil, "记录【%s】[%s]=> %v 已存删除重新建立成功", t, k, v.GetID())

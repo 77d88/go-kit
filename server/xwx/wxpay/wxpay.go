@@ -13,18 +13,7 @@ import (
 	"github.com/go-pay/gopay/wechat/v3"
 )
 
-func init() {
-	x.Use(func() *wechat.ClientV3 {
-		config, err := x.Config[Config]("wx.pay")
-		if err != nil {
-			xlog.Panicf(context.Background(), "wx.pay config error: %v", err)
-		}
-		if config.MchName == "" {
-			config.MchName = "商品"
-		}
-		return New(config)
-	})
-}
+
 
 var Cli *wechat.ClientV3
 
@@ -44,6 +33,16 @@ func NotifyUrl() string {
 	return Cfg.NotifyUrl
 }
 
+func NewX() *wechat.ClientV3 {
+	config, err := x.Config[Config]("wx.pay")
+	if err != nil {
+		xlog.Panicf(context.Background(), "wx.pay config error: %v", err)
+	}
+	if config.MchName == "" {
+		config.MchName = "商品"
+	}
+	return New(config)
+}
 func New(config *Config) *wechat.ClientV3 {
 	Cfg = config
 	if Cfg.AppID == "" {
