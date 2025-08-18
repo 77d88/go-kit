@@ -10,6 +10,12 @@ import (
 type Handler func(ctx *Ctx) (interface{}, error)
 type HandlerMw func(ctx *Ctx)
 
+var ErrorHandler = func(err error) Handler {
+	return func(ctx *Ctx) (interface{}, error) {
+		return nil, err
+	}
+}
+
 // WarpHandle 通用处理函数 包装了一个本地的Context
 func WarpHandle(f Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {

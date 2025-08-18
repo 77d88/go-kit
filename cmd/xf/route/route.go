@@ -165,37 +165,40 @@ func generateModuleCode(moduleName string, handler HandlerInfo, bizDir string) e
 }
 
 func generateRouteFile(moduleName string, handler HandlerInfo, moduleDir string) error {
-	tmpl := `package {{.ModuleName}}
-
-import (
-	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-{{- if .Handler.Auth}}
-	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
-{{- end}}
-)
-
-// {{.Handler.Remark}}
-type request struct {
-}
-
-func handler(c *xhs.Ctx, r *request) (interface{},error) {
-	return nil, xerror.New("系统错误").SetCode(xhs.CodeNotImplemented)
-}
-
-func run(c *xhs.Ctx) (interface{}, error) {
-	if r,err := xhs.ShouldBind[request](c);err != nil {
-		return nil, xerror.New("参数错误").SetCode(xhs.CodeParamError).SetInfo("参数错误: %+v", err)
-	}else{
-		return handler(c, &r)
+	tmpl := `package
+	import "github.com/77d88/go-kit/plugins/x/servers/http/xhs" {{.ModuleName}}
+	
+	import (
+		"github.com/77d88/go-kit/basic/xerror"
+		"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
+	{{- if .Handler.Auth}}
+		"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
+	{{- end}}
+	)
+	
+	// {{.Handler.Remark}}
+	type request struct {
 	}
-}
+	
+	func handler(c *xhs.Ctx, r *request) (interface{},error) {
+		return nil, xerror.New("系统错误").SetCode(xhs.CodeNotImplemented)
+	}
+	
+	func run() xhs.Handler {
+		return func(c *xhs.Ctx) (interface{}, error) {
+			if r,err := xhs.ShouldBind[request](c);err != nil {
+				return nil, xerror.New("参数错误").SetCode(xhs.CodeParamError).SetInfo("参数错误: %+v", err)
+			}else{
+				return handler(c, &r)
+			}
+		}
+	}
 
-func Register(xsh *xhs.HttpServer) {
-{{- range .Methods}}
-	xsh.{{.}}("{{$.BasePath}}{{$.Route}}", run{{if $.Handler.Auth}},auth.ForceAuth {{end}})
-{{- end}}
-}
+	func Register(xsh *xhs.HttpServer) {
+	{{- range .Methods}}
+		xsh.{{.}}("{{$.BasePath}}{{$.Route}}", run(){{if $.Handler.Auth}},auth.ForceAuth {{end}})
+	{{- end}}
+	}
 `
 
 	data := struct {
