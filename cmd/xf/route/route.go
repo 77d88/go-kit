@@ -165,8 +165,7 @@ func generateModuleCode(moduleName string, handler HandlerInfo, bizDir string) e
 }
 
 func generateRouteFile(moduleName string, handler HandlerInfo, moduleDir string) error {
-	tmpl := `package
-	import "github.com/77d88/go-kit/plugins/x/servers/http/xhs" {{.ModuleName}}
+	tmpl := `package {{.ModuleName}}
 	
 	import (
 		"github.com/77d88/go-kit/basic/xerror"
