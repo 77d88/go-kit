@@ -23,14 +23,32 @@ func Set(key string, value interface{}, expire time.Duration) {
 	d.Set(key, value, expire)
 }
 
-func Get(key string) (interface{}, bool) {
-	return d.Get(key)
+func Get[T any](key string) (T, bool) {
+	get, b := d.Get(key)
+	if !b {
+		var zero T
+		return zero, false
+	}
+	if t, ok := get.(T); ok {
+		return t, true
+	}
+	var zero T
+	return zero, false
 }
 
 func Del(key string) {
 	d.Del(key)
 }
 
-func Once(key string, expire time.Duration, fc func() (interface{}, error)) (interface{}, error) {
-	return d.Once(key, expire, fc)
+func Once[T any](key string, expire time.Duration, fc func() (T, error)) (T, error) {
+	result, err := d.Once(key, expire, func() (interface{}, error) {
+		return fc()
+	})
+
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+
+	return result.(T), nil
 }

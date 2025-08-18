@@ -15,7 +15,7 @@ type Res struct {
 }
 
 func TestLocalCache_Set(t *testing.T) {
-	fci00 := func() (interface{}, error) {
+	fci00 := func() (*Res, error) {
 		println("123133")
 		return &Res{
 			ID: 2,
@@ -24,12 +24,12 @@ func TestLocalCache_Set(t *testing.T) {
 	_, err := Once("test", time.Minute, fci00)
 	_, err = Once("test", time.Minute, fci00)
 	_, err = Once("test", time.Minute, fci00)
-	_, err = Once("test2", time.Minute, fci00)
-	res, err2 := Once("test", time.Minute, fci00)
+	_, err = Once("test", time.Minute, fci00)
+	res, _ := Once("test", time.Minute, fci00)
 
 	xlog.Errorf(nil, "err %v %v", err, nil)
 	xlog.Errorf(nil, "err %v %v", err, nil)
-	xlog.Errorf(nil, "err %+v %v", res, err2)
+	xlog.Errorf(nil, "err %+v", res.ID)
 	//xlog.Errorf(nil, "err %v %v", err, nil == nil)
 
 }
