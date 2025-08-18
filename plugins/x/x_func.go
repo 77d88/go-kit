@@ -1,6 +1,7 @@
 package x
 
 import (
+	"context"
 	"os"
 	"os/signal"
 )
@@ -63,4 +64,10 @@ func ConfigIntSlice(key string) []int {
 }
 func ConfigBool(key string) bool {
 	return x.Cfg.GetBool(key)
+}
+
+func CtxTraceId(ctx context.Context) (string, bool) {
+	value := ctx.Value(X_TRACE_ID)
+	s, ok := value.(string)
+	return s, ok
 }

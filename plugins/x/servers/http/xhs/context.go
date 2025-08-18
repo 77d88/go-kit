@@ -7,6 +7,7 @@ import (
 	"github.com/77d88/go-kit/basic/xctx"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
 )
@@ -86,6 +87,9 @@ func (c *Ctx) Value(key any) any {
 	}
 	if key == xlog.CtxLogParam {
 		return logFields(c)
+	}
+	if key == x.X_TRACE_ID {
+		return c.TraceId
 	}
 	return c.Context.Value(key)
 }

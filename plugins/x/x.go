@@ -10,6 +10,10 @@ import (
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
+const (
+	X_TRACE_ID = "__%X-Trace-Id"
+)
+
 type Disposer interface {
 	Dispose() error // 释放资源
 }
