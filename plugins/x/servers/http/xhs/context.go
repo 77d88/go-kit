@@ -73,6 +73,13 @@ func (c *Ctx) ShouldBind(obj any) error {
 	}
 	return c.Context.ShouldBind(obj)
 }
+
+func ShouldBind[T any](c *Ctx) (T, error) {
+	var t T
+	err := c.ShouldBind(&t)
+	return t, err
+}
+
 func (c *Ctx) Value(key any) any {
 	if key == ctxThisKey {
 		return c

@@ -2,13 +2,14 @@ package route
 
 import (
 	"fmt"
-	"github.com/77d88/go-kit/basic/xstr"
-	"github.com/77d88/go-kit/cmd/xf/util"
 	"go/format"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/77d88/go-kit/basic/xstr"
+	"github.com/77d88/go-kit/cmd/xf/util"
 )
 
 // RouteConfig 定义路由配置结构
@@ -84,6 +85,7 @@ type HandlerInfo struct {
 	Remark     string
 	ModuleName string
 	BizModel   string
+	FullPath   string
 }
 
 func generateCode(config RouteConfig, bizDir string) error {
@@ -119,6 +121,7 @@ func generateCode(config RouteConfig, bizDir string) error {
 				Remark:     handler.Remark,
 				ModuleName: handler.Module,
 				BizModel:   route.Module,
+				FullPath:   fmt.Sprintf("%s%s", route.Path, handler.Route),
 			}
 			handlers = append(handlers, handlerInfo)
 
@@ -172,9 +175,6 @@ import (
 )
 
 // {{.Handler.Remark}}
-type response struct {
-}
-
 type request struct {
 }
 
@@ -182,9 +182,17 @@ func handler(c *xhs.Ctx, r *request) (interface{},error) {
 	return nil,nil
 }
 
-func Register(path string,xsh *xhs.HttpServer) {
+func run(c *xhs.Ctx) (interface{}, error) {
+	if r,err := xhs.ShouldBind[request](c);err != nil {
+		return nil, xerror.New("参数错误").SetCode(xhs.CodeParamError).SetInfo("参数错误: %+v", err)
+	}else{
+		return handler(c, &r)
+	}
+}
+
+func Register(xsh *xhs.HttpServer) {
 {{- range .Methods}}
-	xsh.{{.}}(path, run(){{if $.Handler.Auth}},auth.ForceAuth {{end}})
+	xsh.{{.}}("{{$.BasePath}}{{$.Route}}", run{{if $.Handler.Auth}},auth.ForceAuth {{end}})
 {{- end}}
 }
 `
@@ -238,7 +246,7 @@ import (
 
 func Register(xsh *xhs.HttpServer) {
 {{- range .Modules}}
-	{{.Alias}}.Register("{{.FullPath}}",xsh)
+	{{.Alias}}.Register(xsh)
 {{- end}}		
 }
 `
