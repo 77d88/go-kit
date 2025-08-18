@@ -26,6 +26,10 @@ type MuDbProduct struct {
 	BaseModel
 }
 
+func (m *MuDbProduct) Limit() (offset, limit int) {
+	return 1, 10
+}
+
 func (m *MuDbProduct) TableName() string {
 	return "s_product"
 }
@@ -41,7 +45,7 @@ func TestBaseFunc(t *testing.T) {
 		Dns:    FastDsn("127.0.0.1", 5432, "postgres", "jerry123!", "zyv2"),
 		Logger: true,
 	})
-	var dbusers []MuDbUser
+	//var dbusers []MuDbUser
 
 	db, _ := GetDB()
 	//take, err := NewParams[MuDbUser]().
@@ -53,11 +57,10 @@ func TestBaseFunc(t *testing.T) {
 	//}
 	//xlog.Infof(nil, "take %+v", take)
 
-	tx := db.Where("id in ?", []int64{}).Find(&dbusers)
-	if tx.Error != nil {
-		t.Error(tx.Error)
-	}
-	xlog.Infof(nil, "take %+v", dbusers)
+	where := db.Where("id in ?", []int64{})
+	page := FindPage[MuDbUser](where, &MuDbProduct{}, false)
+	//find, err := gorm.G[MuDbUser](where).Find(context.Background())
+	xlog.Infof(nil, "take %+v", page)
 
 }
 

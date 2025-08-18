@@ -9,10 +9,6 @@ var (
 )
 
 const (
-	RoleSuperAdmin = "superAdmin"
-)
-
-const (
 	CodeTokenError        = iota + 1000 // 登录失效或其他
 	CodeRefreshTokenError               // 刷新token验证
 	CodeCurrentLimiting                 // 限流

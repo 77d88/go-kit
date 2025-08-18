@@ -842,7 +842,7 @@ func Sort[T constraints.Ordered](slice []T, desc bool) {
 }
 
 // SortBy 根据提供的比较函数对切片进行排序。
-func SortBy[T constraints.Ordered](slice []T, less func(a, b T) bool) {
+func SortBy[T any](slice []T, less func(a, b T) bool) {
 	quickSortBy(slice, 0, len(slice)-1, less)
 }
 

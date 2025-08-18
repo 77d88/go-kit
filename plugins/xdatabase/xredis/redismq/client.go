@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/77d88/go-kit/basic/xparse"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/hibiken/asynq"
 )

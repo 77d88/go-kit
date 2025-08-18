@@ -133,29 +133,6 @@ func Param(name string, val any) sql.NamedArg {
 	return sql.Named(name, val)
 }
 
-type PageResult[T any] struct {
-	Total int64
-	List  []T
-	Error error
-}
-
-func FindPage[T any](db *gorm.DB, page Pager, count bool) PageResult[T] {
-	var pageResult PageResult[T]
-	offset, limit := page.Limit()
-	if count {
-		if result := db.Count(&pageResult.Total); result.Error != nil {
-			pageResult.Error = result.Error
-			return pageResult
-		}
-		if pageResult.Total <= int64(offset) {
-			return pageResult
-		}
-	}
-	find := db.Offset(offset).Limit(limit).Find(&pageResult.List)
-	pageResult.Error = find.Error
-	return pageResult
-}
-
 func Session(db *gorm.DB, session ...*gorm.Session) *gorm.DB {
 	return db.Session(xarray.FirstOrDefault(session, &gorm.Session{}))
 }

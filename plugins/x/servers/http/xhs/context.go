@@ -96,7 +96,6 @@ func (c *Ctx) Set(key string, val any) {
 
 func (c *Ctx) Send(v interface{}) {
 	c.Result = NewResp(v)
-
 	if c.test {
 		indent, err := json.MarshalIndent(c.Result, "", "  ")
 		if err != nil {

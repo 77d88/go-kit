@@ -35,7 +35,7 @@ var CopyObjFun ObjFun = func(c context.Context, key, toPath string) error {
 	return err
 }
 
-func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
+func DbSave(c context.Context, db *gorm.DB, r OFile, objFun ...ObjFun) (*OFile, error) {
 	var glObjFun ObjFun
 
 	if len(objFun) == 0 {
@@ -60,14 +60,14 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 		o := Config
 
 		var res Res
-		result := xdb.C(c).Where("ali_etag = ?", r.ETag).Limit(1).Find(&res)
+		result := db.WithContext(c).Where("ali_etag = ?", r.ETag).Limit(1).Find(&res)
 		if result.Error != nil {
 			return nil, result.Error
 		}
 
 		if res.ID > 0 {
 			if !res.IsOptimize { // 是否优化过
-				err := OptimizeRes(c, xdb.DB(), res, r)
+				err := OptimizeRes(c, db, res, r)
 				if err != nil {
 					return nil, err
 				}
@@ -75,7 +75,7 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 			return &OFile{Id: res.ID}, nil
 		}
 
-		err := xdb.C(c).Transaction(func(tx *gorm.DB) error {
+		err := db.WithContext(c).Transaction(func(tx *gorm.DB) error {
 			base := xdb.NewBaseModel()
 			res = Res{
 				BaseModel:  base,
@@ -108,7 +108,7 @@ func DbSave(c context.Context, r OFile, objFun ...ObjFun) (*OFile, error) {
 
 func OptimizeRes(c context.Context, db *gorm.DB, res Res, r OFile) error {
 	return db.WithContext(c).Transaction(func(d *gorm.DB) error {
-		result := d.Session(&gorm.Session{}).Model(&Res{}).Where("id = ?", res.ID).Update("is_optimize", true)
+		result := d.Model(&Res{}).Where("id = ?", res.ID).Update("is_optimize", true)
 		if result.Error != nil {
 			return result.Error
 		}
