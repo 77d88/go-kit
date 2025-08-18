@@ -184,7 +184,7 @@ func generateRouteFile(moduleName string, handler HandlerInfo, moduleDir string)
 	}
 	
 	func run() xhs.Handler {
-		return xhs.DefaultShouldHandler[request](Handler)
+		return xhs.DefaultShouldHandler(handler)
 	}
 
 	func Register(xsh *xhs.HttpServer) {

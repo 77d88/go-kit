@@ -3,7 +3,7 @@ module github.com/77d88/go-kit/cmd/xf
 go 1.24.2
 
 require (
-	github.com/77d88/go-kit v0.0.39
+	github.com/77d88/go-kit v0.0.40
 	github.com/spf13/viper v1.20.1
 )
 
