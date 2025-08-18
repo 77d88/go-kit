@@ -21,5 +21,6 @@ const (
 	CodeMethodNotAllowed
 	CodeNotFound
 	CodeNoPermissions
+	CodeNotImplemented
 	CodeInvoke = 8000
 )

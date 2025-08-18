@@ -1,8 +1,9 @@
 package route
 
 import (
-	"github.com/77d88/go-kit/cmd/xf/util"
 	"testing"
+
+	"github.com/77d88/go-kit/cmd/xf/util"
 )
 
 func TestName(t *testing.T) {

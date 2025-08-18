@@ -157,9 +157,9 @@ func generateModuleCode(moduleName string, handler HandlerInfo, bizDir string) e
 	}
 
 	// 生成 run.go 文件
-	if err := UpdateRunFunc(filepath.Join(moduleDir, "handler.go")); err != nil {
-		return err
-	}
+	//if err := UpdateRunFunc(filepath.Join(moduleDir, "handler.go")); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -168,6 +168,7 @@ func generateRouteFile(moduleName string, handler HandlerInfo, moduleDir string)
 	tmpl := `package {{.ModuleName}}
 
 import (
+	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 {{- if .Handler.Auth}}
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
@@ -179,7 +180,7 @@ type request struct {
 }
 
 func handler(c *xhs.Ctx, r *request) (interface{},error) {
-	return nil,nil
+	return nil, xerror.New("系统错误").SetCode(xhs.CodeNotImplemented)
 }
 
 func run(c *xhs.Ctx) (interface{}, error) {
