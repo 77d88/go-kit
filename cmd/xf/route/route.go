@@ -184,13 +184,7 @@ func generateRouteFile(moduleName string, handler HandlerInfo, moduleDir string)
 	}
 	
 	func run() xhs.Handler {
-		return func(c *xhs.Ctx) (interface{}, error) {
-			if r,err := xhs.ShouldBind[request](c);err != nil {
-				return nil, xerror.New("参数错误").SetCode(xhs.CodeParamError).SetInfo("参数错误: %+v", err)
-			}else{
-				return handler(c, &r)
-			}
-		}
+		return xhs.DefaultShouldHandler[request](Handler)
 	}
 
 	func Register(xsh *xhs.HttpServer) {

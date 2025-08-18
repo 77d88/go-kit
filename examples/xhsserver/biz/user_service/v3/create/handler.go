@@ -4,16 +4,16 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 )
 
-// Create
-type response struct {
-}
-
 type request struct {
 }
 
-//go:generate xf -m=2
-func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
+func Handler(ctx *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return
+}
+
+// Create
+func run() xhs.Handler {
+	return xhs.DefaultShouldHandler[request](Handler)
 }
 
 func Register(path string, xsh *xhs.HttpServer) {

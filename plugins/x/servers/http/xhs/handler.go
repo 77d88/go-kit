@@ -7,12 +7,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type HandlerInterface interface {
+	Handler(ctx *Ctx) (resp interface{}, err error)
+}
+
 type Handler func(ctx *Ctx) (interface{}, error)
 type HandlerMw func(ctx *Ctx)
 
-var ErrorHandler = func(err error) Handler {
+func DefaultErrorHandler(err error) Handler {
 	return func(ctx *Ctx) (interface{}, error) {
 		return nil, err
+	}
+}
+func DefaultShouldHandler[T any](handler func(c *Ctx, r *T) (interface{}, error)) Handler {
+	return func(c *Ctx) (interface{}, error) {
+		if r, err := ShouldBind[T](c); err != nil {
+			return nil, xerror.New("参数错误").SetCode(CodeParamError).SetInfo("参数错误: %+v", err)
+		} else {
+			return handler(c, &r)
+		}
 	}
 }
 
