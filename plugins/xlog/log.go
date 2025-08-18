@@ -10,11 +10,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-
 func init() {
 	WithDebugger()
 }
-
 
 const CtxLogParam = "_xe/CTX_LOG_PARAM"
 
@@ -29,8 +27,6 @@ type LoggerFields interface {
 
 var DefaultLogger Logger
 var callMap = make(map[string]string)
-
-
 
 var EmptyFields []zap.Field
 

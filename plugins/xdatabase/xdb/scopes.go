@@ -20,7 +20,6 @@ const (
 
 var sc_empty = func(*gorm.Statement) {}
 
-
 // SC_ZeroWhere 忽略空值的条件查询
 // 示例：
 //

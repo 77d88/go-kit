@@ -2,8 +2,9 @@ package xhs
 
 import (
 	"context"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"sync"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 
 	"github.com/jinzhu/copier"
 )

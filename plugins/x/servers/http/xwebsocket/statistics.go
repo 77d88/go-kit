@@ -3,8 +3,9 @@ package xwebsocket
 import (
 	"context"
 	"encoding/json"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"time"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type ConnectionStats struct {

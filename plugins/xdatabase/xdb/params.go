@@ -49,7 +49,6 @@ func (p *ParamBuilder[T]) LikeRight(query string, value string) *ParamBuilder[T]
 	return p.ExtZero(query+" LIKE ?", WarpLikeRight(value))
 }
 
-
 func (p *ParamBuilder[T]) Build(db *gorm.DB) *gorm.DB {
 	scops := make([]func(*gorm.DB) *gorm.DB, 0, len(p.params))
 	for query, value := range p.params {

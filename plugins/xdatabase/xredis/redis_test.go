@@ -3,8 +3,9 @@ package xredis
 import (
 	"context"
 	"fmt"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"testing"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 func TestGetUserNum(t *testing.T) {

@@ -1,8 +1,9 @@
 package xhs
 
 import (
-	"github.com/gin-gonic/gin"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 func TestName(t *testing.T) {

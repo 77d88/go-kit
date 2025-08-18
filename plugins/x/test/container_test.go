@@ -53,8 +53,8 @@ func TestConstructor(t *testing.T) {
 		}()
 	}
 	type a struct {
-		DB *gorm.DB
-		Str string `x:"name=test"`
+		DB   *gorm.DB
+		Str  string `x:"name=test"`
 		Str2 string
 	}
 

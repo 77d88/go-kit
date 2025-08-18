@@ -1,10 +1,11 @@
 package redis_auth
 
 import (
-	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
-	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"testing"
 	"time"
+
+	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
+	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 )
 
 func TestName(t *testing.T) {

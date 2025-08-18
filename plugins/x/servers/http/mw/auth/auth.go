@@ -2,11 +2,12 @@ package auth
 
 import (
 	"errors"
+	"net/http"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
-	"net/http"
-	"time"
 )
 
 const (

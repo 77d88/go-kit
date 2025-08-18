@@ -1,9 +1,10 @@
 package xhttp
 
 import (
-	"github.com/77d88/go-kit/plugins/xlog"
 	"net/http"
 	"testing"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 func TestName(t *testing.T) {

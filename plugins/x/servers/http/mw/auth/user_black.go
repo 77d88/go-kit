@@ -2,8 +2,9 @@ package auth
 
 import (
 	"context"
-	"github.com/77d88/go-kit/plugins/xlog"
 	"time"
+
+	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 type UserBlackCache interface {

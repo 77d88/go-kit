@@ -23,10 +23,10 @@ func init() {
 func TestName(t *testing.T) {
 	New(config)
 	//for {
-		_ = send("test", "default_"+xid.NextIdStr(),asynq.Queue("default"))
-		//_ = send("test2", "high_"+xid.NextIdStr(),asynq.Queue("high"))
-		//_ = send("test3", "slow_"+xid.NextIdStr(),asynq.Queue("slow"))
-		//time.Sleep(time.Millisecond * 10)
+	_ = send("test", "default_"+xid.NextIdStr(), asynq.Queue("default"))
+	//_ = send("test2", "high_"+xid.NextIdStr(),asynq.Queue("high"))
+	//_ = send("test3", "slow_"+xid.NextIdStr(),asynq.Queue("slow"))
+	//time.Sleep(time.Millisecond * 10)
 	//}
 
 }

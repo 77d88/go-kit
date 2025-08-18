@@ -1,6 +1,11 @@
 package xwebsocket
 
 import (
+	"net/http"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/cors"
@@ -8,10 +13,6 @@ import (
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"net/http"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 const defaultGroup = "default"

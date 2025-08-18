@@ -2,6 +2,9 @@ package jwt_auth
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xencrypt/xmd5"
 	"github.com/77d88/go-kit/basic/xerror"
@@ -9,8 +12,6 @@ import (
 	"github.com/77d88/go-kit/basic/xstr"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/golang-jwt/jwt/v5"
-	"strings"
-	"time"
 )
 
 var (

@@ -1,8 +1,9 @@
 package xhs
 
 import (
-	"github.com/77d88/go-kit/plugins/x"
 	"time"
+
+	"github.com/77d88/go-kit/plugins/x"
 )
 
 func generatedDefaultRegister(r *HttpServer) {

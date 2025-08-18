@@ -3,19 +3,20 @@ package xwebsocket
 import (
 	"errors"
 	"fmt"
+	"io"
+	"time"
+
 	xhs2 "github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gorilla/websocket"
-	"io"
-	"time"
 )
 
 type Context struct {
 	*xhs2.Ctx
-	Conn   *websocket.Conn
-	Msg    Message
-	Engine *WsEngine
-	Group  string
+	Conn     *websocket.Conn
+	Msg      Message
+	Engine   *WsEngine
+	Group    string
 	ConnTime time.Time
 	ClientId int64
 	isClose  bool
@@ -42,7 +43,6 @@ func (c *Context) SendJSON(v interface{}) {
 func (c *Context) ReadMessage() (int, []byte, error) {
 	return c.Conn.ReadMessage()
 }
-
 
 func (c *Context) handlerMsg() {
 	defer func() {
