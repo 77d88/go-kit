@@ -2,7 +2,6 @@ package x
 
 import (
 	"os"
-	"reflect"
 	"sync"
 	"time"
 
@@ -36,6 +35,7 @@ type Engine struct {
 	Server     EngineServer
 	sf         func() (EngineServer, error)
 	dises      []Disposer
+	afterStart []func()
 }
 
 var x *Engine // 持有一个服务实例
@@ -79,8 +79,29 @@ func init() {
 	x = engine
 }
 
-func SetConfig(config *xconfig.Config) {
-	x.Cfg = config
+func (e *Engine) Must(constructorOrValue interface{}, name ...string) {
+	key := Use(constructorOrValue, name...)
+	go func() {
+		e.wait.Add(1)
+		defer e.wait.Done()
+		_, err := Get[any](key)
+		if err != nil {
+			panic(err)
+		}
+	}()
+}
+
+func (e *Engine) AfterStart(constructor func()) {
+	e.afterStart = append(e.afterStart, constructor)
+}
+
+func Must(constructorOrValue interface{}, name ...string) {
+	x.Must(constructorOrValue, name...)
+}
+
+// AfterStart 服务启动后执行 所有must执行完毕
+func AfterStart(constructor func()) {
+	x.AfterStart(constructor)
 }
 
 func (e *Engine) Close() {
@@ -89,24 +110,6 @@ func (e *Engine) Close() {
 	for _, inst := range e.dises {
 		if err1 := inst.Dispose(); err1 != nil {
 			xlog.Errorf(nil, "dispose error: %v", err1)
-		}
-	}
-}
-
-// FastInit 快速初始化构造器的参参数
-func FastInit(construct interface{}) {
-	typeOf := reflect.TypeOf(construct)
-	if typeOf.Kind() == reflect.Func {
-		for i := 0; i < typeOf.NumIn(); i++ {
-			inType := typeOf.In(i)
-			go func() {
-				x.wait.Add(1)
-				defer x.wait.Done()
-				_, err := GetByType(inType)
-				if err != nil {
-					panic(err)
-				}
-			}()
 		}
 	}
 }

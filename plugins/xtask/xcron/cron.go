@@ -121,6 +121,9 @@ func NewX() *Manager {
 	}
 
 	handler, err := New(opts...)
+	if err != nil {
+		xlog.Fatalf(nil, "new cron task manager error: %v", err)
+	}
 	handler.own = own
 	if err != nil {
 		xlog.Fatalf(nil, "new cron task manager error: %v", err)
@@ -204,6 +207,10 @@ func (cm *Manager) wrapJob(task *CronTask) cron.Job {
 			Job:     task.Job,
 			Retry:   task.Retry,
 			Timeout: task.Timeout,
+			Ctx: context.WithValue(defaultCtx, xlog.CtxLogParam, map[string]interface{}{
+				"origin": "f_cron",
+				"taskID": executionID,
+			}),
 		})
 
 		if err != nil {

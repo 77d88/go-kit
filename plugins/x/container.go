@@ -55,14 +55,6 @@ func NewContainer() *Container {
 	}
 }
 
-func Must(constructorOrValue interface{}, name ...string) {
-	key := Use(constructorOrValue, name...)
-	_, err := Get[any](key)
-	if err != nil {
-		panic(err)
-	}
-}
-
 // Use 往容器里面添加实例 可以是构造函数 也可以是直接的实例
 func Use(constructorOrValue interface{}, name ...string) string {
 	container.mu.Lock()
