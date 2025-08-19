@@ -1,6 +1,8 @@
 package xarray
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFirstOrDefault(t *testing.T) {
 	t.Log(FirstOrDefault([]int{1, 2, 3}, 99))
@@ -10,4 +12,5 @@ func TestFirstOrDefault(t *testing.T) {
 	t.Log(FirstOrDefault([]string{"123"}, "99", true))
 	t.Log(FirstOrDefault([]string{"123"}, "99", false))
 	t.Log(FirstOrDefault([]string{""}, "99", false))
+
 }

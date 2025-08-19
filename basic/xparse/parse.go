@@ -119,6 +119,7 @@ func ToString[T any](v T, defaultValue ...T) string {
 		return fmt.Sprintf("%v", v)
 	}
 }
+
 // ToStrings 批量字符串转字符串
 func ToStrings[T any](vs ...T) []string {
 	var is []string
@@ -219,8 +220,9 @@ func ToSlice(val any) []any {
 
 // WarpToMap 转换为 包装为 map转换函数
 // 示例：s:[]string xarray.MapBy(s, xparse.WarpToMap(xparse.ToNumber[int64])) string[] 转为 int64[]
-func WarpToMap[T, U any](parser func(item T) (U, error)) func(index int, item T) (U, error) {
-	return func(index int, item T) (U, error) {
-		return parser(item)
+func WarpToMap[T, U any](parser func(item T) (U, error)) func(index int, item T) (U, bool) {
+	return func(index int, item T) (U, bool) {
+		u, err := parser(item)
+		return u, err != nil
 	}
 }

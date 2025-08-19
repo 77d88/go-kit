@@ -1,6 +1,7 @@
 package xarray
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -428,24 +429,35 @@ func Map[T any, U any](slice []T, iteratee func(index int, item T) U) []U {
 }
 
 // MapBy 对切片元素进行过滤和映射，返回新切片。
-func MapBy[T any, U any](slice []T, iteratee func(index int, item T) (U, error)) []U {
+func MapBy[T any, U any](slice []T, iteratee func(index int, item T) (U, bool)) []U {
 	result := make([]U, 0)
-
 	for i, v := range slice {
-		if a, err := iteratee(i, v); err != nil {
+		if a, ok := iteratee(i, v); ok {
 			result = append(result, a)
 		}
 	}
-
 	return result
 }
 
+func MapByErr[T any, U any](slice []T, iteratee func(index int, item T) (U, error)) ([]U, error) {
+	result := make([]U, 0, len(slice))
+	var errs error
+	for i, v := range slice {
+		if a, err := iteratee(i, v); err == nil {
+			result = append(result, a)
+		} else {
+			errs = errors.Join(errs, err)
+		}
+	}
+	return result, errs
+}
+
 // MapUnique 对切片元素进行过滤和映射，返回新切片，并确保结果中的元素是唯一的。
-func MapUnique[T comparable, V comparable](slice []T, extractor func(index int, item T) (V, error)) []V {
+func MapUnique[T any, V comparable](slice []T, extractor func(index int, item T) (V, bool)) []V {
 	seen := make(map[V]struct{})
-	result := make([]V, 0)
+	result := make([]V, 0, len(slice))
 	for i, item := range slice {
-		if value, err := extractor(i, item); err != nil {
+		if value, ok := extractor(i, item); ok {
 			if _, exists := seen[value]; !exists {
 				seen[value] = struct{}{}
 				result = append(result, value)
@@ -453,6 +465,24 @@ func MapUnique[T comparable, V comparable](slice []T, extractor func(index int, 
 		}
 	}
 	return result
+}
+
+// MapUniqueErr 对切片元素进行过滤和映射，返回新切片，并确保结果中的元素是唯一的。如果有错误，则返回错误。
+func MapUniqueErr[T any, V comparable](slice []T, extractor func(index int, item T) (V, error)) ([]V, error) {
+	seen := make(map[V]struct{})
+	result := make([]V, 0, len(slice))
+	var errs error
+	for i, item := range slice {
+		if value, err := extractor(i, item); err == nil {
+			if _, exists := seen[value]; !exists {
+				seen[value] = struct{}{}
+				result = append(result, value)
+			}
+		} else {
+			errs = errors.Join(errs, err)
+		}
+	}
+	return result, errs
 }
 
 // FlatMap 扁平化映射切片，即映射后结果再扁平化。
