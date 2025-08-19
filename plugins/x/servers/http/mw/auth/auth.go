@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
@@ -84,6 +85,17 @@ type Manager interface {
 
 type ApiAuth struct {
 	Manager Manager
+}
+
+func NewX() *ApiAuth {
+	get, err := x.Get[Manager]()
+	if err != nil {
+		xlog.Errorf(nil, "get auth manager error: %v", err)
+		return nil
+	}
+	return &ApiAuth{
+		Manager: get,
+	}
 }
 
 func New(manager Manager) *ApiAuth {

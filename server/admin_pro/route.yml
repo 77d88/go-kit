@@ -11,7 +11,7 @@ routes:
     module: "user"
     methods: [ POST ]
     handlers:
-      - { name: "login",remark: "登录" ,"auth": true }
+      - { name: "login",remark: "登录" }
       - { name: "logout",remark: "登出/踢出" ,"auth": true }
       - { name: "list",remark: "用户列表","auth": true }
       - { name: "disable",remark: "用户禁用" ,"auth": true }

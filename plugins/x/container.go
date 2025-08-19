@@ -121,7 +121,7 @@ func Get[T any](name ...string) (T, error) {
 		key = name[0]
 	} else {
 		// 通过获取实例的类型组成组件名
-		key = getTypeKey(reflect.TypeOf(t))
+		key = getTypeKey(reflect.TypeOf(new(T)))
 	}
 	// 先尝试从vals中查找已经实例化的对象（使用读锁）
 	container.mu.RLock()

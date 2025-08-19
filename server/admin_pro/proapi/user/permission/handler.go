@@ -24,9 +24,9 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.Permission == nil || len(r.Permission.ToSlice()) <= 0 {
 		if result := xdb.C(c).Model(&pro.User{}).Where("id = ?", r.Id).
 			Updates(map[string]interface{}{
-				"permission":       xdb.NewInt8Array(),
+				"permission":       nil,
 				"update_user":      c.GetUserId(),
-				"permission_codes": xdb.NewTextArray(),
+				"permission_codes": nil,
 			}); result.Error != nil {
 
 			return nil, result.Error

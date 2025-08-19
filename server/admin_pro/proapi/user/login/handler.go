@@ -1,7 +1,7 @@
 package login
 
 import (
-	"github.com/77d88/go-kit/basic/xencrypt/xmd5"
+	"github.com/77d88/go-kit/basic/xencrypt/xpwd"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
@@ -46,10 +46,11 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 }
 
 func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, error) {
-	pwd := xmd5.EncryptSalt(r.Password, pro.UserPwdSalt)
-
-	// todo 密码改一下 用加密的比较
-	if r.UserName == "superadmin" && pwd == "super.admin.(^$@^)@admin.com" {
+	pwd, err := xpwd.HashPassword(r.Password)
+	if err != nil {
+		return nil, xerror.New("密码错误")
+	}
+	if r.UserName == "superadmin" && xpwd.CheckPasswordHash(r.Password, "$2a$10$vkeRXagMQVyizbROxJMkE.2WTUvsp8E.pqPBUiqpkeszUfwvEtMMq") {
 		authorization, err := manager.Login(-1, auth.WithRoles(pro.Per_SuperAdmin))
 		if err != nil {
 			return nil, xerror.New("登录失败")
@@ -80,5 +81,5 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 }
 
 func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+	xsh.POST(path, run())
 }

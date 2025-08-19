@@ -9,7 +9,7 @@ const (
 )
 
 type XError interface {
-	XError() Error
+	XError() *Error
 }
 
 type Error struct {
@@ -18,7 +18,7 @@ type Error struct {
 	Info string `json:"info,omitempty"`
 }
 
-func (b *Error) XError() error {
+func (b *Error) XError() *Error {
 	return b
 }
 
