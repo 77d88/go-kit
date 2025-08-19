@@ -2,35 +2,28 @@ package xredis
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
+	"github.com/77d88/go-kit/basic/xtime"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 func TestGetUserNum(t *testing.T) {
 	New(&Config{
-		Addr: "127.0.0.1:6379",
-		Pass: "jerry123!",
-		Db:   0,
+		Addr: "127.0.0.1:6666",
+		Pass: "test",
 	})
-	New(&Config{
-		Addr:       "127.0.0.1:6379",
-		Pass:       "jerry123!",
-		Db:         1,
-		DbLinkName: "test",
-	})
-	db, err := Get()
-	if err != nil {
-		xlog.Errorf(nil, "redis init error ,%v", err)
-		t.Error(err)
-		return
+	interval := xtime.NewTimeInterval()
+	ix := 6321
+	mp := make(map[int]struct{})
+	for i := 0; i < ix; i++ {
+		num, err2 := RandomNum(context.Background(), 2)
+		if err2 != nil {
+			xlog.Errorf(context.Background(), "err -> %v", err2)
+		}
+		mp[num] = struct{}{}
 	}
-	d2, _ := Get("test")
-	for i := 0; i < 1; i++ {
-		fmt.Printf("id -> %d \n", db.RandomNum(context.Background(), 2))
-		fmt.Printf("id2 -> %d \n", d2.RandomNum(context.Background(), 1))
-	}
+	xlog.Infof(context.Background(), "num -> %d [%d]", len(mp), interval.IntervalMs())
 }
 
 //

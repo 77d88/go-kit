@@ -11,26 +11,17 @@ const (
 )
 
 // RandomNum 获取随机数唯一数
-func (c *client) RandomNum(ctx context.Context, workId uint16) int32 {
+func RandomNum(ctx context.Context, workId uint16, name ...string) (int, error) {
+	script, err := GetScript(name...)
+	if err != nil {
+		return 0, err
+	}
 	key := IdGeneratorPrefix + fmt.Sprintf(":%d", workId)
-	spop := c.SPop(ctx, key)
-	if spop.Err() == nil {
-		num, _ := spop.Int()
-		return int32(num)
+	// 执行Lua脚本
+	//return script.Eval(ctx, lua_randomNum, []string{key}, 1000, rand.Intn(10000)+100000).Int()
+	cmd := script.EvalSha(ctx, script_randomNum, []string{key}, 1000, rand.Intn(10000)+100000)
+	if cmd.Err() != nil {
+		return 0, cmd.Err()
 	}
-	step := 1000
-	incrby := c.IncrBy(ctx, key+":offset", int64(step))
-
-	// 初始化种子 100000~110000
-	random := rand.Intn(10000) + 100000
-	if int64(step) == incrby.Val() {
-		incrby = c.IncrBy(ctx, key+":offset", int64(step+random))
-	}
-	array := make([]string, step)
-	// 存入set中
-	for i := 0; i < step; i++ {
-		array[i] = fmt.Sprintf("%d", incrby.Val()-int64(i))
-	}
-	_ = c.SAdd(ctx, key, array)
-	return c.RandomNum(ctx, workId)
+	return cmd.Int()
 }

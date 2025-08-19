@@ -61,6 +61,8 @@ func TestBaseFunc(t *testing.T) {
 	page := FindPage[MuDbUser](where, &MuDbProduct{}, false)
 	//find, err := gorm.G[MuDbUser](where).Find(context.Background())
 	xlog.Infof(nil, "take %+v", page)
+	ix := []int32{1, 2}
+	NewInt8Array(ix...)
 
 }
 

@@ -16,8 +16,9 @@ const Nil = redis.Nil
 const redisStr string = "redis"
 
 var (
-	dbs    = make(map[string]*redis.Client)
-	dbLock = sync.RWMutex{} // 添加读写锁保护 dbs map
+	dbs     = make(map[string]*redis.Client)
+	scripts = make(map[string]*ScriptManager)
+	dbLock  = sync.RWMutex{} // 添加读写锁保护 dbs map
 )
 
 // Config redis 配置
@@ -64,16 +65,22 @@ func New(config *Config) *redis.Client {
 		xlog.Errorf(nil, "redis init Fatal addr %+v", config)
 		return nil
 	}
+
+	if config.DbLinkName == "" {
+		config.DbLinkName = redisStr
+	}
+
 	// 使用读锁检查是否已经存在相同名称的连接
 	dbLock.RLock()
 	existingClient, exists := dbs[config.DbLinkName]
-	dbLock.RUnlock()
+
 	// 如果已经存在相同名称的连接，直接返回已存在的实例
 	if exists {
 		xlog.Debugf(nil, "redis connection with name %s already exists, returning existing instance", config.DbLinkName)
+		dbLock.RUnlock()
 		return existingClient
 	}
-
+	dbLock.RUnlock()
 	// 使用写锁确保只有一个 goroutine 能够创建连接
 	dbLock.Lock()
 	defer dbLock.Unlock()
@@ -96,7 +103,9 @@ func New(config *Config) *redis.Client {
 	} else {
 		xlog.Infof(nil, "redis init success %s db %d -> %s", config.Addr, config.Db, config.DbLinkName)
 	}
+
 	dbs[config.DbLinkName] = Client
+	scripts[config.DbLinkName] = NewScriptManager(Client)
 	x.Use(&cli, "__xredis."+config.DbLinkName)
 	return Client
 
@@ -108,6 +117,17 @@ func Get(name ...string) (*redis.Client, error) {
 	defer dbLock.RUnlock()
 
 	database, ok := dbs[xarray.FirstOrDefault(name, redisStr)]
+	if !ok {
+		xlog.Errorf(nil, "数据库[%s]链接不存在", name)
+		return nil, xerror.New("数据库链接不存在")
+	}
+	return database, nil
+}
+
+func GetScript(name ...string) (*ScriptManager, error) {
+	dbLock.RLock()
+	defer dbLock.RUnlock()
+	database, ok := scripts[xarray.FirstOrDefault(name, redisStr)]
 	if !ok {
 		xlog.Errorf(nil, "数据库[%s]链接不存在", name)
 		return nil, xerror.New("数据库链接不存在")
