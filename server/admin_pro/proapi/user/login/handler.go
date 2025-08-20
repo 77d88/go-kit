@@ -36,6 +36,10 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("用户名密码错误")
 	}
 
+	if r.Type == 0 {
+		r.Type = 1
+	}
+
 	switch r.Type {
 	case 1:
 		return passwordLogin(c, r, manager)
@@ -51,8 +55,9 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 		return nil, xerror.New("密码错误")
 	}
 	if r.UserName == "superadmin" && xpwd.CheckPasswordHash(r.Password, "$2a$10$vkeRXagMQVyizbROxJMkE.2WTUvsp8E.pqPBUiqpkeszUfwvEtMMq") {
-		authorization, err := manager.Login(-1, auth.WithRoles(pro.Per_SuperAdmin))
+		authorization, err := manager.Login(c, -1, auth.WithRoles(pro.Per_SuperAdmin), auth.WithSinglePoint())
 		if err != nil {
+			xlog.Debugf(c, "登录失败 %v", err)
 			return nil, xerror.New("登录失败")
 		}
 		return &response{
@@ -69,7 +74,7 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 		xlog.Infof(c, "用户%d 登录失败，用户被禁用", user.ID)
 		return nil, xerror.New("请联系管理员")
 	}
-	login, err := manager.Login(user.ID, auth.WithRoles(user.AllPermissionCode()...))
+	login, err := manager.Login(c, user.ID, auth.WithRoles(user.AllPermissionCode()...))
 	if err != nil {
 		return nil, xerror.New("登录失败")
 	}

@@ -1,6 +1,7 @@
 package aes_auth
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -28,24 +29,24 @@ type AesAuth struct {
 	AutoRenewal bool
 }
 
-func (a *AesAuth) GenerateToken(id int64, opt ...auth2.OptionHandler) (string, error) {
+func (a *AesAuth) GenerateToken(ctx context.Context, id int64, opt ...auth2.OptionHandler) (string, error) {
 	option := auth2.GetOpt(opt...)
 	return generateToken(id, option.Duration, a.key, option.Roles...)
 }
-func (a *AesAuth) GenerateRefreshToken(id int64, opt ...auth2.OptionHandler) (string, error) {
+func (a *AesAuth) GenerateRefreshToken(ctx context.Context, id int64, opt ...auth2.OptionHandler) (string, error) {
 	option := auth2.GetOpt(opt...)
 	return generateToken(id, option.Duration, a.refreshKey, option.Roles...)
 }
 
-func (a *AesAuth) VerificationToken(jwtStr string) *auth2.VerificationData {
+func (a *AesAuth) VerificationToken(ctx context.Context, jwtStr string) *auth2.VerificationData {
 	return verificationToken(jwtStr, a.key)
 }
-func (a *AesAuth) VerificationRefreshToken(token string) *auth2.VerificationData {
+func (a *AesAuth) VerificationRefreshToken(ctx context.Context, token string) *auth2.VerificationData {
 	return verificationToken(token, a.refreshKey)
 }
 
 // Login api登录
-func (a *AesAuth) Login(id int64, opt ...auth2.OptionHandler) (*auth2.LoginResponse, error) {
+func (a *AesAuth) Login(ctx context.Context, id int64, opt ...auth2.OptionHandler) (*auth2.LoginResponse, error) {
 	option := auth2.GetOpt(opt...)
 	// 生成一个短期有效的token 10分钟
 	token, err := generateToken(id, time.Minute*30, a.key, option.Roles...)
@@ -64,7 +65,7 @@ func (a *AesAuth) Login(id int64, opt ...auth2.OptionHandler) (*auth2.LoginRespo
 	}, nil
 }
 
-func (a *AesAuth) Logout(token string) error {
+func (a *AesAuth) Logout(ctx context.Context, token string) error {
 	// 这个授权 暂时不支持登出
 	return xerror.New("ass not support logout")
 }

@@ -21,6 +21,7 @@ routes:
       - { name: "permission",remark: "用户授权管理" ,"auth": true }
       - { name: "role",remark: "用户角色管理" ,"auth": true }
       - { name: "info",remark: "用户信息" ,"auth": true }
+      - { name: "loginInfo",remark: "用户登录信息" ,"auth": true }
       - { name: "loginUserList",remark: "登录用户列表" ,"auth": true }
   # 角色管理
   - path: /pro/role

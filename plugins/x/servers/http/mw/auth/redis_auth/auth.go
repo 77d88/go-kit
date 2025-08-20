@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/77d88/go-kit/basic/xencrypt/xbase64"
+	"github.com/77d88/go-kit/basic/xencrypt/xpwd"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/basic/xparse"
@@ -17,14 +18,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const defaultPrefix = "xapi_auth:"
+const defaultPrefix = "xapi_auth"
 
 var localCache = xcache.New(5*time.Minute, 10*time.Minute)
 
 type Auth struct {
-	Client      *redis.Client
-	Prefix      string
-	AutoRenewal bool // 自动续签
+	Client *redis.Client
+	Prefix string
 }
 
 func New() auth.Manager {
@@ -33,41 +33,23 @@ func New() auth.Manager {
 		return nil
 	}
 	a := &Auth{
-		Client:      client,
-		Prefix:      defaultPrefix,
-		AutoRenewal: true,
+		Client: client,
+		Prefix: defaultPrefix,
 	}
 	a.startBackgroundCleanup()
 	return a
 }
 
-func (a *Auth) GenerateToken(id int64, opt ...auth.OptionHandler) (string, error) {
-	return a.genToken(id, auth.GetOpt(opt...))
+func (a *Auth) GenerateToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {
+	return a.genToken(ctx, id, auth.GetOpt(opt...))
 }
 
-func (a *Auth) GenerateRefreshToken(id int64, opt ...auth.OptionHandler) (string, error) {
+func (a *Auth) GenerateRefreshToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {
 	return "", xerror.New("not support refresh token")
 }
 
-func (a *Auth) VerificationToken(token string) *auth.VerificationData {
-	decode, err := xbase64.RawURLDecode(token)
-	if err != nil {
-		return &auth.VerificationData{
-			Err: err,
-		}
-	}
-
-	// 拆分Token [0] 用户id [1] 随机标识
-	split := xstr.Split(string(decode), ":")
-
-	number, err := xparse.ToNumber[int64](split[0])
-	if err != nil {
-		return &auth.VerificationData{
-			Err: err,
-		}
-	}
-
-	seq, err := xparse.ToNumber[int64](split[1])
+func (a *Auth) VerificationToken(ctx context.Context, token string) *auth.VerificationData {
+	token, number, seq, err := checkSingToken(token)
 	if err != nil {
 		return &auth.VerificationData{
 			Err: err,
@@ -75,15 +57,14 @@ func (a *Auth) VerificationToken(token string) *auth.VerificationData {
 	}
 	// 这个是生成时间
 	extractTime := xid.ExtractTime(seq)
-
-	i, b := localCache.Get(string(decode))
+	i, b := localCache.Get(token)
 	if b {
 		return i.(*auth.VerificationData)
 	}
 
 	// 通过redis 获取用户信息 30秒的本地缓存时间
 	var data auth.Option
-	get := a.Client.Get(context.Background(), string(decode))
+	get := a.Client.Get(ctx, a.getRedisTokenKey(token))
 	result, err := get.Result()
 	if err != nil {
 		return &auth.VerificationData{
@@ -102,26 +83,25 @@ func (a *Auth) VerificationToken(token string) *auth.VerificationData {
 		Data:       data.Data,
 	}
 
-	localCache.Set(string(decode), a2, time.Second*30)
+	localCache.Set(token, a2, time.Second*30)
 	return a2
 
 }
 
-func (a *Auth) VerificationRefreshToken(token string) *auth.VerificationData {
+func (a *Auth) VerificationRefreshToken(ctx context.Context, token string) *auth.VerificationData {
 	return &auth.VerificationData{
 		Err: xerror.New("not support refresh token"),
 	}
 }
 
-func (a *Auth) Login(id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, error) {
+func (a *Auth) Login(ctx context.Context, id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, error) {
 	option := auth.GetOpt(opt...)
 
 	// 参数验证
-	if id <= 0 {
-		return nil, xerror.New("无效的用户ID")
-	}
+	//if id <= 0 {
+	//	return nil, xerror.New("无效的用户ID")
+	//}
 
-	ctx := context.Background()
 	userTokensKey := a.Prefix + ":user_tokens:" + xparse.ToString(id)
 
 	// 异步清理已过期的token（非阻塞）
@@ -133,12 +113,43 @@ func (a *Auth) Login(id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, 
 		return nil, xerror.Newf("查询用户token失败: %v", err)
 	}
 
-	if count >= int64(option.MaxLoginNum) {
-		return nil, xerror.Newf("超过最大登录数量限制: %d", option.MaxLoginNum)
+	if option.SinglePoint && count > 0 {
+		// 互斥单点 - 使用Lua脚本原子性地删除所有token
+		luaScript := `
+		-- 获取用户的所有token
+		local tokens = redis.call('ZRANGE', KEYS[1], 0, -1)
+		
+		if #tokens == 0 then
+			return 0
+		end
+		
+		-- 删除所有token数据
+		for i, token in ipairs(tokens) do
+			local key = ARGV[1] .. ':token:' .. token
+			redis.call('DEL', key)
+		end
+		
+		-- 清空有序集合
+		local removed = redis.call('DEL', KEYS[1])
+		
+		return #tokens
+	`
+
+		result := a.Client.Eval(ctx, luaScript, []string{userTokensKey}, a.Prefix)
+		if result.Err() != nil {
+			return nil, xerror.Newf("删除用户token失败: %v", result.Err())
+		}
+
+		count, _ := result.Int()
+		xlog.Debugf(ctx, "单点登录清理了 %d 个用户token", count)
+	} else {
+		if count >= int64(option.MaxLoginNum) {
+			return nil, xerror.Newf("超过最大登录数量限制: %d", option.MaxLoginNum)
+		}
 	}
 
 	// 生成新的token
-	token, err := a.genToken(id, option)
+	token, err := a.genToken(ctx, id, option)
 	if err != nil {
 		return nil, xerror.Newf("生成token失败: %v", err)
 	}
@@ -202,23 +213,6 @@ func (a *Auth) forceCleanupExpiredTokens(userTokensKey string) {
 	}
 }
 
-// 批量清理过期token数据
-func (a *Auth) cleanupExpiredTokenData(expiredTokens []string) {
-	if len(expiredTokens) == 0 {
-		return
-	}
-
-	ctx := context.Background()
-	keys := make([]string, len(expiredTokens))
-
-	for i, token := range expiredTokens {
-		keys[i] = a.Prefix + ":token:" + token
-	}
-
-	// 批量删除过期的token数据
-	a.Client.Del(ctx, keys...)
-}
-
 // 启动后台清理任务
 func (a *Auth) startBackgroundCleanup() {
 	go func() {
@@ -256,7 +250,7 @@ func (a *Auth) cleanupAllExpiredTokens() {
 	}
 }
 
-func (a *Auth) genToken(id int64, option *auth.Option) (string, error) {
+func (a *Auth) genToken(ctx context.Context, id int64, option *auth.Option) (string, error) {
 	// 生成token
 	tokenId := xid.NextIdStr()
 	token := xparse.ToString(id) + ":" + tokenId
@@ -267,7 +261,6 @@ func (a *Auth) genToken(id int64, option *auth.Option) (string, error) {
 		return "", err
 	}
 
-	ctx := context.Background()
 	key := a.Prefix + ":token:" + token
 	userTokensKey := a.Prefix + ":user_tokens:" + xparse.ToString(id)
 
@@ -308,27 +301,62 @@ func (a *Auth) genToken(id int64, option *auth.Option) (string, error) {
 		return "", xerror.Newf("构建token失败: %v", result.Err())
 	}
 
-	// token 使用base64处理一下
-	return xbase64.RawURLEncode([]byte(token)), nil
+	return signToken(token)
 }
 
-func (a *Auth) Logout(token string) error {
+// 签名token 实际返回的签名好的 token
+func signToken(token string) (string, error) {
+	parts := xstr.Split(token, ":")
+	if len(parts) != 2 {
+		return "", xerror.New("无效的token格式")
+	}
+	// token 使用base64处理一下
+	password, err := xpwd.HashPassword(token + parts[1])
+	return xbase64.RawURLEncode([]byte(token + ":" + password)), err
+}
+
+// 验证token 返回原始token和用户id
+func checkSingToken(token string) (string, int64, int64, error) {
 	decode, err := xbase64.RawURLDecode(token)
+	if err != nil {
+		return "", 0, 0, err
+	}
+	parts := xstr.Split(string(decode), ":")
+	if len(parts) != 3 {
+		return "", 0, 0, xerror.New("无效的token格式")
+	}
+	userId := parts[0]
+	number, err := xparse.ToNumber[int64](userId)
+	if err != nil {
+		return "", 0, 0, err
+	}
+	seq, err := xparse.ToNumber[int64](parts[1])
+	if err != nil {
+		return "", 0, 0, err
+	}
+	ori := parts[0] + ":" + parts[1] // 原始token
+	if !xpwd.CheckPasswordHash(ori+parts[1], parts[2]) {
+		return "", 0, 0, xerror.New("token验证失败")
+	}
+	return ori, number, seq, nil
+
+}
+
+func (a *Auth) getRedisTokenKey(token string) string {
+	return a.Prefix + ":token:" + token
+}
+func (a *Auth) getRedisUserTokensKey(userId int64) string {
+	return a.Prefix + ":user_tokens:" + xparse.ToString(userId)
+}
+
+func (a *Auth) Logout(ctx context.Context, token string) error {
+	token, userId, _, err := checkSingToken(token)
 	if err != nil {
 		return err
 	}
 
-	tokenStr := string(decode)
-	parts := xstr.Split(tokenStr, ":")
-	if len(parts) < 2 {
-		return xerror.New("无效的token格式")
-	}
-
-	userId := parts[0]
-
-	ctx := context.Background()
-	key := a.Prefix + ":token:" + tokenStr
-	userTokensKey := a.Prefix + ":user_tokens:" + userId
+	key := a.getRedisTokenKey(token)
+	userTokensKey := a.getRedisUserTokensKey(userId)
 
 	// 使用 Lua 脚本原子性地删除 token
 	luaScript := `
@@ -341,11 +369,7 @@ func (a *Auth) Logout(token string) error {
 		return true
 	`
 
-	result := a.Client.Eval(ctx, luaScript, []string{key, userTokensKey}, tokenStr)
+	result := a.Client.Eval(ctx, luaScript, []string{key, userTokensKey}, token)
 
 	return result.Err()
-}
-
-func (a *Auth) IsAutoRenewal() bool {
-	return a.AutoRenewal
 }

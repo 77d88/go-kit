@@ -20,7 +20,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if err != nil {
 		return nil, xerror.New("获取登录信息失败")
 	}
-	return nil, manager.Logout(c.GetToken())
+	return nil, manager.Logout(c, c.Auth.Token)
 }
 
 func Register(path string, xsh *xhs.HttpServer) {

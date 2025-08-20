@@ -1,6 +1,6 @@
 module github.com/77d88/go-kit/server
 
-go 1.24.2
+go 1.25.0
 
 require (
 	github.com/77d88/go-kit v0.1.5

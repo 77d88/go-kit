@@ -81,14 +81,12 @@ func init() {
 
 func (e *Engine) Must(constructorOrValue interface{}, name ...string) {
 	key := Use(constructorOrValue, name...)
-	go func() {
-		e.wait.Add(1)
-		defer e.wait.Done()
+	e.wait.Go(func() {
 		_, err := Get[any](key)
 		if err != nil {
 			panic(err)
 		}
-	}()
+	})
 }
 
 func (e *Engine) AfterStart(constructor func()) {

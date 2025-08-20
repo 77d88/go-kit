@@ -36,6 +36,7 @@ import (
 	userInfo "github.com/77d88/go-kit/server/admin_pro/proapi/user/info"
 	userList "github.com/77d88/go-kit/server/admin_pro/proapi/user/list"
 	userLogin "github.com/77d88/go-kit/server/admin_pro/proapi/user/login"
+	userLoginInfo "github.com/77d88/go-kit/server/admin_pro/proapi/user/loginInfo"
 	userLoginUserList "github.com/77d88/go-kit/server/admin_pro/proapi/user/loginUserList"
 	userLogout "github.com/77d88/go-kit/server/admin_pro/proapi/user/logout"
 	userPermission "github.com/77d88/go-kit/server/admin_pro/proapi/user/permission"
@@ -81,4 +82,5 @@ func Register(xsh *xhs.HttpServer) {
 	menuInfo.Register("/pro/menu/info", xsh)
 	menuSave.Register("/pro/menu/save", xsh)
 	menuMenu.Register("/pro/menu/menu", xsh)
+	userLoginInfo.Register(xsh)
 }

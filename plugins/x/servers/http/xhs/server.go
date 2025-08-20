@@ -70,20 +70,16 @@ func (h *HttpServer) Start() {
 	group := sync.WaitGroup{}
 	// 初始化基础mw
 	for _, mw := range h.mws {
-		group.Add(1)
-		go func(h *HttpServer) {
-			defer group.Done()
+		group.Go(func() {
 			h.Engine.Use(WarpHandleMw(mw))
-		}(h)
+		})
 	}
 	group.Wait()
-	for _, fc := range h.fcs {
-		group.Add(1)
-		go func() {
-			defer group.Done()
+	group.Go(func() {
+		for _, fc := range h.fcs {
 			fc()
-		}()
-	}
+		}
+	})
 	group.Wait()
 	// 初始化http 服务
 	h.srv = &http.Server{

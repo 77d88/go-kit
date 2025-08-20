@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"time"
@@ -19,7 +20,9 @@ type Option struct {
 	Roles       []string      `json:"roles,omitempty"`
 	Data        interface{}   `json:"data,omitempty"`
 	Duration    time.Duration `json:"-"`
-	MaxLoginNum uint          `json:"-"` // 最大登录数量
+	MaxLoginNum uint          `json:"-"` // 最大登录数量 中心化才支持
+	SinglePoint bool          `json:"-"` // 是否挤掉其他登录保持一个登录 中心化才支持
+	AutoRenewal bool          `json:"-"` // 是否自动续期 中心化才支持
 }
 
 type OptionHandler interface {
@@ -58,6 +61,11 @@ func WithMaxLoginNum(maxLoginNum uint) OptionHandler {
 		manager.MaxLoginNum = maxLoginNum
 	})
 }
+func WithSinglePoint() OptionHandler {
+	return OptionFunc(func(manager *Option) {
+		manager.SinglePoint = true
+	})
+}
 
 func GetOpt(handler ...OptionHandler) *Option {
 	opt := Option{
@@ -70,17 +78,19 @@ func GetOpt(handler ...OptionHandler) *Option {
 			option.Apply(&opt)
 		}
 	}
+	if opt.MaxLoginNum == 0 {
+		opt.MaxLoginNum = 1
+	}
 	return &opt
 }
 
 type Manager interface {
-	GenerateToken(id int64, opt ...OptionHandler) (string, error)
-	GenerateRefreshToken(id int64, opt ...OptionHandler) (string, error)
-	VerificationToken(token string) *VerificationData
-	VerificationRefreshToken(token string) *VerificationData
-	Login(id int64, opt ...OptionHandler) (*LoginResponse, error)
-	Logout(token string) error
-	IsAutoRenewal() bool
+	GenerateToken(ctx context.Context, id int64, opt ...OptionHandler) (string, error)
+	GenerateRefreshToken(ctx context.Context, id int64, opt ...OptionHandler) (string, error)
+	VerificationToken(ctx context.Context, token string) *VerificationData
+	VerificationRefreshToken(ctx context.Context, token string) *VerificationData
+	Login(ctx context.Context, id int64, opt ...OptionHandler) (*LoginResponse, error)
+	Logout(ctx context.Context, token string) error
 }
 
 type ApiAuth struct {
@@ -155,18 +165,18 @@ func (d *VerificationData) IsExpired() bool {
 }
 
 // GenerateToken 生成token
-func (c *ApiAuth) GenerateToken(id int64, opt ...OptionHandler) (string, error) {
-	return c.Manager.GenerateToken(id, opt...)
+func (c *ApiAuth) GenerateToken(ctx context.Context, id int64, opt ...OptionHandler) (string, error) {
+	return c.Manager.GenerateToken(ctx, id, opt...)
 }
 
 // VerificationToken 验证token获取信息
-func (c *ApiAuth) VerificationToken(token string) *VerificationData {
-	return c.Manager.VerificationToken(token)
+func (c *ApiAuth) VerificationToken(ctx context.Context, token string) *VerificationData {
+	return c.Manager.VerificationToken(ctx, token)
 }
 
 // Authorization 通用授权
-func (c *ApiAuth) Authorization(id int64, opt ...OptionHandler) (*LoginResponse, error) {
-	return c.Manager.Login(id, opt...)
+func (c *ApiAuth) Authorization(ctx context.Context, id int64, opt ...OptionHandler) (*LoginResponse, error) {
+	return c.Manager.Login(ctx, id, opt...)
 }
 
 // TokenInfo 默认的token解析中间件 只负责鉴权获取用户信息 不负责强制验证登录授权
@@ -196,15 +206,18 @@ func (c *ApiAuth) TokenInfo() xhs.HandlerMw {
 			x.Next()
 			return
 		}
-		data := manager.VerificationToken(token)
+		data := manager.VerificationToken(x, token)
 		if !data.Validate() {
 			x.Next()
 			return
 		}
-		x.SetUserId(data.Id)
-		x.SetPermission(data.Roles...)
-		x.SetToken(token)
-
+		x.Auth = &xhs.ContextAuth{
+			UserId:     data.Id,
+			Roles:      data.Roles,
+			Token:      token,
+			Data:       data.Data,
+			ExpireTime: data.ExpireTime,
+		}
 		x.Next()
 	}
 }

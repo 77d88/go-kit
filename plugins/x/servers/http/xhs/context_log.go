@@ -22,6 +22,6 @@ func logFields(c *Ctx) map[string]interface{} {
 		"uri":    reqUrl,
 		"cip":    clientIP,
 		"tid":    c.TraceId,
-		"uid":    c.userId,
+		"uid":    c.GetUserId(),
 	}
 }

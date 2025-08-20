@@ -1,6 +1,7 @@
 package jwt_auth
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -41,18 +42,18 @@ func NewCustomize(key, refreshKey []byte) *JwtAuth {
 	}
 }
 
-func (a *JwtAuth) GenerateToken(id int64, opt ...auth.OptionHandler) (string, error) {
+func (a *JwtAuth) GenerateToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {
 	getOpt := auth.GetOpt(opt...)
 	return generateToken(id, getOpt.Duration, a.key, getOpt.Roles...)
 }
-func (a *JwtAuth) GenerateRefreshToken(id int64, opt ...auth.OptionHandler) (string, error) {
+func (a *JwtAuth) GenerateRefreshToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {
 	getOpt := auth.GetOpt(opt...)
 	return generateToken(id, getOpt.Duration, a.refreshKey, getOpt.Roles...)
 }
-func (a *JwtAuth) VerificationToken(jwtStr string) *auth.VerificationData {
+func (a *JwtAuth) VerificationToken(ctx context.Context, jwtStr string) *auth.VerificationData {
 	return verificationToken(jwtStr, a.key)
 }
-func (a *JwtAuth) VerificationRefreshToken(token string) *auth.VerificationData {
+func (a *JwtAuth) VerificationRefreshToken(ctx context.Context, token string) *auth.VerificationData {
 	return verificationToken(token, a.refreshKey)
 }
 func (a *JwtAuth) SetAutoRenewal(autoRenewal bool) *JwtAuth {
@@ -65,7 +66,7 @@ func (a *JwtAuth) IsAutoRenewal() bool {
 }
 
 // Login api登录
-func (a *JwtAuth) Login(id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, error) {
+func (a *JwtAuth) Login(ctx context.Context, id int64, opt ...auth.OptionHandler) (*auth.LoginResponse, error) {
 	getOpt := auth.GetOpt(opt...)
 	// 生成一个短期有效的token 10分钟
 	token, err := generateToken(id, time.Minute*30, a.key, getOpt.Roles...)
@@ -82,7 +83,7 @@ func (a *JwtAuth) Login(id int64, opt ...auth.OptionHandler) (*auth.LoginRespons
 		RefreshToken: longToken,
 	}, nil
 }
-func (a *JwtAuth) Logout(token string) error {
+func (a *JwtAuth) Logout(ctx context.Context, token string) error {
 	// jwt 暂时不支持登出
 	return xerror.New("jwt not support logout")
 }

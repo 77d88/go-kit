@@ -16,7 +16,7 @@ const ctxThisKey = "_xe/CTX_KEY_CONTEXT"
 
 type Ctx struct {
 	*gin.Context
-	ContextAuth
+	Auth *ContextAuth
 	ApiCache
 	Result     interface{}
 	PrintStack bool
@@ -28,7 +28,7 @@ type Ctx struct {
 
 type CopyContext struct {
 	context.Context
-	ContextAuth
+	Auth *ContextAuth
 	ApiCache
 	TraceId int64
 }
@@ -130,8 +130,8 @@ func (c *Ctx) GetError() error {
 // Copy 拷贝最终上下文 用于传输获其他现场调用
 func (c *Ctx) Copy() context.Context {
 	return CopyContext{
-		Context:     context.WithValue(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
-		ContextAuth: c.ContextAuth,
+		Context: context.WithValue(c.Context.Copy(), xlog.CtxLogParam, logFields(c)),
+		Auth:    c.Auth,
 		ApiCache: ApiCache{
 			cache: c.CopyCacheMap(),
 		},
