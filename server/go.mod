@@ -3,7 +3,7 @@ module github.com/77d88/go-kit/server
 go 1.25.0
 
 require (
-	github.com/77d88/go-kit v0.1.5
+	github.com/77d88/go-kit v0.1.7
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.9
 	github.com/alibabacloud-go/sts-20150401/v2 v2.0.4
 	github.com/alibabacloud-go/tea v1.3.10

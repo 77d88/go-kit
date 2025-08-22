@@ -16,6 +16,6 @@ func run() xhs.Handler {
 	return xhs.DefaultShouldHandler[request](Handler)
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
+func Register(xsh *xhs.HttpServer) {
 	xsh.POST(path, run())
 }

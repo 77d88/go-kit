@@ -23,6 +23,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return nil, manager.Logout(c, c.Auth.Token)
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/user/logout", run(), auth.ForceAuth)
 }

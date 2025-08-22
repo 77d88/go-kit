@@ -53,9 +53,8 @@ routes:
     handlers:
       - { name: "list",remark: "字典列表","auth": true }
       - { name: "del",remark: "字典删除","auth": true }
-      - { name: "info",remark: "字典信息" ,"auth": true }
       - { name: "save",remark: "字典保存" ,"auth": true }
-      - { name: "types",remark: "字典类型查询","auth": true }
+      - { name: "items",remark: "前端获取选项" ,"auth": true }
   # 菜单管理 菜单有权限码 会自动生成和移除权限
   - path: /pro/menu
     module: "menu"

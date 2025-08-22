@@ -6,6 +6,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
+	"gorm.io/gorm"
 )
 
 // 菜单保存
@@ -13,7 +14,7 @@ type response struct {
 }
 
 type request struct {
-	Id            int64          `json:"id"`
+	Id            int64          `json:"id,string"`
 	Path          string         `json:"path"`
 	ComponentPath string         `json:"componentPath"`
 	Redirect      string         `json:"redirect"`
@@ -26,21 +27,51 @@ type request struct {
 	Sort          int            `json:"sort"`
 	MetaNoLevel   bool           `json:"metaNoLevel"`
 	RouteParams   string         `json:"routeParams"`
-	Children      *xdb.Int8Array `json:"children"`
+	RootMenu      bool           `json:"rootMenu"`
+	ParentId      int64          `json:"parentId,string"`
+	Permission    *xdb.TextArray `json:"permission"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.Name == "" {
 		return nil, xerror.New("参数错误:名称不能为空")
 	}
-	if result := xdb.SaveMap[pro.Menu](xdb.C(c), r, map[string]interface{}{
-		"update_user": c.GetUserId(),
-	}); result.Error != nil {
-		return nil, result.Error
+	var parent pro.Menu
+	if r.ParentId > 0 {
+		if result := xdb.C(c).Where("id = ?", r.ParentId).Find(&parent); result.Error != nil {
+			return nil, result.Error
+		}
 	}
+
+	err = xdb.C(c).Transaction(func(tx *gorm.DB) error {
+
+		result := xdb.SaveMap[pro.Menu](tx, r, map[string]interface{}{
+			"update_user": c.GetUserId(),
+			"ParentId":    xdb.ToMapIgnore,
+		})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if r.ParentId > 0 {
+			// 如果不包含这个菜单
+			children := parent.Children
+			if children == nil {
+				children = &xdb.Int8Array{}
+			}
+			if !children.Contain(result.RowId) {
+				children.AppendIfNotExist(result.RowId)
+				if result := tx.Model(&parent).Where("id = ?", parent.ID).Update("children", children); result.Error != nil {
+					return result.Error
+				}
+			}
+		}
+		return nil
+	})
+
 	return
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/menu/save", run(), auth.ForceAuth)
 }

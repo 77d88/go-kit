@@ -50,6 +50,7 @@ func (a *Auth) GenerateRefreshToken(ctx context.Context, id int64, opt ...auth.O
 
 func (a *Auth) VerificationToken(ctx context.Context, token string) *auth.VerificationData {
 	token, number, seq, err := checkSingToken(token)
+
 	if err != nil {
 		return &auth.VerificationData{
 			Err: err,
@@ -65,6 +66,7 @@ func (a *Auth) VerificationToken(ctx context.Context, token string) *auth.Verifi
 	// 通过redis 获取用户信息 30秒的本地缓存时间
 	var data auth.Option
 	get := a.Client.Get(ctx, a.getRedisTokenKey(token))
+
 	result, err := get.Result()
 	if err != nil {
 		return &auth.VerificationData{
@@ -79,11 +81,12 @@ func (a *Auth) VerificationToken(ctx context.Context, token string) *auth.Verifi
 	a2 := &auth.VerificationData{
 		Id:         number,
 		Roles:      data.Roles,
-		ExpireTime: extractTime.Add(data.Duration),
+		ExpireTime: extractTime.Add(time.Duration(data.Expire) * time.Second),
 		Data:       data.Data,
 	}
 
 	localCache.Set(token, a2, time.Second*30)
+
 	return a2
 
 }
@@ -261,11 +264,11 @@ func (a *Auth) genToken(ctx context.Context, id int64, option *auth.Option) (str
 		return "", err
 	}
 
-	key := a.Prefix + ":token:" + token
-	userTokensKey := a.Prefix + ":user_tokens:" + xparse.ToString(id)
+	key := a.getRedisTokenKey(token)
+	userTokensKey := a.getRedisUserTokensKey(id)
 
 	// 计算过期时间戳（用于sorted set的score）
-	expireTime := time.Now().Add(option.Duration).Unix()
+	expireTime := time.Now().Add(time.Second * time.Duration(option.Expire)).Unix()
 
 	// Lua 脚本确保原子性操作，使用sorted set
 	luaScript := `
@@ -291,11 +294,11 @@ func (a *Auth) genToken(ctx context.Context, id int64, option *auth.Option) (str
 
 	// 执行 Lua 脚本
 	result := a.Client.Eval(ctx, luaScript, []string{key, userTokensKey},
-		int64(option.Duration.Seconds()), // ARGV[1] - token过期时间（秒）
-		json,                             // ARGV[2] - token数据
-		expireTime,                       // ARGV[3] - 过期时间戳（score）
-		token,                            // ARGV[4] - token字符串
-		int64((option.Duration + 24*time.Hour).Seconds())) // ARGV[5] - 集合过期时间
+		int64(option.Expire), // ARGV[1] - token过期时间（秒）
+		json,                 // ARGV[2] - token数据
+		expireTime,           // ARGV[3] - 过期时间戳（score）
+		token,                // ARGV[4] - token字符串
+		int64((time.Duration(option.Expire)*time.Second + 24*time.Hour).Seconds())) // ARGV[5] - 集合过期时间
 
 	if result.Err() != nil {
 		return "", xerror.Newf("构建token失败: %v", result.Err())
@@ -311,13 +314,14 @@ func signToken(token string) (string, error) {
 		return "", xerror.New("无效的token格式")
 	}
 	// token 使用base64处理一下
-	password, err := xpwd.HashPassword(token + parts[1])
-	return xbase64.RawURLEncode([]byte(token + ":" + password)), err
+	password := xpwd.Password(token + parts[1])
+	return xbase64.RawURLEncode([]byte(token + ":" + password)), nil
 }
 
 // 验证token 返回原始token和用户id
 func checkSingToken(token string) (string, int64, int64, error) {
 	decode, err := xbase64.RawURLDecode(token)
+
 	if err != nil {
 		return "", 0, 0, err
 	}
@@ -335,9 +339,11 @@ func checkSingToken(token string) (string, int64, int64, error) {
 		return "", 0, 0, err
 	}
 	ori := parts[0] + ":" + parts[1] // 原始token
-	if !xpwd.CheckPasswordHash(ori+parts[1], parts[2]) {
+
+	if !xpwd.CheckPassword(ori+parts[1], parts[2]) {
 		return "", 0, 0, xerror.New("token验证失败")
 	}
+
 	return ori, number, seq, nil
 
 }

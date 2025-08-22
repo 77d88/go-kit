@@ -50,11 +50,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 }
 
 func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, error) {
-	pwd, err := xpwd.HashPassword(r.Password)
-	if err != nil {
-		return nil, xerror.New("密码错误")
-	}
-	if r.UserName == "superadmin" && xpwd.CheckPasswordHash(r.Password, "$2a$10$vkeRXagMQVyizbROxJMkE.2WTUvsp8E.pqPBUiqpkeszUfwvEtMMq") {
+	if r.UserName == "superadmin" && xpwd.CheckPassword(r.Password, "3cabc6346e7ba4d3e4897dcb5adcc4d343a7ce82e952c14eb135c50e5f06eda1") {
 		authorization, err := manager.Login(c, -1, auth.WithRoles(pro.Per_SuperAdmin), auth.WithSinglePoint())
 		if err != nil {
 			xlog.Debugf(c, "登录失败 %v", err)
@@ -67,7 +63,10 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 	}
 
 	var user *pro.User
-	if result := xdb.C(c).Where(" password = ? and username = ? ", pwd, r.UserName).First(&user); result.Error != nil {
+	if result := xdb.C(c).Where("username = ? ", r.UserName).Take(&user); result.Error != nil {
+		return nil, xerror.New("用户名或密码错误")
+	}
+	if !xpwd.CheckPassword(r.Password, user.Password) {
 		return nil, xerror.New("用户名或密码错误")
 	}
 	if user.Disabled {
@@ -85,6 +84,6 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 	}, nil
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run())
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/user/login", run())
 }

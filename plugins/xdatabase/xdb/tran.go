@@ -57,3 +57,28 @@ package xdb
 //	xctx.SetVal(c, CtxTransactionKey, begin)
 //	return begin
 //}
+
+//func (db *DB) Begin() *DB {
+//	newDB := db.clone()
+//	tx, err := newDB.pool.Begin(newDB.ctx)
+//	if err != nil {
+//		newDB.error = err
+//		return newDB
+//	}
+//	newDB.tx = tx
+//	return newDB
+//}
+//
+//func (db *DB) Commit() error {
+//	if db.tx != nil {
+//		return db.tx.Commit(db.ctx)
+//	}
+//	return nil
+//}
+//
+//func (db *DB) Rollback() error {
+//	if db.tx != nil {
+//		return db.tx.Rollback(db.ctx)
+//	}
+//	return nil
+//}

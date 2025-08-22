@@ -44,11 +44,11 @@ func NewCustomize(key, refreshKey []byte) *JwtAuth {
 
 func (a *JwtAuth) GenerateToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {
 	getOpt := auth.GetOpt(opt...)
-	return generateToken(id, getOpt.Duration, a.key, getOpt.Roles...)
+	return generateToken(id, getOpt.Expire, a.key, getOpt.Roles...)
 }
 func (a *JwtAuth) GenerateRefreshToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {
 	getOpt := auth.GetOpt(opt...)
-	return generateToken(id, getOpt.Duration, a.refreshKey, getOpt.Roles...)
+	return generateToken(id, getOpt.Expire, a.refreshKey, getOpt.Roles...)
 }
 func (a *JwtAuth) VerificationToken(ctx context.Context, jwtStr string) *auth.VerificationData {
 	return verificationToken(jwtStr, a.key)

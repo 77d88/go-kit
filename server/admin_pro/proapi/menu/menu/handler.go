@@ -8,38 +8,35 @@ import (
 )
 
 // 用户菜单列表
-type response struct {
-}
-
 type request struct {
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	userId := c.GetUserId()
+	var menus []*pro.Menu
+	if c.Auth.HasPermission(pro.Per_SuperAdmin) {
+		result := xdb.C(c).Find(&menus)
+		if result.Error != nil {
+			return nil, result.Error
+		} else {
+			return menus, nil
+		}
+	}
 
 	var user pro.User
 	if result := xdb.C(c).Where("id = ?", userId).Take(&user); result.Error != nil {
 		return nil, result.Error
 	}
 
-	var menus []*pro.Menu
-
-	if user.IsSuperAdmin {
-		result := xdb.C(c).Find(&menus)
-		if result.Error != nil {
-			return nil, result.Error
-		}
-	} else {
-		result := xdb.C(c).Where("permission in (?)", user.AllPermissionCode()).Find(&menus)
-		if result.Error != nil {
-			return nil, result.Error
-		}
+	result := xdb.C(c).Where("permission in (?)", user.AllPermissionCode()).Find(&menus)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return menus, nil
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/menu/menu", run(), auth.ForceAuth)
 }

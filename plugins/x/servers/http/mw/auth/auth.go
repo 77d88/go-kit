@@ -17,12 +17,12 @@ const (
 )
 
 type Option struct {
-	Roles       []string      `json:"roles,omitempty"`
-	Data        interface{}   `json:"data,omitempty"`
-	Duration    time.Duration `json:"-"`
-	MaxLoginNum uint          `json:"-"` // 最大登录数量 中心化才支持
-	SinglePoint bool          `json:"-"` // 是否挤掉其他登录保持一个登录 中心化才支持
-	AutoRenewal bool          `json:"-"` // 是否自动续期 中心化才支持
+	Roles       []string    `json:"roles,omitempty"`
+	Data        interface{} `json:"data,omitempty"`
+	Expire      int         `json:"expire,omitempty"`
+	MaxLoginNum uint        `json:"-"` // 最大登录数量 中心化才支持
+	SinglePoint bool        `json:"-"` // 是否挤掉其他登录保持一个登录 中心化才支持
+	AutoRenewal bool        `json:"-"` // 是否自动续期 中心化才支持
 }
 
 type OptionHandler interface {
@@ -44,9 +44,9 @@ func WithData(data interface{}) OptionHandler {
 		manager.Data = data
 	})
 }
-func WithDuration(duration time.Duration) OptionHandler {
+func WithExpire(second int) OptionHandler {
 	return OptionFunc(func(manager *Option) {
-		manager.Duration = duration
+		manager.Expire = second
 	})
 }
 func WithMaxLoginNum(maxLoginNum uint) OptionHandler {
@@ -69,17 +69,16 @@ func WithSinglePoint() OptionHandler {
 
 func GetOpt(handler ...OptionHandler) *Option {
 	opt := Option{
-		Roles:    []string{},
-		Duration: time.Hour * 24 * 7,
-		Data:     nil,
+		Roles:       []string{},
+		Expire:      60 * 60 * 24 * 7, // 默认7天
+		MaxLoginNum: 99,
+		SinglePoint: false,
+		Data:        nil,
 	}
 	for _, f := range handler {
 		if option, ok := f.(OptionHandler); ok {
 			option.Apply(&opt)
 		}
-	}
-	if opt.MaxLoginNum == 0 {
-		opt.MaxLoginNum = 1
 	}
 	return &opt
 }
@@ -182,6 +181,7 @@ func (c *ApiAuth) Authorization(ctx context.Context, id int64, opt ...OptionHand
 // TokenInfo 默认的token解析中间件 只负责鉴权获取用户信息 不负责强制验证登录授权
 func (c *ApiAuth) TokenInfo() xhs.HandlerMw {
 	return func(x *xhs.Ctx) {
+
 		if c.Manager == nil {
 			x.Next()
 			return
@@ -207,6 +207,7 @@ func (c *ApiAuth) TokenInfo() xhs.HandlerMw {
 			return
 		}
 		data := manager.VerificationToken(x, token)
+
 		if !data.Validate() {
 			x.Next()
 			return

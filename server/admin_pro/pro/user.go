@@ -4,16 +4,12 @@ import (
 	"context"
 
 	"github.com/77d88/go-kit/basic/xarray"
-	"github.com/77d88/go-kit/basic/xencrypt/xmd5"
+	"github.com/77d88/go-kit/basic/xencrypt/xpwd"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
 const TableNameUser = "s_sys_user"
-
-var (
-	UserPwdSalt = "$$SS$#Y#X#@R@@!!!" //  密码盐
-)
 
 func init() {
 	xdb.AddModels(&User{})
@@ -35,9 +31,8 @@ type User struct {
 	ReLoginDesc         string         `gorm:"comment:重新登录描述" json:"reLoginDesc"`
 	PermissionCodes     *xdb.TextArray `gorm:"comment:权限码" json:"permissionCodes"`     // 冗余 集合Permission里面的所有
 	RolePermissionCodes *xdb.TextArray `gorm:"comment:角色码" json:"RolePermissionCodes"` // 冗余 集合Roles里面的所有Permission Code
-	IsSuperAdmin        bool           `gorm:"comment:是否是超级管理员" json:"isSuperAdmin"`
-	_codes              []string       `gorm:"-"` // 本地计算的code
-	_isCalcCodes        bool           `gorm:"-"` // 是否计算
+	_codes              []string       `gorm:"-"`                                      // 本地计算的code
+	_isCalcCodes        bool           `gorm:"-"`                                      // 是否计算
 }
 
 // TableName Res's table name
@@ -55,9 +50,6 @@ func (d *User) AllPermissionCode() []string {
 	codes := make([]string, 0, len(per)+len(rolePer)+1)
 	codes = append(codes, per...)
 	codes = append(codes, rolePer...)
-	if d.IsSuperAdmin {
-		codes = append(codes, Per_SuperAdmin)
-	}
 	codes = xarray.Unique(codes)
 	d._codes = codes
 	d._isCalcCodes = true
@@ -65,12 +57,13 @@ func (d *User) AllPermissionCode() []string {
 }
 
 func (*User) InitData() []xdb.GromModel {
+	password := xpwd.Password("admin123")
 	return []xdb.GromModel{
 		// 初始化一个普通管理员
 		&User{
 			BaseModel: xdb.NewBaseModel(1),
 			Username:  "admin",
-			Password:  xmd5.EncryptSalt("123456", UserPwdSalt),
+			Password:  password,
 			Nickname:  "管理员",
 			Disabled:  false,
 			Email:     "admin@admin.com",

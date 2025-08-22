@@ -16,6 +16,10 @@ type request struct {
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
+	if r.ParentId == 0 {
+		return xdb.G[pro.Menu]().Where("root_menu").Order("sort asc,id asc").Find(c)
+	}
+
 	var menu pro.Menu
 	if result := xdb.C(c).Where("id = ?", r.ParentId).Take(&menu); result.Error != nil {
 		if xdb.IsNotFound(result.Error) {
@@ -28,7 +32,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return make([]struct{}, 0), nil
 	}
 	var menus []pro.Menu
-	if result := xdb.C(c).Where("id in ?", menu.Children.ToSlice()).Find(&menus); result.Error != nil {
+	if result := xdb.C(c).Where("id in ?", menu.Children.ToSlice()).Order("sort asc,id asc").Find(&menus); result.Error != nil {
 		if xdb.IsNotFound(result.Error) {
 			return nil, nil
 		} else {
@@ -38,6 +42,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return menus, nil
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/menu/list", run(), auth.ForceAuth, pro.HansPermission(pro.Per_SuperAdmin))
 }

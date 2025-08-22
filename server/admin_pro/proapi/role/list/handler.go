@@ -25,6 +25,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/role/list", run(), auth.ForceAuth)
 }

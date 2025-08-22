@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -56,9 +57,26 @@ func TestBaseFunc(t *testing.T) {
 	//	t.Error(err)
 	//}
 	//xlog.Infof(nil, "take %+v", take)
+	// 获取底层 *sql.DB
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	where := db.Where("id in ?", []int64{})
-	page := FindPage[MuDbUser](where, &MuDbProduct{}, false)
+	// 预热
+	sqlDB.Ping()
+
+	// 测试
+	for i := 0; i < 10; i++ {
+		start := time.Now()
+		_, err := sqlDB.Exec("SELECT 1")
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		fmt.Printf("Attempt %d: %v ms\n", i+1, time.Since(start).Milliseconds())
+	}
+
+	page := FindPage[MuDbUser](db, &MuDbProduct{}, true)
 	//find, err := gorm.G[MuDbUser](where).Find(context.Background())
 	xlog.Infof(nil, "take %+v", page)
 	ix := []int32{1, 2}
@@ -101,10 +119,6 @@ func TestUtil(t *testing.T) {
 }
 
 func TestNextId(t *testing.T) {
-	var a Int8Array
-
-	t.Log("Testing NextId...", AppendInt8ArrayIfNotExist(&a, 1, 2, 3), a)
-	t.Log("Testing NextId...", AppendInt8ArrayIfNotExist(&a, 1, 2, 4), a)
 
 }
 

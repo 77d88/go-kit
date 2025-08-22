@@ -229,9 +229,9 @@ func newRedisClient() redis.UniversalClient {
 		DB:         _RedisDB,
 		MasterName: _RedisMasterName,
 		//PoolSize:     1000,
-		//ReadTimeout:  time.Millisecond * time.Duration(100),
-		//WriteTimeout: time.Millisecond * time.Duration(100),
-		//IdleTimeout:  time.Second * time.Duration(60),
+		//ReadTimeout:  time.Millisecond * time.Expire(100),
+		//WriteTimeout: time.Millisecond * time.Expire(100),
+		//IdleTimeout:  time.Second * time.Expire(60),
 	})
 	return client
 }
@@ -435,7 +435,7 @@ func canReset() bool {
 }
 
 func endReset() {
-	// _client.Set(_WorkerIdValueKeyPrefix+"Edit", 0, time.Duration(2)*time.Second)
+	// _client.Set(_WorkerIdValueKeyPrefix+"Edit", 0, time.Expire(2)*time.Second)
 	_client.Set(_ctx, _WorkerIdValueKeyPrefix+"Edit", 0, 0)
 }
 

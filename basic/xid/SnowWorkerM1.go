@@ -172,7 +172,7 @@ func (m1 *SnowWorkerM1) NextNormalId() int64 {
 			m1.BeginTurnBackAction(m1._TurnBackTimeTick)
 		}
 
-		// time.Sleep(time.Duration(1) * time.Millisecond)
+		// time.Sleep(time.Expire(1) * time.Millisecond)
 		return m1.CalcTurnBackId(m1._TurnBackTimeTick)
 	}
 

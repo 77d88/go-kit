@@ -31,11 +31,11 @@ type AesAuth struct {
 
 func (a *AesAuth) GenerateToken(ctx context.Context, id int64, opt ...auth2.OptionHandler) (string, error) {
 	option := auth2.GetOpt(opt...)
-	return generateToken(id, option.Duration, a.key, option.Roles...)
+	return generateToken(id, option.Expire, a.key, option.Roles...)
 }
 func (a *AesAuth) GenerateRefreshToken(ctx context.Context, id int64, opt ...auth2.OptionHandler) (string, error) {
 	option := auth2.GetOpt(opt...)
-	return generateToken(id, option.Duration, a.refreshKey, option.Roles...)
+	return generateToken(id, option.Expire, a.refreshKey, option.Roles...)
 }
 
 func (a *AesAuth) VerificationToken(ctx context.Context, jwtStr string) *auth2.VerificationData {

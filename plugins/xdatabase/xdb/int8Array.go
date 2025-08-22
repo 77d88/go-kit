@@ -116,28 +116,23 @@ func (i *Int8Array) Append(is ...int64) {
 
 	slice := i.ToSlice()
 	slice = append(slice, is...)
-	i.Set(slice)
+	err := i.Set(slice)
+	if err != nil {
+		xlog.Errorf(nil, "Int8Array.Append error: %v", err)
+	}
 }
 
 // AppendIfNotExist 追加元素，如果元素不存在
 // 返回是否追加成功
-func (i *Int8Array) AppendIfNotExist(is ...int64) bool {
-	flag := false
-	if len(is) == 0 {
-		return false
-	}
+func (i *Int8Array) AppendIfNotExist(is ...int64) {
 	slice := i.ToSlice()
 	for _, x := range is {
-		if xarray.Contain(slice, x) {
-			continue
-		}
-		slice = append(slice, x)
-		flag = true
+		slice = xarray.AppendIfAbsent(slice, x)
 	}
-	if flag {
-		i.Set(slice)
+	err := i.Set(slice)
+	if err != nil {
+		xlog.Errorf(nil, "Int8Array.Append error: %v", err)
 	}
-	return flag
 }
 
 func (i *Int8Array) AppendStrs(is ...string) {
@@ -192,15 +187,6 @@ func AppendInt8Array(i *Int8Array, is ...int64) {
 		i = NewInt8Array(is...)
 	}
 	i.Append(is...)
-}
-
-func AppendInt8ArrayIfNotExist(i *Int8Array, is ...int64) bool {
-	if i == nil {
-		i = NewInt8Array(is...)
-		return true
-	}
-
-	return i.AppendIfNotExist(is...)
 }
 
 // MarshalJSON 实现 json.Marshaler 接口

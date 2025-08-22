@@ -23,7 +23,7 @@ package xredis
 //	}
 // }
 //
-// func (c CacheOnce) Set(ctx context.DefaultAppContext, key string, value interface{}, expire time.Duration) bool {
+// func (c CacheOnce) Set(ctx context.DefaultAppContext, key string, value interface{}, expire time.Expire) bool {
 //	if value == nil {
 //		return false
 //	}

@@ -41,6 +41,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth, pro.HansPermission(pro.Per_SuperAdmin))
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/db/autoMigrate", run(), auth.ForceAuth, pro.HansPermission(pro.Per_SuperAdmin))
 }

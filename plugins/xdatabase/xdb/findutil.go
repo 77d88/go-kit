@@ -19,17 +19,73 @@ func (t *FindResult[T]) IsEmpty() bool {
 func FindPage[T any](db *gorm.DB, page Pager, count bool) FindResult[T] {
 	var pageResult FindResult[T]
 	offset, limit := page.Limit()
+
+	// 创建通道用于接收计数结果
+	countChan := make(chan struct {
+		total int64
+		err   error
+	}, 1)
+
+	// 创建通道用于接收查询结果
+	dataChan := make(chan struct {
+		list []T
+		err  error
+	}, 1)
+
+	// 异步执行 count 查询
 	if count {
-		if result := db.Count(&pageResult.Total); result.Error != nil {
-			pageResult.Error = result.Error
+		go func() {
+			var total int64
+			var err error
+			if result := db.Session(&gorm.Session{}).Model(new(T)).Count(&total); result.Error != nil {
+				err = result.Error
+			}
+			countChan <- struct {
+				total int64
+				err   error
+			}{total: total, err: err}
+		}()
+	}
+
+	// 异步执行数据查询
+	go func() {
+		var list []T
+		var err error
+		result := db.Session(&gorm.Session{}).Model(new(T)).Offset(offset).Limit(limit).Find(&list)
+		if result.Error != nil {
+			err = result.Error
+		}
+		dataChan <- struct {
+			list []T
+			err  error
+		}{list: list, err: err}
+	}()
+
+	// 等待并处理数据查询结果
+	dataResult := <-dataChan
+	pageResult.List = dataResult.list
+	pageResult.Error = dataResult.err
+
+	// 如果数据查询出错，直接返回
+	if pageResult.Error != nil {
+		return pageResult
+	}
+
+	// 等待并处理 count 结果
+	if count {
+		countResult := <-countChan
+		if countResult.err != nil {
+			pageResult.Error = countResult.err
 			return pageResult
 		}
+		pageResult.Total = countResult.total
+
+		// 如果总数为0或偏移量超过总数，清空列表
 		if pageResult.Total <= int64(offset) {
-			return pageResult
+			pageResult.List = []T{}
 		}
 	}
-	find := db.Offset(offset).Limit(limit).Find(&pageResult.List)
-	pageResult.Error = find.Error
+
 	return pageResult
 }
 

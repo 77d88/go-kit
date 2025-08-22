@@ -1,6 +1,7 @@
 package save
 
 import (
+	"github.com/77d88/go-kit/basic/xencrypt/xpwd"
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
@@ -32,6 +33,14 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("新用户必须要输入密码")
 	}
 
+	if r.Password != "nil" {
+		password := xpwd.Password(r.Password)
+		if err != nil {
+			return nil, err
+		}
+		r.Password = password
+	}
+
 	var user pro.User
 	if result := xdb.C(c).Where("username = ?", r.Username).Find(&user); result.Error != nil {
 		return nil, result.Error
@@ -48,6 +57,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/user/save", run(), auth.ForceAuth)
 }

@@ -1,32 +1,44 @@
 package list
 
 import (
-	"github.com/77d88/go-kit/basic/xerror"
-	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
 // 字典列表
-type response struct {
-}
 
 type request struct {
-	TypeId int64 `json:"typeId,string"`
+	ParentId int64 `json:"parentId,string"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	if r.TypeId <= 0 {
-		return nil, xerror.New("参数错误")
+	if r.ParentId == 0 {
+		return xdb.G[pro.Dict]().Where("root").Order("sort asc,id asc").Find(c)
 	}
-	var dict []*pro.Dict
-	if result := xdb.C(c).Where("not is_type and type = ?", r.TypeId).Order("sort asc").Find(&dict); result.Error != nil {
-		return nil, result.Error
+
+	var dict pro.Dict
+	if result := xdb.C(c).Where("id = ?", r.ParentId).Take(&dict); result.Error != nil {
+		if xdb.IsNotFound(result.Error) {
+			return make([]struct{}, 0), nil
+		} else {
+			return nil, result.Error
+		}
 	}
-	return dict, nil
+	if dict.Children.IsEmpty() {
+		return make([]struct{}, 0), nil
+	}
+	var dicts []pro.Dict
+	if result := xdb.C(c).Where("id in ?", dict.Children.ToSlice()).Order("sort asc,id asc").Find(&dicts); result.Error != nil {
+		if xdb.IsNotFound(result.Error) {
+			return nil, nil
+		} else {
+			return nil, result.Error
+		}
+	}
+	return dicts, nil
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/dict/list", run())
 }

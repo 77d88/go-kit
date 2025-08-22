@@ -1,6 +1,8 @@
 package list
 
 import (
+	"time"
+
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
@@ -21,18 +23,19 @@ type response struct {
 	Email       string         `json:"email"`
 	IsReLogin   bool           `json:"isReLogin"`
 	ReLoginDesc string         `json:"reLoginDesc"`
+	UpdatedTime time.Time      `json:"updatedTime"`
 }
 
 type request struct {
 	Page     xdb.PageSearch `json:"page"`
 	Name     string         `json:"name"`
-	Disabled *bool          `json:"disabled"`
+	Disabled *bool          `json:"disabled,string"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
-	tx := xdb.C(c).Model(&pro.User{}).Where("not is_super_admin").Order("id desc")
-	tx = xdb.XWhere(tx, r.Name != "", "username ilike @name || nickname ilike @name", xdb.Param("name", xdb.WarpLike(r.Name)))
+	tx := xdb.C(c).Model(&pro.User{}).Order("id desc")
+	tx = xdb.XWhere(tx, r.Name != "", "(username ilike @name or nickname ilike @name)", xdb.Param("name", xdb.WarpLike(r.Name)))
 	tx = xdb.XWhere(tx, r.Disabled != nil, "disabled = ?", r.Disabled)
 
 	if result := xdb.FindPage[pro.User](tx, r.Page, true); result.Error != nil {
@@ -49,12 +52,13 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 				Permission:  d.Permission,
 				IsReLogin:   d.IsReLogin,
 				ReLoginDesc: d.ReLoginDesc,
+				UpdatedTime: d.UpdatedTime,
 			}
 		}), result.Total), nil
 	}
 
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
-	xsh.POST(path, run(), auth.ForceAuth)
+func Register(xsh *xhs.HttpServer) {
+	xsh.POST("/pro/user/list", run(), auth.ForceAuth)
 }

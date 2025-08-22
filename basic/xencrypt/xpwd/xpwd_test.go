@@ -1,13 +1,17 @@
 package xpwd
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/77d88/go-kit/basic/xtime"
+)
 
 func TestName(t *testing.T) {
-
-	password, err := HashPassword("123456")
-	if err != nil {
-		t.Error(err)
-	}
+	inv := xtime.NewTimeInterval()
+	t.Log(inv.IntervalMs())
+	password := Password("123456")
+	t.Log(inv.IntervalMs())
 	t.Log(password)
-	t.Log(CheckPasswordHash("123456", password))
+	t.Log(CheckPassword("123456", password))
+	t.Log(inv.IntervalMs())
 }

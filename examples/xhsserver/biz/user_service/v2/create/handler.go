@@ -24,6 +24,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	return &m, scan.Error
 }
 
-func Register(path string, xsh *xhs.HttpServer) {
+func Register(xsh *xhs.HttpServer) {
 	xsh.GET(path, run())
 }
