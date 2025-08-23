@@ -6,7 +6,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -62,8 +62,8 @@ func passwordLogin(c *xhs.Ctx, r *request, manager auth.Manager) (*response, err
 		}, nil
 	}
 
-	var user *pro.User
-	if result := xdb.C(c).Where("username = ? ", r.UserName).Take(&user); result.Error != nil {
+	var user pro.User
+	if result := xpg.C(c).Where("username = ? ", r.UserName).First(&user); result.Error != nil {
 		return nil, xerror.New("用户名或密码错误")
 	}
 	if !xpwd.CheckPassword(r.Password, user.Password) {

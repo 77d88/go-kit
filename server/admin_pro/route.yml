@@ -1,12 +1,5 @@
 workPath: "github.com/77d88/go-kit/server/admin_pro"
 routes:
-  - path: /pro/db
-    module: "db"
-    methods: [ POST ]
-    handlers:
-      - { name: "autoMigrate",remark: "自动同步数据库结构","auth": true }
-      - { name: "initDataRows",remark: "重置初始化数据","auth": true }
-      - { name: "dbModels",remark: "数据库表列表","auth": true }
   - path: /pro/user
     module: "user"
     methods: [ POST ]

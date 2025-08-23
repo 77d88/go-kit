@@ -1,4 +1,4 @@
-package xdb2
+package xpg
 
 import (
 	"context"
@@ -85,11 +85,20 @@ func New(c *Config) *DB {
 		xlog.Fatalf(nil, "db init error -3 %s", err)
 		return nil
 	}
+
+	go func() {
+		err = pool.Ping(ctx)
+		if err != nil {
+			xlog.Fatalf(nil, "db init error -1 %s", err)
+		}
+	}()
+
 	re := regexp.MustCompile(`password=.+? `)
 	maskedStr := re.ReplaceAllString(c.Dns, "password=******* ")
 	xlog.Infof(nil, "init db conn success %s link -> %s", maskedStr, c.DbLinkName)
 	db := &DB{
-		pool: pool,
+		pool:   pool,
+		config: c,
 	}
 	dbs[c.DbLinkName] = db
 	if DefaultDB == nil {

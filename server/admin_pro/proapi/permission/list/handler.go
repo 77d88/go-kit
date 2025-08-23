@@ -5,6 +5,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -21,14 +22,13 @@ type request struct {
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	db := xdb.C(c)
-	if r.Code != "" {
-		db = db.Where("code ilike @code", xdb.Param("code", xdb.WarpLike(r.Code)))
-	}
-	if result := xdb.FindPage[pro.Permission](db, r.Page, true); result.Error != nil {
+	var pres []pro.Permission
+	result := xpg.C(c).Model(&pro.Permission{}).XWhere(r.Code != "", "code ilike ?", xdb.WarpLike(r.Code)).
+		FindPage(&pres, r.Page, true)
+	if result.Error != nil {
 		return nil, result.Error
 	} else {
-		return xhs.NewResp(xarray.Map(result.List, func(index int, item pro.Permission) response {
+		return xhs.NewResp(xarray.Map(pres, func(index int, item pro.Permission) response {
 			return response{
 				Id:   item.ID,
 				Code: item.Code,

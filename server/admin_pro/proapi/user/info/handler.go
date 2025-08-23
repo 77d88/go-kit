@@ -2,25 +2,26 @@ package info
 
 import (
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
 // 用户信息
 type response struct {
-	Id          int64          `json:"id,string"`
-	Password    string         `json:"password,omitempty"`
-	Disabled    bool           `json:"disabled"`
-	Username    string         `json:"username"`
-	Nickname    string         `json:"nickname"`
-	Avatar      *xdb.Int8Array `json:"avatar"`
-	Roles       *xdb.Int8Array `json:"roles"`
-	Permission  *xdb.Int8Array `json:"permission"`
-	Email       string         `json:"email"`
-	IsReLogin   bool           `json:"isReLogin"`
-	ReLoginDesc string         `json:"reLoginDesc"`
+	Id          int64            `json:"id,string"`
+	Password    string           `json:"password,omitempty"`
+	Disabled    bool             `json:"disabled"`
+	Username    string           `json:"username"`
+	Nickname    string           `json:"nickname"`
+	Avatar      xtype.Int64Array `json:"avatar"`
+	Roles       xtype.Int64Array `json:"roles"`
+	Permission  xtype.Int64Array `json:"permission"`
+	Email       string           `json:"email"`
+	IsReLogin   bool             `json:"isReLogin"`
+	ReLoginDesc string           `json:"reLoginDesc"`
 }
 
 type request struct {
@@ -32,7 +33,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误:Id不能为空")
 	}
 	var user pro.User
-	if result := xdb.C(c).Where("id = ?", r.Id).First(&user); result.Error != nil {
+	if result := xpg.C(c).Where("id = ?", r.Id).First(&user); result.Error != nil {
 		return nil, result.Error
 	}
 	return &response{

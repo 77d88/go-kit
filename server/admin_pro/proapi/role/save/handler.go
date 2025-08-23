@@ -4,7 +4,7 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -23,7 +23,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 
 	var role pro.Role
-	if result := xdb.C(c).Where("name = ?", r.Name).Find(&role); result.Error != nil {
+	if result := xpg.C(c).Where("name = ?", r.Name).Find(&role); result.Error != nil {
 		return nil, result.Error
 	}
 	if r.Id > 0 && role.ID != r.Id {
@@ -31,14 +31,14 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 
 	if r.Id > 0 {
-		if result := xdb.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).Updates(map[string]interface{}{
+		if result := xpg.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).Updates(map[string]interface{}{
 			"name":        r.Name,
 			"update_user": c.GetUserId(),
 		}); result.Error != nil {
 			return nil, result.Error
 		}
 	} else {
-		if result := xdb.C(c).Model(&pro.Role{}).Create(&pro.Role{
+		if result := xpg.C(c).Model(&pro.Role{}).Create(&pro.Role{
 			Name:       r.Name,
 			UpdateUser: c.GetUserId(),
 		}); result.Error != nil {

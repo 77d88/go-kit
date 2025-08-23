@@ -4,6 +4,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -17,11 +18,12 @@ type request struct {
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
-	db := xdb.XWhere(xdb.C(c), r.Name != "", "name ilike @name", xdb.Param("name", xdb.WarpLike(r.Name)))
-	if result := xdb.FindPage[pro.Role](db, r.Page, true); result.Error != nil {
+	var roles []pro.Role
+	result := xpg.C(c).Model(&pro.Role{}).XWhere(r.Name != "", "name ilike ?", xdb.WarpLike(r.Name)).FindPage(&roles, r.Page, true)
+	if result.Error != nil {
 		return nil, result.Error
 	} else {
-		return xhs.NewResp(result.List, result.Total), nil
+		return xhs.NewResp(roles, result.Total), nil
 	}
 }
 

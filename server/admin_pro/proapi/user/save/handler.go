@@ -6,6 +6,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -35,22 +36,19 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	if r.Password != "nil" {
 		password := xpwd.Password(r.Password)
-		if err != nil {
-			return nil, err
-		}
 		r.Password = password
 	}
 
 	var user pro.User
-	if result := xdb.C(c).Where("username = ?", r.Username).Find(&user); result.Error != nil {
+	if result := xpg.C(c).Where("username = ?", r.Username).Find(&user); result.Error != nil {
 		return nil, result.Error
 	}
 
 	if user.ID > 0 && user.ID != r.Id {
 		return nil, xerror.New("用户名已存在")
 	}
-	if result := xdb.SaveMap[pro.User](xdb.C(c), r, map[string]interface{}{
-		"update_user": c.GetUserId(),
+	if result := xpg.C(c).Model(&user).Save(r, func(m map[string]interface{}) {
+		m["update_user"] = c.GetUserId()
 	}); result.Error != nil {
 		return nil, result.Error
 	}

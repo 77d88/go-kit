@@ -7,7 +7,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xcache"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -24,14 +24,14 @@ type response struct {
 func handler(c *xhs.Ctx, r *request) (interface{}, error) {
 	return xcache.Once[any]("pro.dict.items", time.Minute*10, func() (any, error) {
 		var dict pro.Dict
-		if result := xdb.C(c).Where("name = ?", r.Name).Find(&dict); result.Error != nil {
+		if result := xpg.C(c).Where("name = ?", r.Name).Find(&dict); result.Error != nil {
 			return nil, result.Error
 		}
 		if dict.Children.IsEmpty() {
 			return []struct{}{}, nil
 		}
 		var items []pro.Dict
-		if result := xdb.C(c).Where("id in ?", dict.Children.ToSlice()).Find(&items); result.Error != nil {
+		if result := xpg.C(c).Where("id = ANY(?)", dict.Children).Find(&items); result.Error != nil {
 			return nil, result.Error
 		}
 		return xarray.Map(items, func(index int, item pro.Dict) response {

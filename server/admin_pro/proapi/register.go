@@ -4,9 +4,6 @@ package proapi
 
 import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	dbAutoMigrate "github.com/77d88/go-kit/server/admin_pro/proapi/db/autoMigrate"
-	dbDbModels "github.com/77d88/go-kit/server/admin_pro/proapi/db/dbModels"
-	dbInitDataRows "github.com/77d88/go-kit/server/admin_pro/proapi/db/initDataRows"
 	dictDel "github.com/77d88/go-kit/server/admin_pro/proapi/dict/del"
 	dictItems "github.com/77d88/go-kit/server/admin_pro/proapi/dict/items"
 	dictList "github.com/77d88/go-kit/server/admin_pro/proapi/dict/list"
@@ -44,9 +41,6 @@ import (
 )
 
 func Register(xsh *xhs.HttpServer) {
-	dbAutoMigrate.Register(xsh)
-	dbInitDataRows.Register(xsh)
-	dbDbModels.Register(xsh)
 	userLogin.Register(xsh)
 	userLogout.Register(xsh)
 	userList.Register(xsh)

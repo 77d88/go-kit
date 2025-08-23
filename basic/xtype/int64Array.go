@@ -8,23 +8,17 @@ import (
 
 type Int64Array []int64
 
-func (i *Int64Array) ToSlice() []int64 {
-	if i == nil {
-		return make([]int64, 0)
-	}
-	return *i
+func (i Int64Array) ToSlice() []int64 {
+	return i
 }
-func (i *Int64Array) IsEmpty() bool {
-	return i == nil || len(*i) == 0
+func (i Int64Array) IsEmpty() bool {
+	return len(i) == 0
 }
 
-func (i *Int64Array) ToStrings() []string {
+func (i Int64Array) ToStrings() []string {
 	// 初始化一个空的字符串数组
-	if i == nil {
-		return make([]string, 0)
-	}
-	var goArray = make([]string, 0, len(*i))
-	for i, elem := range *i {
+	var goArray = make([]string, 0, len(i))
+	for i, elem := range i {
 		goArray[i] = strconv.FormatInt(elem, 10)
 	}
 	return goArray
@@ -60,6 +54,15 @@ func (i *Int64Array) UnmarshalJSON(data []byte) error {
 		ints[idx] = val
 	}
 
-	*i = Int64Array(ints)
+	*i = ints
 	return nil
+}
+
+func (i Int64Array) Contain(cp int64) bool {
+	for _, v := range i {
+		if v == cp {
+			return true
+		}
+	}
+	return false
 }

@@ -3,9 +3,11 @@ package permission
 import (
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -14,8 +16,8 @@ type response struct {
 }
 
 type request struct {
-	Id         int64          `json:"id,string"`
-	Permission *xdb.Int8Array `json:"permission"`
+	Id         int64            `json:"id,string"`
+	Permission xtype.Int64Array `json:"permission"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
@@ -24,7 +26,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误:Id不能为空")
 	}
 	var permissions []pro.Permission
-	if result := xdb.C(c).Where("id in ?", r.Permission.ToSlice()).Find(&permissions); result.Error != nil {
+	if result := xpg.C(c).Where("id = ANY(?)", r.Permission).Find(&permissions); result.Error != nil {
 		return nil, result.Error
 	}
 	codes := make([]string, 0, len(permissions))
@@ -32,7 +34,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		codes = append(codes, p.Code)
 	}
 	codes = xarray.Union(codes)
-	if result := xdb.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).
+	if result := xpg.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).
 		Updates(map[string]interface{}{
 			"permission":       r.Permission,
 			"update_user":      c.GetUserId(),

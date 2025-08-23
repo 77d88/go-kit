@@ -8,7 +8,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/cors"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/limiter"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	_ "github.com/77d88/go-kit/plugins/xdatabase/xredis"
 	"github.com/77d88/go-kit/plugins/xtask/xjob"
@@ -35,10 +35,11 @@ func init() {
 }
 
 func main() {
-	x.Must(xdb.NewX)
+	//x.Must(xdb.NewX)
 	x.Must(xredis.NewX)
 	x.Must(xjob.NewX)
 	x.Must(redis_auth.New)
+	x.Must(xpg.NewX)
 	x.Use(func() x.EngineServer {
 		server := xhs.New()
 		server.Use(cors.New())

@@ -2,6 +2,7 @@ package xcore
 
 import (
 	"reflect"
+	"time"
 )
 
 // IsZero 检查值是否等于其类型的零值
@@ -10,16 +11,42 @@ func IsZero(val any) bool {
 	// 基础类型处理
 	case bool:
 		return !v
-	case int, int8, int16, int32, int64:
-		return any(v) == 0
-	case uint, uint8, uint16, uint32, uint64, uintptr:
-		return any(v) == 0
-	case float32, float64:
-		return any(v) == 0
+	case int:
+		return v == 0
+	case int8:
+		return v == 0
+	case int16:
+		return v == 0
+	case int32:
+		return v == 0
+	case int64:
+		return v == 0
+	case uint:
+		return v == 0
+	case uint8:
+		return v == 0
+	case uint16:
+		return v == 0
+	case uint32:
+		return v == 0
+	case uint64:
+		return v == 0
+	case uintptr:
+		return v == 0
+	case float32:
+		return v == 0
+	case float64:
+		return v == 0
 	case string:
 		return v == ""
 	case []byte:
 		return len(v) == 0
+	case complex64:
+		return v == 0
+	case complex128:
+		return v == 0
+	case time.Time:
+		return v.IsZero()
 
 	// 指针类型特殊处理
 	case *bool:
@@ -54,6 +81,12 @@ func IsZero(val any) bool {
 		return v == nil || *v == ""
 	case *[]byte:
 		return v == nil || len(*v) == 0
+	case *complex64:
+		return v == nil || *v == 0
+	case *complex128:
+		return v == nil || *v == 0
+	case *time.Time:
+		return v == nil || v.IsZero()
 
 	// 其他类型使用反射处理
 	default:

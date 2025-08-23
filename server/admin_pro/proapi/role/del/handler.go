@@ -7,6 +7,7 @@ import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -24,17 +25,17 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return nil, xerror.New("参数错误")
 	}
 	var role pro.Role
-	if result := xdb.C(c).Where("id = ?", r.Id).Take(&role); result.Error != nil {
+	if result := xpg.C(c).Where("id = ?", r.Id).First(&role); result.Error != nil {
 		return nil, result.Error
 	}
 	var count int64
-	if result := xdb.C(c).Model(&pro.Role{}).Where("deleted_time is null and roles && ?", xdb.NewInt8Array(r.Id)).Count(&count); result.Error != nil {
+	if result := xpg.C(c).Model(&pro.Role{}).Where("deleted_time is null and roles && ?", xdb.NewInt8Array(r.Id)).Count(&count); result.Error != nil {
 		return nil, result.Error
 	}
 	if count > 0 {
 		return nil, xerror.New("角色已分配给用户，不能删除")
 	}
-	if result := xdb.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).
+	if result := xpg.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).
 		Updates(map[string]interface{}{
 			"update_user":  c.GetUserId(),
 			"deleted_time": time.Now(),

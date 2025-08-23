@@ -3,6 +3,7 @@ package xhs
 import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/basic/xsys"
+	"github.com/77d88/go-kit/basic/xtime"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/gin-gonic/gin"
 )
@@ -89,6 +90,10 @@ func serverHandler(c *Ctx) {
 		if e := recover(); e != nil {
 			handleError(c, e)
 		}
+	}()
+	inv := xtime.NewTimeInterval()
+	defer func() {
+		xlog.Debugf(c, "request time: %d", inv.IntervalMs())
 	}()
 	// 继续处理
 	c.Next()

@@ -1,4 +1,4 @@
-package xdb2
+package xpg
 
 import (
 	"context"
@@ -9,7 +9,8 @@ import (
 
 // DB 是 pgxorm 的主对象，模仿 GORM 的 *gorm.DB
 type DB struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	config *Config
 }
 
 // Logger 定义日志接口，可对接 zap、logrus 等
@@ -23,9 +24,10 @@ func C(c context.Context, name ...string) *Inst {
 		return nil
 	}
 	return &Inst{
-		pool: db.pool,
-		cond: sq.Select().PlaceholderFormat(sq.Dollar),
-		ctx:  c,
+		pool:   db.pool,
+		cond:   sq.Select().PlaceholderFormat(sq.Dollar),
+		ctx:    c,
+		config: db.config,
 	}
 }
 
@@ -71,9 +73,9 @@ func C(c context.Context, name ...string) *Inst {
 //
 // // Where 添加 WHERE 条件
 //
-//	func (db *DB) Where(query interface{}, args ...interface{}) *DB {
+//	func (db *DB) Where(Query interface{}, args ...interface{}) *DB {
 //		newDB := db.clone()
-//		switch q := query.(type) {
+//		switch q := Query.(type) {
 //		case string:
 //			newDB.cond.Where(q, args...)
 //		case map[string]interface{}:
@@ -122,7 +124,7 @@ func C(c context.Context, name ...string) *Inst {
 //		// 构建 SQL
 //		sql, args := db.cond.Select(db.model.SelectFields()...).MustBuild()
 //
-//		rows, err := db.query(sql, args...)
+//		rows, err := db.Query(sql, args...)
 //		if err != nil {
 //			return err
 //		}
@@ -234,9 +236,9 @@ func C(c context.Context, name ...string) *Inst {
 //		return db.pool.Exec(db.ctx, sql, args...)
 //	}
 //
-// // query 执行查询
+// // Query 执行查询
 //
-//	func (db *DB) query(sql string, args ...interface{}) (pgx.Rows, error) {
+//	func (db *DB) Query(sql string, args ...interface{}) (pgx.Rows, error) {
 //		if db.tx != nil {
 //			return db.tx.Query(db.ctx, sql, args...)
 //		}
@@ -270,7 +272,8 @@ func C(c context.Context, name ...string) *Inst {
 // // clone 复制当前 DB 实例（用于链式调用）
 func (db *DB) clone() *DB {
 	return &DB{
-		pool: db.pool,
+		pool:   db.pool,
+		config: db.config,
 	}
 }
 
@@ -283,5 +286,5 @@ func (db *DB) clone() *DB {
 //// Rows 返回原始 rows（可选）
 //func (db *DB) Rows() (pgx.Rows, error) {
 //	sql, args := db.cond.MustBuild()
-//	return db.query(sql, args...)
+//	return db.Query(sql, args...)
 //}

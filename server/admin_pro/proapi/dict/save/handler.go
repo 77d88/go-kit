@@ -2,11 +2,11 @@ package save
 
 import (
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
-	"gorm.io/gorm"
 )
 
 // 字典保存
@@ -20,7 +20,7 @@ type request struct {
 	Name     string `json:"name,omitempty"`
 	Sort     int    `json:"sort,omitempty"`
 	Root     bool   `json:"root,omitempty" `
-	ParentId int64  `json:"parentId,string"`
+	ParentId int64  `json:"parentId,string" db:"-"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
@@ -35,7 +35,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	// 根节点name不能重复
 	if r.ParentId == 0 {
 		var dict pro.Dict
-		if result := xdb.C(c).Where("name = ?", r.Name).Find(&dict); result.Error != nil {
+		if result := xpg.C(c).Where("name = ?", r.Name).Find(&dict); result.Error != nil {
 			return nil, result.Error
 		}
 		if dict.ID > 0 && dict.ID != r.Id {
@@ -45,15 +45,14 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	var parent pro.Dict
 	if r.ParentId > 0 {
-		if result := xdb.C(c).Where("id = ?", r.ParentId).Find(&parent); result.Error != nil {
+		if result := xpg.C(c).Where("id = ?", r.ParentId).Find(&parent); result.Error != nil {
 			return nil, result.Error
 		}
 	}
 
-	err = xdb.C(c).Transaction(func(tx *gorm.DB) error {
-		result := xdb.SaveMap[pro.Dict](tx, r, map[string]interface{}{
-			"update_user": c.GetUserId(),
-			"ParentId":    xdb.ToMapIgnore,
+	err = xpg.C(c).Transaction(func(tx *xpg.Inst) error {
+		result := tx.Model(&pro.Dict{}).Save(r, func(m map[string]interface{}) {
+			m["update_user"] = c.GetUserId()
 		})
 		if result.Error != nil {
 			return result.Error
@@ -62,10 +61,10 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 			// 如果不包含这个子项则新增
 			children := parent.Children
 			if children == nil {
-				children = &xdb.Int8Array{}
+				children = make(xtype.Int64Array, 0)
 			}
 			if !children.Contain(result.RowId) {
-				children.AppendIfNotExist(result.RowId)
+				children = append(children, result.RowId)
 				if result := tx.Model(&parent).Where("id = ?", parent.ID).Update("children", children); result.Error != nil {
 					return result.Error
 				}

@@ -3,6 +3,7 @@ package list
 import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -14,11 +15,11 @@ type request struct {
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.ParentId == 0 {
-		return xdb.G[pro.Dict]().Where("root").Order("sort asc,id asc").Find(c)
+		return xpg.C(c).Where("root").Order("sort asc,id asc").Find(&[]pro.Dict{}).Decon()
 	}
 
 	var dict pro.Dict
-	if result := xdb.C(c).Where("id = ?", r.ParentId).Take(&dict); result.Error != nil {
+	if result := xpg.C(c).Where("id = ?", r.ParentId).First(&dict); result.Error != nil {
 		if xdb.IsNotFound(result.Error) {
 			return make([]struct{}, 0), nil
 		} else {
@@ -29,7 +30,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		return make([]struct{}, 0), nil
 	}
 	var dicts []pro.Dict
-	if result := xdb.C(c).Where("id in ?", dict.Children.ToSlice()).Order("sort asc,id asc").Find(&dicts); result.Error != nil {
+	if result := xpg.C(c).Where("id = any(?)", dict.Children).Order("sort asc,id asc").Find(&dicts); result.Error != nil {
 		if xdb.IsNotFound(result.Error) {
 			return nil, nil
 		} else {

@@ -1,4 +1,4 @@
-package xdb2
+package xpg
 
 import (
 	"sync"
@@ -31,9 +31,13 @@ func GetDB(name ...string) (*DB, error) {
 	return database.clone(), nil
 }
 
+type Model interface {
+	TableName() string
+}
+
 type BaseModel struct {
-	ID          int64     `gorm:"comment:主键;primaryKey;" json:"id,string"`                          // 主键
-	CreatedTime time.Time `gorm:"autoCreateTime;comment:创建时间" json:"createdTime" db:"created_time"` // 创建时间
-	UpdatedTime time.Time `gorm:"autoUpdateTime;comment:更新时间" json:"updatedTime" db:"updated_Time"` // 更新时间
-	DeletedTime time.Time `gorm:"comment:删除时间;index" json:"deletedTime" db:"deleted_time"`          // 删除时间
+	ID          int64     `json:"id,string" db:"id"`             // 主键
+	CreatedTime time.Time `json:"createdTime" db:"created_time"` // 创建时间
+	UpdatedTime time.Time `json:"updatedTime" db:"updated_time"` // 更新时间
+	DeletedTime time.Time `json:"deletedTime" db:"deleted_time"` // 删除时间
 }

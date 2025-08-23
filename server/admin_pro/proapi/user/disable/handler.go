@@ -4,7 +4,7 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	pro2 "github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -20,7 +20,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.Id <= 0 {
 		return nil, xerror.New("参数错误")
 	}
-	if result := xdb.C(c).Model(&pro2.User{}).Where("id = ?", r.Id).
+	if result := xpg.C(c).Model(&pro2.User{}).Where("id = ?", r.Id).
 		Updates(map[string]interface{}{
 			"disabled":    true,
 			"update_user": c.GetUserId(),

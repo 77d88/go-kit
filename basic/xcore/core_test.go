@@ -36,6 +36,11 @@ func TestIsZeroValue(t *testing.T) {
 	fmt.Println(IsZero(a))
 	fmt.Println(IsZero(ax))
 	fmt.Println(IsZero(A{A: "1"}))
+	fmt.Println(IsZero(int64(0)))                      // 输出: true
+	fmt.Println("IsZero(int64(0)):", IsZero(int64(0))) // 应该输出: true
+	fmt.Println("IsZero(int64(1)):", IsZero(int64(1))) // 应该输出: false
+	fmt.Println("IsZero(int32(0)):", IsZero(int32(0))) // 应该输出: true
+	fmt.Println("IsZero(int(0)):", IsZero(int(0)))     // 应该输出: true
 }
 
 func TestTR(t *testing.T) {
@@ -45,14 +50,4 @@ func TestTR(t *testing.T) {
 		return "false"
 	})
 	fmt.Println(ternaryFunc)
-}
-
-func TestName(t *testing.T) {
-	a := struct {
-		A string
-	}{
-		A: "123",
-	}
-	s, err := Copy(a)
-	fmt.Printf("%v===%v\n", s, err)
 }

@@ -275,7 +275,7 @@ type db struct {
 //	return d.IdDesc().Offset(offset).Limit(limit).Find(result)
 //}
 //
-//func (d *db) SaveMap(s GromModel, obj interface{}, mapping ...interface{}) *Result {
+//func (d *db) Save(s GromModel, obj interface{}, mapping ...interface{}) *Result {
 //	m := toSqlMap(obj, mapping...)
 //	mdb := d
 //	if s != nil {

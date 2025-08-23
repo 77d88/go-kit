@@ -3,7 +3,7 @@ package list
 import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
 
@@ -17,23 +17,23 @@ type request struct {
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if r.ParentId == 0 {
-		return xdb.G[pro.Menu]().Where("root_menu").Order("sort asc,id asc").Find(c)
+		return xpg.C(c).Where("root_menu").Order("sort asc,id asc").Find(&[]pro.Menu{}).Decon()
 	}
 
 	var menu pro.Menu
-	if result := xdb.C(c).Where("id = ?", r.ParentId).Take(&menu); result.Error != nil {
-		if xdb.IsNotFound(result.Error) {
+	if result := xpg.C(c).Where("id = ?", r.ParentId).First(&menu); result.Error != nil {
+		if result.IsNotFound() {
 			return make([]struct{}, 0), nil
 		} else {
 			return nil, result.Error
 		}
 	}
-	if menu.Children.IsEmpty() {
+	if len(menu.Children) == 0 {
 		return make([]struct{}, 0), nil
 	}
 	var menus []pro.Menu
-	if result := xdb.C(c).Where("id in ?", menu.Children.ToSlice()).Order("sort asc,id asc").Find(&menus); result.Error != nil {
-		if xdb.IsNotFound(result.Error) {
+	if result := xpg.C(c).Where("id = ANY(?)", menu.Children).Order("sort asc,id asc").Find(&menus); result.Error != nil {
+		if result.IsNotFound() {
 			return nil, nil
 		} else {
 			return nil, result.Error
