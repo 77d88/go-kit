@@ -45,9 +45,9 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 
 	err = xpg.C(c).Transaction(func(tx *xpg.Inst) error {
-		result := tx.Save(r, func(m map[string]interface{}) {
+		result := tx.Table(pro.TableNameMenu).Save(r, func(m map[string]interface{}) {
 			m["update_user"] = c.GetUserId()
-			delete(m, "ParentId")
+			delete(m, "parent_id")
 		})
 
 		if result.Error != nil {

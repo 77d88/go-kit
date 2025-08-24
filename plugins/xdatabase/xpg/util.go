@@ -1,13 +1,35 @@
 package xpg
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/77d88/go-kit/basic/xstr"
+	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/jackc/pgx/v5"
 )
 
+// RowsToMaps 将查询结果映射为 map集合统一处理
+func RowsToMaps(ctx context.Context, rows pgx.Rows) ([]map[string]any, error) {
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	defer rows.Close()
+	maps := make([]map[string]any, 0)
+	for rows.Next() {
+		toMap, err := pgx.RowToMap(rows)
+		if err != nil {
+			xlog.Errorf(ctx, "handlerQueryRowToMap error: %v", err)
+			return nil, err
+		}
+		maps = append(maps, toMap)
+	}
+	return maps, nil
+}
+
+// Scan 将查询结果映射到结构体
 func Scan(list []map[string]any, dest any) error {
 	t := reflect.TypeOf(dest)
 	if t.Kind() != reflect.Ptr {
@@ -91,9 +113,7 @@ func mapDecode(t reflect.Type, data map[string]any) (reflect.Value, error) {
 	return reflect.ValueOf(instance), nil
 }
 
-// check
-
-// extractDBFields 递归提取结构体中的db字段
+// extractDBFields 递归提取结构体中的db字段 字段名默认 SnakeCase蛇形命名
 func extractDBFields(t reflect.Type) []string {
 	var fields []string
 

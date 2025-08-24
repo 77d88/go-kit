@@ -69,13 +69,9 @@ func (i *Inst) Transaction(fn func(*Inst) error) error {
 	if err != nil {
 		return err
 	}
-
-	txInst := &Inst{
-		pool: i.pool,
-		cond: sq.SelectBuilder{},
-		ctx:  i.ctx,
-		tx:   begin,
-	}
+	txInst := i.Copy()
+	txInst.cond = sq.SelectBuilder{}
+	txInst.tx = begin
 
 	defer func() {
 		if p := recover(); p != nil {

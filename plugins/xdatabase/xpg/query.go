@@ -1,7 +1,6 @@
 package xpg
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 
@@ -12,28 +11,35 @@ import (
 	"github.com/lann/builder"
 )
 
-func (i *Inst) First(result interface{}) *Result {
-	// 检查result类型来决定是查询单个还是多个记录
-	t := reflect.TypeOf(result)
-	if t.Kind() != reflect.Ptr {
-		return &Result{
-			Error: fmt.Errorf("result must be a pointer"),
-		}
+func (i *Inst) Raw(sql string, args ...interface{}) (re *Result) {
+	if i.debug || i.config.Logger {
+		inv := xtime.NewTimeInterval()
+		defer func() {
+			xlog.Debugf(i.ctx, "Exec[%dms rows[%d] tx:[%s]] sql: %s, args: %v", inv.IntervalMs(), re.Rows, sql, args, i.savepointCounter)
+		}()
 	}
-	// 如果是切片指针，则查询多个记录
-	if t.Elem().Kind() == reflect.Slice {
-		return &Result{
-			Error: fmt.Errorf("result must be a pointer to a slice of structs"), // 必须是struct 类型
-		}
+	var rows pgx.Rows
+	var queryErr error
+	if i.tx != nil {
+		rows, queryErr = i.tx.Query(i.ctx, sql, args...)
+	} else {
+		rows, queryErr = i.pool.Query(i.ctx, sql, args...)
 	}
-	// 只查询一个
-	find := i.Find(result)
-	if find.Rows == 0 {
-		return &Result{
-			Error: pgx.ErrNoRows,
-		}
+	if queryErr != nil {
+		return &Result{Error: queryErr, Sql: sql, Args: args}
 	}
-	return find
+	maps, err := RowsToMaps(i.ctx, rows)
+	re = &Result{MapResult: maps, Error: err, Rows: int64(len(maps)), Sql: sql, Args: args}
+	return
+}
+
+// Query 查询结果 并统一处理为 map
+func (i *Inst) Query() *Result {
+	sql, args, err := i.cond.From(i.tableName).Columns(i.selectFields...).Where("deleted_time is null").ToSql() // 都是软删除
+	if err != nil {
+		return &Result{Error: err}
+	}
+	return i.Raw(sql, args...)
 }
 
 func (i *Inst) Find(result interface{}) *Result {
@@ -69,90 +75,53 @@ func (i *Inst) Find(result interface{}) *Result {
 			}
 		}
 	}
-
-	rs, err := ic.Query()
-	if err != nil {
+	return ic.Query().Scan(result)
+}
+func (i *Inst) First(result interface{}) *Result {
+	// 检查result类型来决定是查询单个还是多个记录
+	t := reflect.TypeOf(result)
+	if t.Kind() != reflect.Ptr {
 		return &Result{
-			Error: err,
+			Error: fmt.Errorf("result must be a pointer"),
 		}
 	}
-	if len(rs) == 0 {
-		return &Result{}
+	// 如果是切片指针，则查询多个记录
+	if t.Elem().Kind() == reflect.Slice {
+		return &Result{
+			Error: fmt.Errorf("result must be a pointer to a slice of structs"), // 必须是struct 类型
+		}
 	}
-	err = Scan(rs, result)
-	return &Result{
-		Rows:   int64(len(rs)),
-		Error:  err,
-		Result: result,
+	// 只查询一个
+	find := i.Find(result)
+	if find.Rows == 0 {
+		return &Result{
+			Error: pgx.ErrNoRows,
+		}
 	}
+	return find
 }
 
 func (i *Inst) Count(rc ...*int64) *Result {
 	ic := i.Select(`COUNT(1) as count`)
 	ic.cond = builder.Delete(ic.cond, "OrderByParts").(sq.SelectBuilder)
-	rs, err := ic.Query()
-	if err != nil {
-		return &Result{
-			Error: err,
-		}
+	result := ic.Query()
+	if result.Result != nil {
+		return result
 	}
-
-	m := rs[0]
-	if m == nil {
-		return &Result{
-			Error: fmt.Errorf("count error"),
-		}
+	get, b := result.Get(0, "count")
+	if !b {
+		return result.AddError(fmt.Errorf("count error not find"))
 	}
-	if m["count"] == nil {
-		return &Result{
-			Error: fmt.Errorf("count error"),
-		}
-	}
-	count, ok := m["count"].(int64)
+	count, ok := get.(int64)
 	if !ok {
-		return &Result{
-			Error: fmt.Errorf("count error"),
-		}
+		return result.AddError(fmt.Errorf("count error"))
 	}
 	if len(rc) > 0 {
 		*rc[0] = count
 	}
-	return &Result{
-		Rows:   1,
-		Error:  nil,
-		Total:  count,
-		Result: count,
-	}
-}
-
-// Query 查询结果 并统一处理为 map
-func (i *Inst) Query() ([]map[string]any, error) {
-	maps := make([]map[string]any, 0)
-	sql, args, err := i.cond.From(i.tableName).Columns(i.selectFields...).Where("deleted_time is null").ToSql() // 都是软删除
-	if err != nil {
-		return maps, err
-	}
-	if i.debug || i.config.Logger {
-		inv := xtime.NewTimeInterval()
-		defer func() {
-			xlog.Debugf(i.ctx, "Query[%dms rows[%d]] sql: %s, args: %v", inv.IntervalMs(), len(maps), sql, args)
-		}()
-	}
-	rows, err := i.pool.Query(i.ctx, sql, args...)
-	defer rows.Close()
-	if err != nil {
-		return maps, err
-	}
-
-	for rows.Next() {
-		toMap, err := pgx.RowToMap(rows)
-		if err != nil {
-			xlog.Errorf(context.Background(), "handlerQueryRowToMap error: %v", err)
-			return maps, err
-		}
-		maps = append(maps, toMap)
-	}
-	return maps, nil
+	result.Total = count
+	result.Result = count
+	return result
 }
 
 // FindPage 分页查询

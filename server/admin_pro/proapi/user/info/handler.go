@@ -43,7 +43,6 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		Username:    user.Username,
 		Avatar:      user.Avatar,
 		Roles:       user.Roles,
-		Permission:  user.Permission,
 		IsReLogin:   user.IsReLogin,
 		ReLoginDesc: user.ReLoginDesc,
 	}, nil

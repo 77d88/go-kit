@@ -9,9 +9,9 @@ const TableNamePermission = "s_sys_permission"
 // Permission 权限配置
 type Permission struct {
 	xpg.BaseModel
-	UpdateUser int64  `gorm:"comment:更新人"`
-	Code       string `gorm:"comment:权限码;index"` //全局唯一
-	Desc       string `gorm:"comment:权限描述"`
+	UpdateUser int64  `json:"updateUser,omitempty"`
+	Code       string `json:"code,omitempty"` //全局唯一
+	Desc       string `json:"desc,omitempty"`
 }
 
 // TableName Res's table name

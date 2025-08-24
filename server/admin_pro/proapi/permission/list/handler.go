@@ -2,6 +2,7 @@ package list
 
 import (
 	"github.com/77d88/go-kit/basic/xarray"
+	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
@@ -17,14 +18,17 @@ type response struct {
 }
 
 type request struct {
-	Page xdb.PageSearch `json:"page"`
-	Code string         `json:"code,omitempty"`
+	Page xdb.PageSearch   `json:"page"`
+	Code string           `json:"code,omitempty"`
+	Ids  xtype.Int64Array `json:"ids"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	var pres []pro.Permission
-	result := xpg.C(c).Model(&pro.Permission{}).XWhere(r.Code != "", "code ilike ?", xdb.WarpLike(r.Code)).
-		FindPage(&pres, r.Page, true)
+	result := xpg.C(c).Model(&pro.Permission{}).
+		XWhere(r.Code != "", "code ilike ?", xdb.WarpLike(r.Code)).
+		XWhere(len(r.Ids) > 0, "id =  any(?)", r.Ids).
+		FindPage(&pres, r.Page, len(r.Ids) == 0)
 	if result.Error != nil {
 		return nil, result.Error
 	} else {

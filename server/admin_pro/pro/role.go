@@ -10,10 +10,10 @@ const TableNameRole = "s_sys_role"
 // Role 权限配置
 type Role struct {
 	xpg.BaseModel
-	UpdateUser      int64            `gorm:"comment:更新人"`
-	Name            string           `gorm:"comment:权限码"` //全局唯一
-	Permission      xtype.Int64Array `gorm:"comment:权限集合"`
-	PermissionCodes []string         `gorm:"comment:权限码"` // 冗余字段
+	UpdateUser      int64            `json:"updateUser,omitempty"`
+	Name            string           `json:"name,omitempty"` //全局唯一
+	Permission      xtype.Int64Array `json:"permission,omitempty"`
+	PermissionCodes []string         `json:"-"` // 冗余字段
 }
 
 // TableName Res's table name

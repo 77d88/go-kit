@@ -26,6 +26,7 @@ type response struct {
 	IsReLogin   bool             `json:"isReLogin"`
 	ReLoginDesc string           `json:"reLoginDesc"`
 	UpdatedTime time.Time        `json:"updatedTime"`
+	RoleNames   []string         `json:"roleNames"`
 }
 
 type request struct {
@@ -51,10 +52,10 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 			Username:    d.Username,
 			Avatar:      d.Avatar,
 			Roles:       d.Roles,
-			Permission:  d.Permission,
 			IsReLogin:   d.IsReLogin,
 			ReLoginDesc: d.ReLoginDesc,
 			UpdatedTime: d.UpdatedTime,
+			RoleNames:   d.RoleNames,
 		}
 	}), result.Total), nil
 

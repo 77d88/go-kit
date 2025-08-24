@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"reflect"
 	"runtime"
-	"sync"
 	"time"
 
 	"github.com/77d88/go-kit/basic/xarray"
@@ -67,20 +66,18 @@ func New() *HttpServer {
 
 func (h *HttpServer) Start() {
 	// 初始化路由
-	group := sync.WaitGroup{}
+	c1 := make(chan struct{})
 	// 初始化基础mw
-	for _, mw := range h.mws {
-		group.Go(func() {
+	go func() {
+		for _, mw := range h.mws {
 			h.Engine.Use(WarpHandleMw(mw))
-		})
-	}
-	group.Wait()
-	group.Go(func() {
-		for _, fc := range h.fcs {
-			fc()
 		}
-	})
-	group.Wait()
+		c1 <- struct{}{}
+	}()
+	for _, fc := range h.fcs {
+		fc()
+	}
+	<-c1
 	// 初始化http 服务
 	h.srv = &http.Server{
 		Addr:    net.JoinHostPort("", h.Config.Port),

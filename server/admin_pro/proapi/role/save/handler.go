@@ -2,6 +2,7 @@ package save
 
 import (
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
@@ -13,8 +14,9 @@ type response struct {
 }
 
 type request struct {
-	Id   int64  `json:"id,omitempty"`
-	Name string `json:"code,omitempty"`
+	Id         int64            `json:"id,omitempty,string"`
+	Name       string           `json:"name,omitempty"`
+	Permission xtype.Int64Array `json:"permission"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
@@ -26,21 +28,38 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	if result := xpg.C(c).Where("name = ?", r.Name).Find(&role); result.Error != nil {
 		return nil, result.Error
 	}
-	if r.Id > 0 && role.ID != r.Id {
+	if role.ID > 0 && role.ID != r.Id {
 		return nil, xerror.New("角色名称不能重复")
+	}
+	var percodes []string
+	var perIds []int64
+	if !r.Permission.IsEmpty() {
+		var permissions []pro.Permission
+		if result := xpg.C(c).Where("id = any(?)", r.Permission).Find(&permissions); result.Error != nil {
+			return nil, result.Error
+		} else {
+			for _, p := range permissions {
+				percodes = append(percodes, p.Code)
+				perIds = append(perIds, p.ID)
+			}
+		}
 	}
 
 	if r.Id > 0 {
 		if result := xpg.C(c).Model(&pro.Role{}).Where("id = ?", r.Id).Updates(map[string]interface{}{
-			"name":        r.Name,
-			"update_user": c.GetUserId(),
+			"name":             r.Name,
+			"update_user":      c.GetUserId(),
+			"permission":       perIds,
+			"permission_codes": percodes,
 		}); result.Error != nil {
 			return nil, result.Error
 		}
 	} else {
 		if result := xpg.C(c).Model(&pro.Role{}).Create(&pro.Role{
-			Name:       r.Name,
-			UpdateUser: c.GetUserId(),
+			Name:            r.Name,
+			UpdateUser:      c.GetUserId(),
+			Permission:      perIds,
+			PermissionCodes: percodes,
 		}); result.Error != nil {
 			return nil, result.Error
 		}

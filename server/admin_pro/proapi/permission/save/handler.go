@@ -14,7 +14,7 @@ type response struct {
 }
 
 type request struct {
-	Id   int64  `json:"id,omitempty"`
+	Id   int64  `json:"id,omitempty,string"`
 	Code string `json:"code,omitempty"`
 	Desc string `json:"desc,omitempty"`
 }
@@ -23,6 +23,9 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	if r.Code == "" {
 		return nil, xerror.New("权限码不能为空")
+	}
+	if r.Code == pro.Per_SuperAdmin {
+		return nil, xerror.New("该权限码已被占用")
 	}
 	var permission pro.Permission
 	if result := xpg.C(c).Where("code = ?", r.Code).Find(&permission); result.Error != nil {

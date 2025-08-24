@@ -29,9 +29,10 @@ func (i *Inst) Exec(sql string, args ...interface{}) (res *Result) {
 	}
 	if err != nil {
 		xlog.Errorf(i.ctx, "handlerExec error: %v", err)
-		return &Result{Error: err}
+		return &Result{Error: err, Sql: sql, Args: args}
 	}
-	return &Result{Error: err, Rows: conn.RowsAffected()}
+	res = &Result{Error: err, Rows: conn.RowsAffected(), Sql: sql, Args: args}
+	return
 }
 
 func (i *Inst) Update(field string, value any) *Result {
@@ -51,10 +52,10 @@ func (i *Inst) Updates(m map[string]interface{}) *Result {
 	}
 	where := sq.Update(i.tableName).Where(clause, i2...)
 	for field, value := range m {
-		where = where.Set(field, value)
+		where = where.Set(`"`+field+`"`, value)
 	}
 	// 更新时间
-	where = where.Set("updated_time", time.Now())
+	where = where.Set(`"updated_time"`, time.Now())
 
 	sql, i3, err := where.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
@@ -87,7 +88,8 @@ func (i *Inst) Create(c interface{}) *Result {
 		return &Result{Error: err}
 	}
 	// 默认字段设定
-	dbObj["id"] = xid.NextIdStr()
+	nextId := xid.NextId()
+	dbObj["id"] = nextId
 	dbObj["created_time"] = time.Now()
 	dbObj["updated_time"] = time.Now()
 
@@ -98,7 +100,7 @@ func (i *Inst) Create(c interface{}) *Result {
 		if xcore.IsZero(v) { //忽略空字段
 			continue
 		} else {
-			keys = append(keys, k)
+			keys = append(keys, `"`+k+`"`)
 			values = append(values, v)
 		}
 	}
@@ -109,7 +111,9 @@ func (i *Inst) Create(c interface{}) *Result {
 	if err != nil {
 		return &Result{Error: err}
 	}
-	return i.Exec(sql, i3...)
+	res := i.Exec(sql, i3...)
+	res.RowId = nextId
+	return res
 }
 
 // Save 保存 如果id存在则更新，不存在则创建
@@ -138,6 +142,6 @@ func (i *Inst) Save(obj interface{}, before ...func(m map[string]interface{})) *
 		for _, f := range before {
 			f(dbObj)
 		}
-		return ic.Create(obj)
+		return ic.Create(dbObj)
 	}
 }
