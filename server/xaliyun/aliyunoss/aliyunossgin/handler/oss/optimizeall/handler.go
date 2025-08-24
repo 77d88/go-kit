@@ -3,7 +3,7 @@ package smallimgsave
 import (
 	"github.com/77d88/go-kit/basic/xcore"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	aliyunoss2 "github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 )
 
@@ -11,11 +11,11 @@ import (
 func handler(c *xhs.Ctx, r request) (interface{}, error) {
 
 	var res []aliyunoss2.Res
-	if result := xdb.C(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res); result.Error != nil {
+	if result := xpg.C(c).Where("id > 0 and mime_type in (0,1) and not is_optimize").Find(&res); result.Error != nil {
 
 		return nil, result.Error
 	}
-	db := xdb.DB()
+	db := xpg.C(c)
 	for _, r := range res {
 		if r.IsOptimize {
 			continue

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"regexp"
 
 	"github.com/77d88/go-kit/basic/xstr"
 	"github.com/77d88/go-kit/plugins/xlog"
@@ -34,6 +35,10 @@ func Scan(list []map[string]any, dest any) error {
 	t := reflect.TypeOf(dest)
 	if t.Kind() != reflect.Ptr {
 		return fmt.Errorf("result must be a pointer")
+	}
+
+	if len(list) == 0 {
+		return nil
 	}
 
 	v := reflect.ValueOf(dest).Elem() // 获取指针指向的值
@@ -230,4 +235,43 @@ func extractDBFieldsFromValue(value reflect.Value, result map[string]interface{}
 		// 直接赋值，如果有命名相同的字段会直接替换
 		result[fieldTag] = fieldValue.Interface()
 	}
+}
+
+// NamedExpr 命名参数转换为 ？号参数
+// 比如 name=:name 转换成 name=?
+// 能匹配的情况:
+// ":name"        // 匹配 name
+// ":user_name"   // 匹配 user_name
+// ":age123"      // 匹配 age123
+// ":param_1_test" // 匹配 param_1_test
+//
+// // 不会匹配的情况:
+// ":123name"     // 不匹配，因为不是字母开头
+// ":_name"       // 不匹配，因为不是字母开头
+// ":name-age"    // 只匹配 :name，-age 部分不匹配
+// ":name age"    // 只匹配 :name，空格后的内容不匹
+func NamedExpr(clause string, args map[string]interface{}) (string, []interface{}) {
+	// 正则表达式匹配 : 后面跟着字母开头的标识符
+	// 参数名可以包含字母、数字和下划线
+	re := regexp.MustCompile(`:([a-zA-Z][a-zA-Z0-9_]*)`)
+
+	var params []interface{}
+
+	// 替换所有匹配的命名参数
+	result := re.ReplaceAllStringFunc(clause, func(matched string) string {
+		// 提取参数名（去掉冒号）
+		paramName := matched[1:]
+
+		// 从参数映射中获取对应值
+		if val, exists := args[paramName]; exists {
+			params = append(params, val)
+		} else {
+			// 如果参数不存在，使用 nil 作为默认值
+			params = append(params, nil)
+		}
+
+		return "?"
+	})
+
+	return result, params
 }

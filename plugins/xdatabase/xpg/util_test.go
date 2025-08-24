@@ -26,3 +26,9 @@ func TestExObj(t *testing.T) {
 		t.Log(k, v)
 	}
 }
+func TestNamedExpr(t *testing.T) {
+	t.Log(NamedExpr("update user set username = :username where id = :id", map[string]interface{}{
+		"username": "123",
+		"id":       1,
+	}))
+}

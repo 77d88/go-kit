@@ -3,7 +3,7 @@ package aliyunoss
 import (
 	"time"
 
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 )
 
 const TableNameRes = "s_res"
@@ -15,13 +15,9 @@ const (
 	ResTypeFile                   // 文件
 )
 
-func init() {
-	xdb.AddModels(&Res{})
-}
-
 // Res mapped from table <s_res>
 type Res struct {
-	xdb.BaseModel           // 删除时间
+	xpg.BaseModel           // 删除时间
 	RefTime       time.Time `gorm:"comment:引用时间"` // 引用时间
 	MimeType      int32     `gorm:"comment:资源类型"` // 资源类型
 	Size          float64   `gorm:"comment:资源大小"` // 资源大小

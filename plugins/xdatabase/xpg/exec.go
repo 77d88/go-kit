@@ -39,6 +39,29 @@ func (i *Inst) Update(field string, value any) *Result {
 	return i.Updates(map[string]interface{}{field: value})
 }
 
+func (i *Inst) Delete(logic ...bool) *Result {
+	if len(logic) > 0 {
+		if logic[0] {
+			return i.Update("deleted_time", time.Now())
+		} else {
+			// 物理删除
+			clause, i2, err := i.extractWhereClause()
+			if err != nil {
+				return &Result{Error: err}
+			}
+			if clause == "" {
+				return &Result{Error: errors.New("where clause is empty")}
+			}
+			sql, i3, err := sq.Delete(i.tableName).Where(clause, i2...).PlaceholderFormat(sq.Dollar).ToSql()
+			if err != nil {
+				return &Result{Error: err}
+			}
+			return i.Exec(sql, i3...)
+		}
+	}
+	return i.Update("deleted_time", time.Now())
+}
+
 func (i *Inst) Updates(m map[string]interface{}) *Result {
 	if i.tableName == "" {
 		return &Result{Error: errors.New("tableName is empty")}
@@ -88,7 +111,20 @@ func (i *Inst) Create(c interface{}) *Result {
 		return &Result{Error: err}
 	}
 	// 默认字段设定
-	nextId := xid.NextId()
+	var nextId int64
+	if objId := dbObj["id"]; objId == nil {
+		nextId = xid.NextId()
+	} else {
+		if n, ok := objId.(int64); ok {
+			if n == 0 {
+				nextId = xid.NextId()
+			} else {
+				nextId = n
+			}
+		} else {
+			nextId = xid.NextId()
+		}
+	}
 	dbObj["id"] = nextId
 	dbObj["created_time"] = time.Now()
 	dbObj["updated_time"] = time.Now()
@@ -117,6 +153,7 @@ func (i *Inst) Create(c interface{}) *Result {
 }
 
 // Save 保存 如果id存在则更新，不存在则创建
+// 如果有需要更新的时候强制设定的值 通过 before 处理 新增的时候无法设置 ！注意 before 对应的是数据库字段 或者obj的 蛇形 名
 func (i *Inst) Save(obj interface{}, before ...func(m map[string]interface{})) *Result {
 	ic := i.Copy()
 	if m, ok := obj.(Model); ok && i.tableName == "" {

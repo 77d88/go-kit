@@ -104,6 +104,5 @@ func New(c *Config) *DB {
 	if DefaultDB == nil {
 		DefaultDB = db
 	}
-	x.Use(db, "_xdb.pgx.pool."+c.DbLinkName)
 	return db
 }

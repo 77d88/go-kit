@@ -6,6 +6,7 @@ import (
 
 	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xerror"
+	"github.com/77d88/go-kit/basic/xid"
 	"github.com/77d88/go-kit/plugins/xlog"
 )
 
@@ -40,4 +41,18 @@ type BaseModel struct {
 	CreatedTime time.Time `json:"createdTime" db:"created_time"` // 创建时间
 	UpdatedTime time.Time `json:"updatedTime" db:"updated_time"` // 更新时间
 	DeletedTime time.Time `json:"deletedTime" db:"deleted_time"` // 删除时间
+}
+
+func NewBaseModel(id ...int64) BaseModel {
+	var nextID int64
+	if len(id) == 0 || id[0] == 0 {
+		nextID = xid.NextId()
+	} else {
+		nextID = id[0]
+	}
+	return BaseModel{
+		ID:          nextID,
+		CreatedTime: time.Now(),
+		UpdatedTime: time.Now(),
+	}
 }

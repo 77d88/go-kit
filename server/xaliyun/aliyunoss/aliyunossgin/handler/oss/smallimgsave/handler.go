@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 
 	context2 "github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/xaliyun/aliyunoss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 )
@@ -39,7 +39,7 @@ func handler(c *context2.Ctx, r request) (interface{}, error) {
 	}
 	etag := object.Headers.Get("ETag")
 
-	return aliyunoss.DbSave(c, xdb.DB(), aliyunoss.OFile{
+	return aliyunoss.DbSave(c, xpg.C(c), aliyunoss.OFile{
 		ETag: etag + "small", // 小图片的etag加上small标识 不要影响原始图片
 		Key:  key,
 	}, func(c context.Context, key, toPath string) error {

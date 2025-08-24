@@ -2,6 +2,8 @@ package xpg
 
 import (
 	"errors"
+	"fmt"
+	"reflect"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -35,11 +37,46 @@ func (r *Result) Decon() (interface{}, error) {
 
 // Scan 扫描结果将原始map扫描到传入的结构体中 并保存到Result.Result中
 func (r *Result) Scan(i interface{}) *Result {
-	r.Error = Scan(r.MapResult, i)
-	if r.Error == nil {
-		r.Result = i
+	t := reflect.TypeOf(i)
+	if t.Kind() != reflect.Ptr {
+		clone := r.Clone()
+		clone.Error = errors.Join(r.Error, fmt.Errorf("result must be a pointer"))
+		return clone
 	}
-	return r
+
+	switch i.(type) {
+	case *int, *int64, *float64, *string, *bool:
+		covert, ok := mapFirstCovert(r.MapResult, i)
+		if ok {
+			// 使用反射正确设置值
+			reflect.ValueOf(i).Elem().Set(reflect.ValueOf(covert))
+			r.Result = covert
+			return r
+		} else {
+			r.Error = fmt.Errorf("covert to %v error", reflect.TypeOf(i))
+			return r
+		}
+	}
+	n := r.Clone()
+	n.Error = Scan(n.MapResult, i)
+	if n.Error == nil {
+		n.Result = i
+	}
+	return n
+}
+
+func (r *Result) Clone() *Result {
+	return &Result{
+		Args:      r.Args,
+		Error:     r.Error,
+		MapResult: r.MapResult,
+		Result:    r.Result,
+		RowId:     r.RowId,
+		Rows:      r.Rows,
+		Sql:       r.Sql,
+		Total:     r.Total,
+	}
+
 }
 
 // Get 获取原始map的某个字段
@@ -51,4 +88,33 @@ func (r *Result) Get(i int, key string) (interface{}, bool) {
 	}
 	x, exist := m[key]
 	return x, exist
+}
+
+// Salvage 捞取关联数据 简单的 如果target不是model ins 需要提前设置 tablename和捞取字段
+func (r *Result) Salvage(ins *Inst, target interface{}, fields ...string) *Result {
+	ids := r.SalvageId(fields...)
+	if len(ids) == 0 {
+		return r
+	}
+	return ins.Where("id = any(?)", ids).Find(target)
+}
+
+// SalvageId 捞取ID
+func (r *Result) SalvageId(fields ...string) []int64 {
+	// 捞取ID
+	var ids []int64
+	unique := make(map[int64]struct{})
+	for _, m := range r.MapResult {
+		for _, field := range fields {
+			if id, ok := m[field]; ok {
+				if i, ok := id.(int64); ok {
+					if _, exists := unique[i]; !exists {
+						unique[i] = struct{}{}
+						ids = append(ids, i)
+					}
+				}
+			}
+		}
+	}
+	return ids
 }

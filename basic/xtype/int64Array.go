@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+
+	"github.com/77d88/go-kit/basic/xarray"
 )
 
 type Int64Array []int64
@@ -65,4 +67,8 @@ func (i Int64Array) Contain(cp int64) bool {
 		}
 	}
 	return false
+}
+
+func (i Int64Array) ContainBy(predicate func(item int64) bool) bool {
+	return xarray.ContainBy(i, predicate)
 }

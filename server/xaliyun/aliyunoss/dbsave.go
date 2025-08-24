@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/77d88/go-kit/basic/xstr"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
+	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/plugins/xlog"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
-	"gorm.io/gorm"
 )
 
 type OFile struct {
@@ -35,7 +34,7 @@ var CopyObjFun ObjFun = func(c context.Context, key, toPath string) error {
 	return err
 }
 
-func DbSave(c context.Context, db *gorm.DB, r OFile, objFun ...ObjFun) (*OFile, error) {
+func DbSave(c context.Context, db *xpg.Inst, r OFile, objFun ...ObjFun) (*OFile, error) {
 	var glObjFun ObjFun
 
 	if len(objFun) == 0 {
@@ -75,8 +74,8 @@ func DbSave(c context.Context, db *gorm.DB, r OFile, objFun ...ObjFun) (*OFile, 
 			return &OFile{Id: res.ID}, nil
 		}
 
-		err := db.WithContext(c).Transaction(func(tx *gorm.DB) error {
-			base := xdb.NewBaseModel()
+		err := db.WithContext(c).Transaction(func(tx *xpg.Inst) error {
+			base := xpg.NewBaseModel()
 			res = Res{
 				BaseModel:  base,
 				RefTime:    time.Now(),
@@ -106,8 +105,8 @@ func DbSave(c context.Context, db *gorm.DB, r OFile, objFun ...ObjFun) (*OFile, 
 	}
 }
 
-func OptimizeRes(c context.Context, db *gorm.DB, res Res, r OFile) error {
-	return db.WithContext(c).Transaction(func(d *gorm.DB) error {
+func OptimizeRes(c context.Context, db *xpg.Inst, res Res, r OFile) error {
+	return db.WithContext(c).Transaction(func(d *xpg.Inst) error {
 		result := d.Model(&Res{}).Where("id = ?", res.ID).Update("is_optimize", true)
 		if result.Error != nil {
 			return result.Error
