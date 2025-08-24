@@ -149,7 +149,7 @@ func TestFirst(t *testing.T) {
 func TestCount(t *testing.T) {
 	var count int64
 	c := C(context.Background()).Debug()
-	result := c.Model(&User{}).Count(&count)
+	result := c.Model(&User{}).Select("count(id)").Count(&count)
 
 	t.Logf("result:%+v ==>%d", result, count)
 }

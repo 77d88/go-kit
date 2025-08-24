@@ -102,25 +102,21 @@ func (i *Inst) First(result interface{}) *Result {
 }
 
 func (i *Inst) Count(rc ...*int64) *Result {
-	ic := i.Select(`COUNT(1) as count`)
+	ic := i
+	if len(i.selectFields) == 0 {
+		ic = i.Select(`COUNT(1)`)
+	}
 	ic.cond = builder.Delete(ic.cond, "OrderByParts").(sq.SelectBuilder)
 	result := ic.Query()
 	if result.Result != nil {
 		return result
 	}
-	get, b := result.Get(0, "count")
-	if !b {
-		return result.AddError(fmt.Errorf("count error not find"))
-	}
-	count, ok := get.(int64)
-	if !ok {
-		return result.AddError(fmt.Errorf("count error"))
-	}
+	var count int64
+	result = result.Scan(&count)
 	if len(rc) > 0 {
 		*rc[0] = count
 	}
 	result.Total = count
-	result.Result = count
 	return result
 }
 
