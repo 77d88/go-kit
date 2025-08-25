@@ -2,7 +2,6 @@ package list
 
 import (
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -20,7 +19,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 
 	var dict pro.Dict
 	if result := xpg.C(c).Where("id = ?", r.ParentId).First(&dict); result.Error != nil {
-		if xdb.IsNotFound(result.Error) {
+		if result.IsNotFound() {
 			return make([]struct{}, 0), nil
 		} else {
 			return nil, result.Error
@@ -31,7 +30,7 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	}
 	var dicts []pro.Dict
 	if result := xpg.C(c).Where("id = any(?)", dict.Children).Order("sort asc,id asc").Find(&dicts); result.Error != nil {
-		if xdb.IsNotFound(result.Error) {
+		if result.IsNotFound() {
 			return nil, nil
 		} else {
 			return nil, result.Error

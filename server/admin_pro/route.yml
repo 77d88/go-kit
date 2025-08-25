@@ -1,5 +1,10 @@
 workPath: "github.com/77d88/go-kit/server/admin_pro"
 routes:
+  - - path: /pro/manager
+    - module: "manager"
+    - methods: [ POST ]
+    - handlers:
+      - { name: "initdb",remark: "数据库初始化" }
   - path: /pro/user
     module: "user"
     methods: [ POST ]

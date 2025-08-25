@@ -5,7 +5,6 @@ import (
 	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -15,22 +14,22 @@ type response struct {
 }
 
 type request struct {
-	Id            int64          `json:"id,string"`
-	Path          string         `json:"path"`
-	ComponentPath string         `json:"componentPath"`
-	Redirect      string         `json:"redirect"`
-	Name          string         `json:"name"`
-	NameZh        string         `json:"nameZh"`
-	MataTitle     string         `json:"mataTitle"`
-	MataKeywords  string         `json:"mataKeywords"`
-	MetaIcon      string         `json:"metaIcon"`
-	MetaHide      bool           `json:"metaHide"`
-	Sort          int            `json:"sort"`
-	MetaNoLevel   bool           `json:"metaNoLevel"`
-	RouteParams   string         `json:"routeParams"`
-	RootMenu      bool           `json:"rootMenu"`
-	ParentId      int64          `json:"parentId,string"`
-	Permission    *xdb.TextArray `json:"permission"`
+	Id            int64    `json:"id,string"`
+	Path          string   `json:"path"`
+	ComponentPath string   `json:"componentPath"`
+	Redirect      string   `json:"redirect"`
+	Name          string   `json:"name"`
+	NameZh        string   `json:"nameZh"`
+	MataTitle     string   `json:"mataTitle"`
+	MataKeywords  string   `json:"mataKeywords"`
+	MetaIcon      string   `json:"metaIcon"`
+	MetaHide      bool     `json:"metaHide"`
+	Sort          int      `json:"sort"`
+	MetaNoLevel   bool     `json:"metaNoLevel"`
+	RouteParams   string   `json:"routeParams"`
+	RootMenu      bool     `json:"rootMenu"`
+	ParentId      int64    `json:"parentId,string"`
+	Permission    []string `json:"permission"`
 }
 
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {

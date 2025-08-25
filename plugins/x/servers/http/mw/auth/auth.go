@@ -113,9 +113,21 @@ func New(manager Manager) *ApiAuth {
 	}
 }
 
-func NewMw(manager Manager) xhs.HandlerMw {
+func NewMw(manager ...Manager) xhs.HandlerMw {
+	var m Manager
+	if len(manager) > 0 {
+		m = manager[0]
+	} else {
+		get, err := x.Get[Manager]()
+		if err != nil {
+			xlog.Panicf(nil, "please init auth manager first")
+			return nil
+		}
+		m = get
+	}
+
 	auth := ApiAuth{
-		Manager: manager,
+		Manager: m,
 	}
 	return auth.TokenInfo()
 }

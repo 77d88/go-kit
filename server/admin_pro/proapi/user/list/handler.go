@@ -7,7 +7,6 @@ import (
 	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -30,7 +29,7 @@ type response struct {
 }
 
 type request struct {
-	Page     xdb.PageSearch `json:"page"`
+	Page     xpg.PageSearch `json:"page"`
 	Name     string         `json:"name"`
 	Disabled *bool          `json:"disabled,string"`
 }
@@ -38,7 +37,7 @@ type request struct {
 func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 	var users []pro.User
 	result := xpg.C(c).Model(&pro.User{}).Order("id desc").
-		XWhere(r.Name != "", "(username ilike @name or nickname ilike @name)", xdb.Param("name", xdb.WarpLike(r.Name))).
+		XWhere(r.Name != "", "(username ilike ? or nickname ilike ?)", xpg.WarpLike(r.Name), xpg.WarpLike(r.Name)).
 		XWhere(r.Disabled != nil, "disabled = ?", r.Disabled).FindPage(&users, r.Page, true)
 
 	if result.Error != nil {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/77d88/go-kit/basic/xstr"
 	"github.com/77d88/go-kit/plugins/xlog"
-	"github.com/go-viper/mapstructure/v2"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -88,34 +87,6 @@ func Scan(list []map[string]any, dest any) error {
 		}
 	}
 	return nil
-}
-
-// mapDecode 将map数据映射到结构体
-func mapDecode(t reflect.Type, data map[string]any) (reflect.Value, error) {
-	// 现将map key转为camelCase
-
-	for k, v := range data {
-		camelCaseKey := xstr.CamelCase(k)
-		data[camelCaseKey] = v
-		//delete(data, k) // 不用删除旧的 key 满足使用db tag的映射
-	}
-
-	instance := reflect.New(t).Interface()
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:           &instance,
-		WeaklyTypedInput: true, // 允许弱类型转换（如 map → struct）
-		Metadata:         nil,
-		TagName:          "db",
-		Squash:           true,
-	})
-	if err != nil {
-		return reflect.ValueOf(instance), err
-	}
-	err = decoder.Decode(data)
-	if err != nil {
-		return reflect.ValueOf(instance), err
-	}
-	return reflect.ValueOf(instance), nil
 }
 
 // extractDBFields 递归提取结构体中的db字段 字段名默认 SnakeCase蛇形命名

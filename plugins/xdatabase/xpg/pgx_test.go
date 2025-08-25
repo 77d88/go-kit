@@ -15,19 +15,19 @@ type User struct {
 	BaseModel
 	UpdateUser          int64    `gorm:"comment:更新人"`
 	Password            string   `gorm:"comment:后台登录密码" json:"password"`   // 后台登录密码
-	Disabled            bool     `gorm:"comment:是否禁用" json:"disabled"`       // 是否禁用
+	Disabled            bool     `gorm:"comment:是否禁用" json:"disabled"`     // 是否禁用
 	Username            string   `gorm:"comment:后台登录名称" json:"username"`   // 后台登录名称
 	Nickname            string   `gorm:"comment:后台显示名称" json:"nickname"`   // 后台显示名称
-	Avatar              []int64  `gorm:"comment:头像" json:"avatar"`             // 头像
-	Roles               []int64  `gorm:"comment:系统角色" json:"roles"`          // 系统角色
+	Avatar              []int64  `gorm:"comment:头像" json:"avatar"`         // 头像
+	Roles               []int64  `gorm:"comment:系统角色" json:"roles"`        // 系统角色
 	Permission          []int64  `gorm:"comment:系统独立权限" json:"permission"` // 系统独立权限
 	Email               string   `gorm:"comment:邮箱" json:"email"`
 	IsReLogin           bool     `gorm:"comment:是否需要重新登录" json:"isReLogin"`
 	ReLoginDesc         string   `gorm:"comment:重新登录描述" json:"reLoginDesc"`
 	PermissionCodes     []string `gorm:"comment:权限码" json:"permissionCodes"`     // 冗余 集合Permission里面的所有
 	RolePermissionCodes []string `gorm:"comment:角色码" json:"RolePermissionCodes"` // 冗余 集合Roles里面的所有Permission Code
-	_codes              []string `db:"-"`                                           // 本地计算的code
-	_isCalcCodes        bool     `db:"-"`                                           // 是否计算
+	_codes              []string `db:"-"`                                        // 本地计算的code
+	_isCalcCodes        bool     `db:"-"`                                        // 是否计算
 }
 
 // TableName Res's table name

@@ -6,7 +6,6 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -41,17 +40,17 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 		}
 		// 移除角色里面的权限
 		if result := tx.Exec(`update s_sys_role set 
-                      "permission" = array_remove("permission", @id) ,
-                      "permission_codes" = array_remove("permission_codes", @code) 
-                  where deleted_time is null `, xdb.Param("id", r.Id), xdb.Param("code", permission.Code)); result.Error != nil {
+                      "permission" = array_remove("permission", ?) ,
+                      "permission_codes" = array_remove("permission_codes", ?) 
+                  where deleted_time is null `, r.Id, permission.Code); result.Error != nil {
 			return result.Error
 		}
 
 		// 移除用户里面的权限码
 		if result := tx.Exec(`update s_sys_user set 
-                      "permission_codes" = array_remove("permission_codes", @code) ,
-                      "role_permission_codes" = array_remove("role_permission_codes", @code) 
-                  where deleted_time is null `, xdb.Param("code", permission.Code)); result.Error != nil {
+                      "permission_codes" = array_remove("permission_codes", ?) ,
+                      "role_permission_codes" = array_remove("role_permission_codes", ?) 
+                  where deleted_time is null `, permission.Code, permission.Code); result.Error != nil {
 			return result.Error
 		}
 		return nil

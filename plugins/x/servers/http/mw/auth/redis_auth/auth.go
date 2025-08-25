@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/77d88/go-kit/basic/xarray"
 	"github.com/77d88/go-kit/basic/xencrypt/xbase64"
 	"github.com/77d88/go-kit/basic/xencrypt/xpwd"
 	"github.com/77d88/go-kit/basic/xerror"
@@ -27,17 +28,33 @@ type Auth struct {
 	Prefix string
 }
 
-func New() auth.Manager {
+func New(prefix ...string) auth.Manager {
 	client, err := x.Get[*redis.Client]()
 	if err != nil {
 		return nil
 	}
 	a := &Auth{
 		Client: client,
-		Prefix: defaultPrefix,
+		Prefix: xarray.FirstOrDefault(prefix, defaultPrefix),
 	}
 	a.startBackgroundCleanup()
+	xlog.Debugf(context.Background(), "初始化授权管理器成功")
 	return a
+}
+func NewX(prefix ...string) func() auth.Manager {
+	return func() auth.Manager {
+		client, err := x.Get[*redis.Client]()
+		if err != nil {
+			return nil
+		}
+		a := &Auth{
+			Client: client,
+			Prefix: xarray.FirstOrDefault(prefix, defaultPrefix),
+		}
+		a.startBackgroundCleanup()
+		xlog.Debugf(context.Background(), "初始化授权管理器成功")
+		return a
+	}
 }
 
 func (a *Auth) GenerateToken(ctx context.Context, id int64, opt ...auth.OptionHandler) (string, error) {

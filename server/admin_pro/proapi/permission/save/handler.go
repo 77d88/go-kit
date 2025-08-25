@@ -4,7 +4,6 @@ import (
 	"github.com/77d88/go-kit/basic/xerror"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -53,24 +52,24 @@ func handler(c *xhs.Ctx, r *request) (resp interface{}, err error) {
 			args := map[string]interface{}{
 				"code":    old.Code,
 				"newCode": r.Code,
-				"codeArr": xdb.NewTextArray(old.Code),
+				"codeArr": []string{old.Code},
 			}
 			// 更新角色里面的权限码
-			if result := tx.Exec(`update s_sys_role set 
-                      "permission_codes" = array_append(array_remove("permission_codes", @code), @newCode )
-                  where deleted_time is null and permission_codes && @codeArr `, args); result.Error != nil {
+			if result := tx.Exec(xpg.NamedExpr(`update s_sys_role set 
+                      "permission_codes" = array_append(array_remove("permission_codes", :code), :newCode )
+                  where deleted_time is null and permission_codes && :codeArr `, args)); result.Error != nil {
 				return result.Error
 			}
 			// 更新用户里面的权限码
-			if result := tx.Exec(`update s_sys_user set 
-                      "permission_codes" = array_append(array_remove("permission_codes", @code), @newCode )
-                  where deleted_time is null  and permission_codes && @codeArr  `, args); result.Error != nil {
+			if result := tx.Exec(xpg.NamedExpr(`update s_sys_user set 
+                      "permission_codes" = array_append(array_remove("permission_codes", :code), :newCode )
+                  where deleted_time is null  and permission_codes && :codeArr  `, args)); result.Error != nil {
 				return result.Error
 			}
 			// 更新用户里面的权限码2
-			if result := tx.Exec(`update s_sys_user set 
-                      "role_permission_codes" = array_append(array_remove("role_permission_codes", @code), @newCode )
-                  where deleted_time is null  and role_permission_codes && @codeArr  `, args); result.Error != nil {
+			if result := tx.Exec(xpg.NamedExpr(`update s_sys_user set 
+                      "role_permission_codes" = array_append(array_remove("role_permission_codes", :code), :newCode )
+                  where deleted_time is null  and role_permission_codes && :codeArr  `, args)); result.Error != nil {
 				return result.Error
 			}
 		}

@@ -11,6 +11,7 @@ import (
 	"github.com/lann/builder"
 )
 
+// Raw 执行sql 并统一处理为 map
 func (i *Inst) Raw(sql string, args ...interface{}) (re *Result) {
 	if i.debug || i.config.Logger {
 		inv := xtime.NewTimeInterval()
@@ -33,7 +34,7 @@ func (i *Inst) Raw(sql string, args ...interface{}) (re *Result) {
 	return
 }
 
-// Query 查询结果 并统一处理为 map
+// Query 处理内置条件 并统一处理为 map
 func (i *Inst) Query() *Result {
 	sql, args, err := i.cond.From(i.tableName).Columns(i.selectFields...).Where("deleted_time is null").ToSql() // 都是软删除
 	if err != nil {

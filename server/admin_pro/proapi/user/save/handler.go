@@ -6,7 +6,6 @@ import (
 	"github.com/77d88/go-kit/basic/xtype"
 	"github.com/77d88/go-kit/plugins/x/servers/http/mw/auth"
 	"github.com/77d88/go-kit/plugins/x/servers/http/xhs"
-	"github.com/77d88/go-kit/plugins/xdatabase/xdb"
 	"github.com/77d88/go-kit/plugins/xdatabase/xpg"
 	"github.com/77d88/go-kit/server/admin_pro/pro"
 )
@@ -21,7 +20,7 @@ type request struct {
 	Disabled bool             `json:"disabled"`
 	Username string           `json:"username"`
 	Nickname string           `json:"nickname"`
-	Avatar   *xdb.Int8Array   `json:"avatar"`
+	Avatar   xtype.Int64Array `json:"avatar"`
 	Email    string           `json:"email"`
 	Roles    xtype.Int64Array `json:"roles"`
 }

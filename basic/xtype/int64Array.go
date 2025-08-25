@@ -19,7 +19,7 @@ func (i Int64Array) IsEmpty() bool {
 
 func (i Int64Array) ToStrings() []string {
 	// 初始化一个空的字符串数组
-	var goArray = make([]string, 0, len(i))
+	var goArray = make([]string, len(i))
 	for i, elem := range i {
 		goArray[i] = strconv.FormatInt(elem, 10)
 	}
